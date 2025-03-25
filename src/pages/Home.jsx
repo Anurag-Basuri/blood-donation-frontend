@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { motion, useInView, useAnimation } from "framer-motion";
+import { useInView, useAnimation } from "framer-motion";
 import { FiDroplet, FiHeart, FiUsers, FiClock } from "react-icons/fi";
-import {
-  TestimonialCard,
-  StatsCard,
-  SectionHeading,
-  GradientButton,
-} from "./components";
+import GradientButton from "../components/GradientButton.jsx";
+import SectionHeading from "../components/SectionHeading.jsx";
+import StatsCard from "../components/StatsCard.jsx";
+import TestimonialCard from "../components/TestimonialCard.jsx";
 
 const Home = () => {
   const [stats, setStats] = useState({ donors: 0, lives: 0, drives: 0 });
