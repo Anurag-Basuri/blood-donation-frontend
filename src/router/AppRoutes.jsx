@@ -1,9 +1,9 @@
 import { Routes, Route } from "react-router-dom";
-import Home from "../pages/Home";
-import About from "../pages/About";
-import Donate from "../pages/Donate";
-import Contact from "../pages/Contact";
-import Dashboard from "../pages/Dashboard";
+import Home from "../pages/Home.jsx";
+import About from "../pages/About.jsx";
+import Donate from "../pages/Donate.jsx";
+import Contact from "../pages/Contact.jsx";
+import Dashboard from "../pages/Dashboard.jsx";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 
