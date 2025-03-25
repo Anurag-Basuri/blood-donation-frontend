@@ -1,11 +1,12 @@
-import React from "react";
+import { BrowserRouter as Router } from "react-router-dom";
+import AppRoutes from "./routes/AppRoutes";
 
-function App() {
+const App = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <h1 className="text-4xl font-bold text-blue-500">Hello, Tailwind CSS!</h1>
-    </div>
+    <Router>
+      <AppRoutes />
+    </Router>
   );
-}
+};
 
 export default App;
