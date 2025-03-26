@@ -56,3 +56,24 @@
 .timeline-content {
   padding-left: 1.5rem;
 }
+
+/* Toast Notifications Custom Styles */
+.Toastify__toast {
+  border-radius: 8px;
+  background: rgba(17, 24, 39, 0.95) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.Toastify__toast-body {
+  color: #fff;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.Toastify__progress-bar {
+  background: linear-gradient(to right, #ef4444, #dc2626) !important;
+}
+
+.Toastify__toast-icon {
+  margin-right: 12px;
+}

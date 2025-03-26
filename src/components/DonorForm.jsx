@@ -2,21 +2,33 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { Autocomplete } from "@react-google-maps/api";
+import axios from "axios";
+import { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const schema = yup.object().shape({
-  fullName: yup.string().required(),
-  email: yup.string().email().required(),
+  fullName: yup.string().required("Full name is required"),
+  email: yup.string().email("Invalid email").required("Email is required"),
   phone: yup.string().matches(/^[0-9]{10}$/, "Invalid phone number"),
-  dob: yup.date().required(),
-  bloodGroup: yup.string().required(),
-  location: yup.string().required(),
-  frequency: yup.string().required(),
-  conditions: yup.array().min(0),
-  password: yup.string().min(8).required(),
+  dob: yup.date().required("Date of birth is required"),
+  street: yup.string().required("Street address is required"),
+  city: yup.string().required("City is required"),
+  state: yup.string().required("State is required"),
+  pinCode: yup
+    .string()
+    .matches(/^[0-9]{6}$/, "Invalid PIN code")
+    .required("PIN code is required"),
+  bloodGroup: yup.string().required("Blood group is required"),
+  password: yup
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .required("Password is required"),
 });
 
 export default function DonorForm({ formStep, setFormStep }) {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -26,6 +38,11 @@ export default function DonorForm({ formStep, setFormStep }) {
     resolver: yupResolver(schema),
     mode: "onChange",
   });
+  
+const [showOtpForm, setShowOtpForm] = useState(false);
+const [email, setEmail] = useState('');
+const [otp, setOtp] = useState('');
+const [userPassword, setUserPassword] = useState('');
 
   const calculateAge = (dob) => {
     const diff = Date.now() - new Date(dob).getTime();
@@ -39,14 +56,149 @@ export default function DonorForm({ formStep, setFormStep }) {
     },
     {
       title: "Health Details",
-      fields: ["bloodGroup", "location", "frequency", "conditions"],
+      fields: ["bloodGroup", "frequency", "conditions"], // removed location
     },
     { title: "Account Setup", fields: ["password"] },
   ];
 
-  const onSubmit = (data) => {
-    console.log("Donor Data:", data);
-    // Submit to API
+  const getCoordinates = async (address) => {
+    try {
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          address
+        )}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
+      );
+
+      if (response.data.results && response.data.results[0]) {
+        const { lat, lng } = response.data.results[0].geometry.location;
+        return [lng, lat];
+      }
+      return null;
+    } catch (error) {
+      console.error("Geocoding failed:", error);
+      return null;
+    }
+  };
+  const handleLogin = async (email, password) => {
+    try {
+      const response = await axios.post("/api/v1/user/login", {
+        email,
+        password
+      });
+      
+      if (response.data) {
+        localStorage.setItem('token', response.data.token);
+        toast.success('🎉 Welcome! Redirecting to dashboard...');
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
+      }
+    } catch (error) {
+      toast.error('Login failed. Please try logging in manually.');
+    }
+  };
+
+  const handleResendOtp = async () => {
+    try {
+      const response = await axios.post("/api/v1/user/resend-email-otp", {
+        email: email
+      });
+      toast.info('✉️ New OTP has been sent to your email!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to resend OTP');
+    }
+  };
+  
+  const handleVerifyOtp = async () => {
+    try {
+      const response = await axios.post("/api/v1/user/verify-email", {
+        email: email,
+        otp: otp
+      });
+      toast.success('🎉 Registration successful!');
+      // Automatically log in the user
+      await handleLogin(email, userPassword);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'OTP verification failed');
+    }
+  };
+  
+  const onSubmit = async (data) => {
+    try {
+      const formattedData = {
+        email: data.email,
+        password: data.password,
+        fullName: data.fullName,
+        dateOfBirth: data.dob,
+        phone: data.phone,
+        bloodGroup: data.bloodGroup,
+        address: {
+          street: data.street,
+          city: data.city,
+          state: data.state,
+          pinCode: data.pinCode,
+          coordinates: [77.5946, 12.9716],
+        },
+        frequency: data.frequency,
+        conditions: data.conditions || [],
+      };
+  
+      const response = await axios.post("/api/v1/user/register", formattedData);
+  
+      if (response.data) {
+        setEmail(data.email);
+        setUserPassword(data.password); // Store password for auto-login
+        setShowOtpForm(true);
+        toast.success('📧 OTP has been sent to your email!', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
+    }
+  };
+
+  const OtpForm = () => {
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="space-y-4 mt-8"
+      >
+        <h3 className="text-xl font-semibold mb-4">Enter OTP</h3>
+        <div>
+          <input
+            type="text"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+            placeholder="Enter OTP"
+            className="w-full bg-gray-800 rounded-lg px-4 py-3"
+          />
+        </div>
+        <div className="flex space-x-4">
+          <button
+            onClick={handleVerifyOtp}
+            className="px-6 py-2 rounded-lg bg-red-600 hover:bg-red-500 transition"
+          >
+            Verify OTP
+          </button>
+          <button
+            onClick={handleResendOtp}
+            className="px-6 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition"
+          >
+            Resend OTP
+          </button>
+        </div>
+      </motion.div>
+    );
   };
 
   return (
@@ -118,6 +270,35 @@ export default function DonorForm({ formStep, setFormStep }) {
                 </p>
               )}
             </div>
+
+            <div>
+              <input
+                {...register("street")}
+                placeholder="Street Address"
+                className="w-full bg-gray-800 rounded-lg px-4 py-3"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                {...register("city")}
+                placeholder="City"
+                className="w-full bg-gray-800 rounded-lg px-4 py-3"
+              />
+              <input
+                {...register("state")}
+                placeholder="State"
+                className="w-full bg-gray-800 rounded-lg px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <input
+                {...register("pinCode")}
+                placeholder="PIN Code"
+                className="w-full bg-gray-800 rounded-lg px-4 py-3"
+              />
+            </div>
           </motion.div>
         )}
 
@@ -137,16 +318,6 @@ export default function DonorForm({ formStep, setFormStep }) {
                   )
                 )}
               </select>
-            </div>
-
-            <div>
-              <Autocomplete>
-                <input
-                  {...register("location")}
-                  placeholder="Enter Location"
-                  className="w-full bg-gray-800 rounded-lg px-4 py-3"
-                />
-              </Autocomplete>
             </div>
 
             <div>
@@ -227,11 +398,24 @@ export default function DonorForm({ formStep, setFormStep }) {
               type="submit"
               className="ml-auto px-6 py-2 rounded-lg bg-red-600 hover:bg-red-500 transition"
             >
-              Become a Donor
+              Get OTP
             </button>
           )}
         </div>
       </form>
+      {showOtpForm && <OtpForm />}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </motion.div>
   );
 }
