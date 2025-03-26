@@ -98,7 +98,7 @@ export default function NGOForm({ formStep, setFormStep }) {
         localStorage.setItem('token', response.data.token);
         toast.success('🎉 Welcome! Redirecting to NGO dashboard...');
         setTimeout(() => {
-          navigate('/ngo-dashboard');
+          navigate('/ngoDashboard');
         }, 1500);
       }
     } catch (error) {

@@ -2,8 +2,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import { Lock, Mail, Eye, EyeOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [userType, setUserType] = useState("donor");
   const [showPassword, setShowPassword] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
@@ -13,8 +16,60 @@ export default function Login() {
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
-    console.log("Form Data:", { ...data, userType });
+  const onSubmit = async (data) => {
+    try {
+      let endpoint = "";
+      let redirectPath = "";
+
+      // Determine endpoint and redirect based on user type
+      switch (userType) {
+        case "donor":
+          endpoint = "/api/v1/user/login";
+          redirectPath = "/userdashboard";
+          break;
+        case "ngo":
+          endpoint = "/api/v1/ngo/login";
+          redirectPath = "/ngodashboard";
+          break;
+        case "hospital":
+          endpoint = "/api/v1/hospital/login";
+          redirectPath = "/hospitaldashboard";
+          break;
+        default:
+          throw new Error("Invalid user type");
+      }
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Login failed");
+      }
+
+      // Show success toast
+      toast.success("Login successful!");
+      
+      // Save token if returned from API
+      if (result.token) {
+        localStorage.setItem("token", result.token);
+      }
+
+      // Redirect to dashboard
+      navigate(redirectPath);
+    } catch (error) {
+      toast.error(error.message || "Login failed. Please try again.");
+      console.error("Login error:", error);
+    }
   };
 
   return (
