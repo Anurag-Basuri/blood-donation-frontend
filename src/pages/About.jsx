@@ -12,7 +12,6 @@ import {
 } from "react-icons/fi";
 import SectionHeading from "../components/SectionHeading.jsx";
 import StatsCard from "../components/StatsCard.jsx";
-import GradientButton from "../components/GradientButton.jsx";
 import TestimonialCarousel from "../components/TestimonialCarousel.jsx";
 import PartnerLogoCloud from "../components/PartnerLogoCloud.jsx";
 
@@ -112,6 +111,27 @@ const About = () => {
     { src: "/logos/logo4.png", alt: "Company 4" },
     { src: "/logos/logo5.png", alt: "Company 5" },
   ];
+
+  const GradientButton = ({
+    text,
+    icon,
+    className = "",
+    glow = false,
+    onClick,
+  }) => {
+    return (
+      <button
+        onClick={onClick}
+        className={`bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 text-white font-semibold rounded-full px-6 py-3 flex items-center justify-center transition-all duration-300 hover:scale-105 ${
+          glow ? "shadow-lg shadow-red-500/50 dark:shadow-red-600/50" : ""
+        } ${className}`}
+        aria-label={text}
+      >
+        {text}
+        {icon && <span className="ml-2">{icon}</span>}
+      </button>
+    );
+  };
 
   return (
     <div

@@ -3,6 +3,11 @@ import { Autoplay, Pagination, Navigation } from "swiper/modules";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiChevronLeft, FiChevronRight, FiCheck } from "react-icons/fi";
 
+// Import required Swiper styles
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
+
 const TestimonialCard = ({ quote, author, role, avatar, className }) => {
   return (
     <motion.div
@@ -29,7 +34,7 @@ const TestimonialCard = ({ quote, author, role, avatar, className }) => {
           <motion.img
             src={avatar}
             alt={`${author}'s avatar`}
-            className="w-12 h-12 rounded-full object-cover border-2 border-red-100 dark:border-gray-700"
+            className="w-12 h-12 rounded-full object-cover border-2 border-red-100 dark:border-gray-600"
             whileHover={{ rotate: 5 }}
             transition={{ type: "spring" }}
           />
@@ -72,7 +77,7 @@ const TestimonialCarousel = ({ testimonials }) => {
           clickable: true,
           dynamicBullets: true,
           renderBullet: (index, className) => {
-            return `<span class="${className} bg-red-300 dark:bg-red-500 opacity-50 hover:opacity-100 transition-opacity"></span>`;
+            return `<span class="${className} bg-red-300 dark:bg-red-400 opacity-50 hover:opacity-100 transition-opacity"></span>`;
           },
         }}
         navigation={{
@@ -86,7 +91,7 @@ const TestimonialCarousel = ({ testimonials }) => {
             <SwiperSlide key={index}>
               <TestimonialCard
                 {...testimonial}
-                className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl h-full border border-gray-100 dark:border-gray-700 hover:border-red-100 dark:hover:border-gray-600 transition-all"
+                className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl h-full border border-gray-100 dark:border-gray-600 hover:border-red-100 dark:hover:border-red-400/50 transition-all"
               />
             </SwiperSlide>
           ))}
@@ -96,14 +101,14 @@ const TestimonialCarousel = ({ testimonials }) => {
       {/* Custom Navigation */}
       <div className="flex justify-center items-center mt-8 gap-4">
         <button
-          className="testimonial-prev p-3 rounded-full bg-white dark:bg-gray-800 shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+          className="testimonial-prev p-3 rounded-full bg-white dark:bg-gray-700 shadow-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-all text-red-600 dark:text-red-300 hover:text-red-800"
           aria-label="Previous testimonial"
         >
           <FiChevronLeft className="w-5 h-5" />
         </button>
         <div className="swiper-pagination !relative !w-auto"></div>
         <button
-          className="testimonial-next p-3 rounded-full bg-white dark:bg-gray-800 shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+          className="testimonial-next p-3 rounded-full bg-white dark:bg-gray-700 shadow-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-all text-red-600 dark:text-red-300 hover:text-red-800"
           aria-label="Next testimonial"
         >
           <FiChevronRight className="w-5 h-5" />
