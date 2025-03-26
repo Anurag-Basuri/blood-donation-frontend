@@ -3,7 +3,7 @@ import Home from "../pages/Home.jsx";
 import About from "../pages/About.jsx";
 import Donate from "../pages/Donate.jsx";
 import Contact from "../pages/Contact.jsx";
-import Dashboard from "../pages/Dashboard.jsx";
+import NGODashboard from "../pages/NGODashboard.jsx";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 
@@ -14,7 +14,7 @@ const AppRoutes = () => {
       <Route path="/about" element={<About />} />
       <Route path="/donate" element={<Donate />} />
       <Route path="/contact" element={<Contact />} />
-      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/ngodashboard" element={<NGODashboard />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
     </Routes>

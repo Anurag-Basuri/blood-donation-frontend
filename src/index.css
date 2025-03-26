@@ -1,4 +1,10 @@
 @import "tailwindcss";
+
+/* Enable dark mode using the 'class' strategy */
+:root {
+  --tw-dark-mode: class;
+}
+
 @layer utilities {
   .drop-shadow-glow {
     filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.5));

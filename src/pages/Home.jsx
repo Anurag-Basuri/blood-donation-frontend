@@ -26,14 +26,16 @@ const Home = () => {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
 
   useEffect(() => {
-    // Check user preference for dark mode
+    // Check for saved preference or system preference
+    const savedMode = localStorage.getItem("darkMode");
     const prefersDark = window.matchMedia(
       "(prefers-color-scheme: dark)"
     ).matches;
-    setDarkMode(prefersDark);
 
-    // Apply the dark mode class to the HTML element
-    document.documentElement.classList.toggle("dark", prefersDark);
+    // Use saved preference if exists, otherwise use system preference
+    const initialMode = savedMode ? JSON.parse(savedMode) : prefersDark;
+    setDarkMode(initialMode);
+    document.documentElement.classList.toggle("dark", initialMode);
 
     if (inView) {
       controls.start({ opacity: 1, y: 0 });
@@ -42,14 +44,15 @@ const Home = () => {
   }, [controls, inView]);
 
   const toggleDarkMode = () => {
-    setDarkMode((prev) => !prev);
-    document.documentElement.classList.toggle("dark");
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    document.documentElement.classList.toggle("dark", newMode);
+    localStorage.setItem("darkMode", JSON.stringify(newMode));
   };
 
   const animateStats = () => {
     setStats({ donors: 0, units: 0, lives: 0 });
     setTimeout(() => {
-      // Simulated API call with realistic numbers
       setStats({
         donors: 12456,
         units: 8453,
@@ -104,12 +107,27 @@ const Home = () => {
       role: "Cardiologist",
       avatar: "/avatars/emily.jpg",
     },
+    {
+      quote:
+        "The process was quick and painless. I'll definitely be donating again through BloodHero!",
+      author: "David Wilson",
+      role: "First-time Donor",
+      avatar: "/avatars/david.jpg",
+    },
+    {
+      quote:
+        "After my accident, I needed 4 units of blood. This platform helped my family find donors quickly.",
+      author: "Jessica Martinez",
+      role: "Recipient",
+      avatar: "/avatars/jessica.jpg",
+    },
   ];
 
   const WaveDivider = () => (
     <svg
-      className="absolute bottom-0 left-0 right-0 text-white dark:text-gray-900"
+      className="absolute bottom-0 left-0 w-full text-white dark:text-gray-900"
       viewBox="0 0 1440 120"
+      style={{ transform: "rotate(180deg)" }}
     >
       <path
         fill="currentColor"
@@ -140,18 +158,18 @@ const Home = () => {
   };
 
   return (
-    <div
-      className={`font-sans bg-gradient-to-b from-red-50 to-white dark:bg-gradient-to-b dark:from-gray-900 dark:to-gray-800 overflow-hidden ${
-        darkMode ? "dark" : ""
-      }`}
-    >
+    <div className="font-sans bg-gradient-to-b from-red-50 to-white dark:from-gray-900 dark:to-gray-800 overflow-hidden">
       {/* Dark Mode Toggle */}
       <button
         onClick={toggleDarkMode}
         className="fixed top-4 right-4 z-50 p-2 rounded-full bg-white dark:bg-gray-800 shadow-lg"
         aria-label="Toggle dark mode"
       >
-        {darkMode ? "☀️" : "🌙"}
+        {darkMode ? (
+          <span className="text-yellow-300">☀️</span>
+        ) : (
+          <span className="text-gray-700">🌙</span>
+        )}
       </button>
 
       {/* Hero Section */}
@@ -255,7 +273,7 @@ const Home = () => {
       </section>
 
       {/* Process Section */}
-      <section className="py-20 bg-gradient-to-br from-red-50 to-red-100 dark:from-gray-800 dark:to-gray-900 relative">
+      <section className="py-20 bg-gradient-to-br from-red-50 to-red-100 dark:from-gray-800 dark:to-gray-800 relative">
         <div className="container mx-auto px-4">
           <SectionHeading
             title="How It Works"
@@ -288,7 +306,16 @@ const Home = () => {
             subtitle="Voices from our community"
             icon={<FiUsers className="text-red-500 dark:text-red-400" />}
           />
-          <TestimonialCarousel testimonials={testimonials} />
+          <div className="mt-12 max-w-6xl mx-auto">
+            <TestimonialCarousel testimonials={testimonials} />
+          </div>
+          <div className="mt-12 text-center">
+            <GradientButton
+              text="Share Your Story"
+              icon={<FiHeart className="ml-2" />}
+              className="px-8 py-3"
+            />
+          </div>
         </div>
       </section>
 
