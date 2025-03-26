@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   GoogleMap,
   Marker,
@@ -22,6 +22,7 @@ import {
   FiTrash2,
   FiMenu,
 } from "react-icons/fi";
+import AdvancedMarker from "../components/AdvancedMarker";
 
 const mapContainerStyle = {
   width: "100%",
@@ -34,8 +35,9 @@ const center = {
 };
 
 const NGODashboard = () => {
-  const { isLoaded } = useJsApiLoader({
+  const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: ["marker"],
   });
 
   const [darkMode, setDarkMode] = useState(false);
@@ -43,6 +45,11 @@ const NGODashboard = () => {
   const [activeView, setActiveView] = useState("dashboard");
   const [selectedCamp, setSelectedCamp] = useState(null);
   const [showCampForm, setShowCampForm] = useState(false);
+
+  const mapRef = useRef(null);
+  const handleMapLoad = (map) => {
+    mapRef.current = map;
+  };
 
   // Mock Data
   const [camps, setCamps] = useState([
@@ -692,11 +699,13 @@ const NGODashboard = () => {
                     mapContainerStyle={mapContainerStyle}
                     zoom={12}
                     center={center}
+                    onLoad={handleMapLoad}
                   >
                     {camps.map((camp) => (
-                      <Marker
+                      <AdvancedMarker
                         key={camp.id}
                         position={camp.location}
+                        map={mapRef.current}
                         icon={getMarkerIcon(camp.status)}
                         onClick={() => setSelectedCamp(camp)}
                       />
