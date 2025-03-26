@@ -7,7 +7,6 @@ import {
   FiClock,
   FiChevronRight,
 } from "react-icons/fi";
-import GradientButton from "../components/GradientButton.jsx";
 import SectionHeading from "../components/SectionHeading.jsx";
 import StatsCard from "../components/StatsCard.jsx";
 import TestimonialCarousel from "../components/TestimonialCarousel.jsx";
@@ -89,6 +88,19 @@ const Home = () => {
       />
     </svg>
   );
+
+  const GradientButton = ({ text, icon, className = "", glow = false }) => {
+    return (
+      <button
+        className={`bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-full px-6 py-3 flex items-center justify-center transition-transform transform hover:scale-105 ${
+          glow ? "shadow-lg shadow-red-500/50" : ""
+        } ${className}`}
+      >
+        {text}
+        {icon && <span className="ml-2">{icon}</span>}
+      </button>
+    );
+  };
 
   return (
     <div className="font-sans bg-gradient-to-b from-red-50 to-white overflow-hidden">
