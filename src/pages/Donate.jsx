@@ -1,10 +1,211 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Player } from "@lottiefiles/react-lottie-player";
-import heartbeatAnimation from "../assets/heartbeat.json";
+import {
+  FiMenu,
+  FiX,
+  FiUser,
+  FiHome,
+  FiInfo,
+  FiDroplet,
+  FiMail,
+  FiSettings,
+  FiLogOut,
+} from "react-icons/fi";
+import { Menu, Transition } from "@headlessui/react";
+
+const Header = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [userType] = useState("user");
+
+  const navigation = [
+    { name: "Home", href: "/", icon: <FiHome />, current: false },
+    { name: "About", href: "/about", icon: <FiInfo />, current: false },
+    { name: "Donate", href: "/donate", icon: <FiDroplet />, current: true },
+    { name: "Contact", href: "/contact", icon: <FiMail />, current: false },
+    {
+      name: "Dashboard",
+      href: userType === "ngo" ? "/ngodashboard" : "/userdashboard",
+      icon: <FiUser />,
+      current: false,
+    },
+  ];
+
+  return (
+    <header className="sticky top-0 z-50 bg-white shadow-sm">
+      <nav className="container mx-auto px-4 py-3 flex items-center justify-between">
+        {/* Logo */}
+        <a href="/" className="flex items-center space-x-2">
+          <div className="w-7 h-7 bg-gradient-to-r from-red-600 to-red-700 text-white p-1.5 rounded-full flex items-center justify-center">
+            <FiDroplet className="text-xl" />
+          </div>
+          <span className="text-2xl font-bold text-red-700">Lifesaver</span>
+        </a>
+
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-6">
+          {navigation.map((item) => (
+            <a
+              key={item.name}
+              href={item.href}
+              className={`px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-2 transition-colors ${
+                item.current
+                  ? "bg-red-100 text-red-700"
+                  : "text-gray-700 hover:bg-red-50 hover:text-red-700"
+              }`}
+            >
+              {item.icon}
+              <span>{item.name}</span>
+            </a>
+          ))}
+        </div>
+
+        {/* Right Section */}
+        <div className="flex items-center space-x-4">
+          {isLoggedIn ? (
+            <Menu as="div" className="relative">
+              <Menu.Button className="flex items-center space-x-2 focus:outline-none">
+                <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center hover:bg-red-200 transition-colors">
+                  <FiUser className="text-red-700 text-lg" />
+                </div>
+              </Menu.Button>
+              <Transition
+                enter="transition ease-out duration-100"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-1 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-1 scale-100"
+                leaveTo="transform opacity-0 scale-95"
+              >
+                <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none divide-y divide-gray-100">
+                  <div className="py-1">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <a
+                          href="/profile"
+                          className={`flex items-center space-x-2 px-4 py-2 text-sm ${
+                            active ? "bg-red-50 text-red-700" : "text-gray-700"
+                          }`}
+                        >
+                          <FiUser className="text-lg" />
+                          <span>Profile</span>
+                        </a>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <a
+                          href="/settings"
+                          className={`flex items-center space-x-2 px-4 py-2 text-sm ${
+                            active ? "bg-red-50 text-red-700" : "text-gray-700"
+                          }`}
+                        >
+                          <FiSettings className="text-lg" />
+                          <span>Settings</span>
+                        </a>
+                      )}
+                    </Menu.Item>
+                  </div>
+                  <div className="py-1">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          onClick={() => setIsLoggedIn(false)}
+                          className={`w-full text-left px-4 py-2 text-sm flex items-center space-x-2 ${
+                            active ? "bg-red-50 text-red-700" : "text-gray-700"
+                          }`}
+                        >
+                          <FiLogOut className="text-lg" />
+                          <span>Logout</span>
+                        </button>
+                      )}
+                    </Menu.Item>
+                  </div>
+                </Menu.Items>
+              </Transition>
+            </Menu>
+          ) : (
+            <div className="hidden md:flex space-x-3">
+              <a
+                href="/login"
+                className="px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 rounded-md transition-colors flex items-center space-x-2"
+              >
+                <FiUser className="text-lg" />
+                <span>Login</span>
+              </a>
+              <a
+                href="/register"
+                className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-md text-sm font-medium hover:from-red-700 hover:to-red-800 transition-colors shadow-md flex items-center space-x-2"
+              >
+                <FiDroplet className="text-lg" />
+                <span>Register</span>
+              </a>
+            </div>
+          )}
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 rounded-md hover:bg-red-50 text-gray-700 hover:text-red-700 transition-colors"
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? (
+              <FiX className="w-5 h-5" />
+            ) : (
+              <FiMenu className="w-5 h-5" />
+            )}
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Menu */}
+      <div
+        className={`md:hidden ${
+          isMobileMenuOpen ? "block" : "hidden"
+        } bg-white pb-4 shadow-md`}
+      >
+        <div className="px-2 pt-2 pb-3 space-y-1">
+          {navigation.map((item) => (
+            <a
+              key={item.name}
+              href={item.href}
+              className={`block px-3 py-2 rounded-md text-base font-medium flex items-center space-x-2 ${
+                item.current
+                  ? "bg-red-100 text-red-700"
+                  : "text-gray-700 hover:bg-red-50 hover:text-red-700"
+              }`}
+            >
+              {item.icon}
+              <span>{item.name}</span>
+            </a>
+          ))}
+        </div>
+        {!isLoggedIn && (
+          <div className="px-5 pt-4 pb-2 border-t border-gray-200">
+            <div className="space-y-2">
+              <a
+                href="/login"
+                className="w-full block text-center px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 transition-colors flex items-center justify-center space-x-2"
+              >
+                <FiUser className="text-lg" />
+                <span>Login</span>
+              </a>
+              <a
+                href="/register"
+                className="w-full block text-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-md hover:from-red-700 hover:to-red-800 transition-colors shadow-md flex items-center justify-center space-x-2"
+              >
+                <FiDroplet className="text-lg" />
+                <span>Register</span>
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+};
 
 const Donate = () => {
-  const [darkMode, setDarkMode] = useState(true);
   const [donationType, setDonationType] = useState("one-time");
   const [amount, setAmount] = useState(500);
 
@@ -23,80 +224,72 @@ const Donate = () => {
   // Animation variants
   const fadeInUp = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
+    visible: { opacity: 1, y: 0 },
   };
 
   return (
-    <div className={`min-h-screen ${darkMode ? "bg-gray-900" : "bg-gray-50"} transition-colors duration-300`}>
-      {/* Dark Mode Toggle */}
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => setDarkMode(!darkMode)}
-        className="fixed top-4 right-4 p-3 rounded-full bg-red-500/20 backdrop-blur-sm z-50 shadow-lg"
-        aria-label="Toggle dark mode"
-      >
-        {darkMode ? "🌞" : "🌙"}
-      </motion.button>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Animation */}
-        <div className="absolute inset-0 z-0">
-          <div className="heartbeat-animation">
-            <div className="pulse-line"></div>
-            <div className="heart">❤️</div>
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-red-900/40 to-transparent" />
-        </div>
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-red-900/40 to-transparent" />
 
-        {/* Content */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeInUp}
           className="relative z-10 text-center px-4"
         >
-          <motion.h1 
-            className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent"
+          <motion.h1
+            className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent"
             variants={fadeInUp}
           >
             💖 Your Contribution, Their Lifeline!
           </motion.h1>
-          
-          <motion.p className="text-xl mb-8 text-red-100/80" variants={fadeInUp}>
+
+          <motion.p
+            className="text-xl mb-8 text-red-700/80"
+            variants={fadeInUp}
+          >
             Every Drop Counts in Saving Lives
           </motion.p>
 
-          <motion.div className="flex flex-wrap justify-center gap-4 mb-12" variants={fadeInUp}>
+          <motion.div
+            className="flex flex-wrap justify-center gap-4 mb-12"
+            variants={fadeInUp}
+          >
             {impactStats.map((stat, index) => (
               <motion.div
                 key={stat.label}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: index * 0.1 }}
-                className="p-4 bg-red-800/30 rounded-xl backdrop-blur-sm hover:bg-red-800/40 transition-colors"
+                className="p-4 bg-red-100 rounded-xl hover:bg-red-200 transition-colors"
               >
-                <div className="text-2xl md:text-3xl text-red-300">
+                <div className="text-2xl md:text-3xl text-red-600">
                   {stat.icon} {stat.value}
                 </div>
-                <div className="text-sm text-red-200/80">{stat.label}</div>
+                <div className="text-sm text-red-700/80">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>
 
-          <motion.div className="flex flex-col md:flex-row justify-center gap-4" variants={fadeInUp}>
+          <motion.div
+            className="flex flex-col md:flex-row justify-center gap-4"
+            variants={fadeInUp}
+          >
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 bg-red-600 rounded-xl font-semibold shadow-lg hover:bg-red-700 transition-all"
+              className="px-8 py-4 bg-red-600 rounded-xl font-semibold text-white shadow-lg hover:bg-red-700 transition-all"
             >
               🏥 Support Blood Camps
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 bg-red-800 rounded-xl font-semibold shadow-lg hover:bg-red-900 transition-all"
+              className="px-8 py-4 bg-red-800 rounded-xl font-semibold text-white shadow-lg hover:bg-red-900 transition-all"
             >
               🚑 Emergency Support
             </motion.button>
@@ -106,14 +299,14 @@ const Donate = () => {
 
       {/* Why Donate Section */}
       <section className="py-20 px-4 md:px-8">
-        <motion.h2 
+        <motion.h2
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          className="text-4xl md:text-5xl text-center mb-16 font-bold text-red-400"
+          className="text-4xl md:text-5xl text-center mb-16 font-bold text-red-600"
         >
           Your Contribution Matters
         </motion.h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {donationTiers.map((tier, index) => (
             <motion.div
@@ -122,43 +315,39 @@ const Donate = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "0px 0px -100px 0px" }}
               transition={{ delay: index * 0.2 }}
-              className={`p-8 rounded-3xl backdrop-blur-sm border ${
-                darkMode 
-                  ? "border-red-800/50 bg-red-900/20 hover:bg-red-900/30" 
-                  : "border-red-200 bg-red-50 hover:bg-red-100"
-              } transition-all`}
+              className="p-8 rounded-3xl bg-white border border-red-100 hover:bg-red-50 transition-all shadow-lg"
             >
-              <div className="text-4xl md:text-5xl font-bold mb-4 text-red-400">
+              <div className="text-4xl md:text-5xl font-bold mb-4 text-red-600">
                 ₹{tier.amount}
               </div>
-              <p className={`text-lg ${darkMode ? "text-red-300" : "text-red-600"}`}>
-                {tier.description}
-              </p>
+              <p className="text-lg text-red-700">{tier.description}</p>
             </motion.div>
           ))}
         </div>
       </section>
 
       {/* Transparency Section */}
-      <section className={`py-20 px-4 md:px-8 ${darkMode ? "bg-red-900/10" : "bg-red-50"}`}>
+      <section className="py-20 px-4 md:px-8 bg-red-50">
         <div className="max-w-6xl mx-auto">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            className="text-4xl md:text-5xl text-center mb-16 font-bold text-red-400"
+            className="text-4xl md:text-5xl text-center mb-16 font-bold text-red-600"
           >
             Where Your Money Goes
           </motion.h2>
-          
+
           <div className="grid md:grid-cols-2 gap-12">
             {/* Fund Breakdown */}
-            <motion.div 
+            <motion.div
               className="space-y-6"
               initial={{ x: -50, opacity: 0 }}
               whileInView={{ x: 0, opacity: 1 }}
             >
-              <div className={`p-8 rounded-3xl ${darkMode ? "bg-red-900/20" : "bg-white"} shadow-xl`}>
-                <h3 className="text-2xl font-bold mb-6 text-red-300">Fund Breakdown</h3>
+              <div className="p-8 rounded-3xl bg-white shadow-xl">
+                <h3 className="text-2xl font-bold mb-6 text-red-600">
+                  Fund Breakdown
+                </h3>
                 <div className="space-y-4">
                   {[
                     ["Donation Camps", "40%", "bg-red-400"],
@@ -167,12 +356,12 @@ const Donate = () => {
                     ["Administration", "10%", "bg-red-100"],
                   ].map(([label, percentage, color]) => (
                     <div key={label} className="space-y-2">
-                      <div className="flex justify-between text-red-100">
+                      <div className="flex justify-between text-red-700">
                         <span>{label}</span>
                         <span>{percentage}</span>
                       </div>
-                      <div className="h-2 bg-red-900/20 rounded-full">
-                        <div 
+                      <div className="h-2 bg-red-100 rounded-full">
+                        <div
                           className={`h-full rounded-full ${color}`}
                           style={{ width: percentage }}
                         />
@@ -184,27 +373,27 @@ const Donate = () => {
             </motion.div>
 
             {/* Impact Stories */}
-            <motion.div 
+            <motion.div
               className="space-y-6"
               initial={{ x: 50, opacity: 0 }}
               whileInView={{ x: 0, opacity: 1 }}
             >
-              <div className={`p-8 rounded-3xl ${darkMode ? "bg-red-900/20" : "bg-white"} shadow-xl`}>
-                <h3 className="text-2xl font-bold mb-6 text-red-300">Real Impact Stories</h3>
+              <div className="p-8 rounded-3xl bg-white shadow-xl">
+                <h3 className="text-2xl font-bold mb-6 text-red-600">
+                  Real Impact Stories
+                </h3>
                 <div className="space-y-6">
                   {[
                     "Your donations helped save my daughter's life during emergency surgery.",
                     "Blood camps organized through your support helped 50+ patients last month.",
-                    "Emergency funds provided blood units to accident victims within hours."
+                    "Emergency funds provided blood units to accident victims within hours.",
                   ].map((story, index) => (
-                    <div 
+                    <div
                       key={index}
-                      className={`p-4 rounded-xl ${darkMode ? "bg-red-900/30" : "bg-red-100"} transition-all hover:scale-[1.02]`}
+                      className="p-4 rounded-xl bg-red-50 transition-all hover:scale-[1.02]"
                     >
-                      <p className={`${darkMode ? "text-red-200" : "text-red-600"}`}>{story}</p>
-                      <div className={`mt-2 ${darkMode ? "text-red-400" : "text-red-500"}`}>
-                        - Anonymous Donor
-                      </div>
+                      <p className="text-red-700">{story}</p>
+                      <div className="mt-2 text-red-500">- Anonymous Donor</div>
                     </div>
                   ))}
                 </div>
@@ -217,15 +406,15 @@ const Donate = () => {
       {/* Donation Form Section */}
       <section className="py-20 px-4 md:px-8">
         <div className="max-w-2xl mx-auto">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            className="text-4xl md:text-5xl text-center mb-12 font-bold text-red-400"
+            className="text-4xl md:text-5xl text-center mb-12 font-bold text-red-600"
           >
             Make a Difference
           </motion.h2>
-          
-          <div className={`p-8 rounded-3xl ${darkMode ? "bg-red-900/20" : "bg-red-50"} shadow-xl`}>
+
+          <div className="p-8 rounded-3xl bg-white shadow-xl">
             <form className="space-y-8">
               {/* Donation Type */}
               <div className="grid grid-cols-2 gap-4">
@@ -239,7 +428,7 @@ const Donate = () => {
                     className={`p-4 rounded-xl transition-all ${
                       donationType === type
                         ? "bg-red-600 text-white shadow-lg"
-                        : `${darkMode ? "bg-red-900/30" : "bg-white"} hover:bg-red-800/20`
+                        : "bg-red-50 hover:bg-red-100"
                     }`}
                   >
                     {type.charAt(0).toUpperCase() + type.slice(1)} Donation
@@ -249,7 +438,9 @@ const Donate = () => {
 
               {/* Amount Selection */}
               <div className="space-y-6">
-                <h3 className="text-xl font-bold text-red-300">Select Amount (₹)</h3>
+                <h3 className="text-xl font-bold text-red-600">
+                  Select Amount (₹)
+                </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {[500, 1000, 5000].map((amt) => (
                     <motion.button
@@ -261,10 +452,10 @@ const Donate = () => {
                       className={`p-4 rounded-xl transition-all ${
                         amount === amt
                           ? "bg-red-600 text-white shadow-lg"
-                          : `${darkMode ? "bg-red-900/30" : "bg-white"} hover:bg-red-800/20`
+                          : "bg-red-50 hover:bg-red-100"
                       }`}
                     >
-                      {amt}
+                      ₹{amt}
                     </motion.button>
                   ))}
                 </div>
@@ -273,12 +464,10 @@ const Donate = () => {
                   value={amount}
                   min="100"
                   step="100"
-                  onChange={(e) => setAmount(Math.max(100, Number(e.target.value)))}
-                  className={`w-full p-4 rounded-xl transition-all outline-none ${
-                    darkMode 
-                      ? "bg-red-900/30 text-red-100 focus:bg-red-900/40" 
-                      : "bg-white text-red-900 focus:bg-red-100"
-                  }`}
+                  onChange={(e) =>
+                    setAmount(Math.max(100, Number(e.target.value)))
+                  }
+                  className="w-full p-4 rounded-xl bg-red-50 text-red-700 outline-none focus:bg-red-100 transition-all"
                   placeholder="Custom Amount"
                 />
               </div>
@@ -296,46 +485,6 @@ const Donate = () => {
           </div>
         </div>
       </section>
-
-      <style jsx global>{`
-        .heartbeat-animation {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          overflow: hidden;
-        }
-        
-        .pulse-line {
-          position: absolute;
-          top: 50%;
-          width: 100%;
-          height: 4px;
-          background: rgba(255, 50, 50, 0.3);
-          animation: pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
-        }
-
-        .heart {
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          transform: translate(-50%, -50%);
-          font-size: 20rem;
-          animation: beat 1.5s infinite ease-in-out;
-          opacity: 0.1;
-          text-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
-        }
-
-        @keyframes beat {
-          0% { transform: translate(-50%, -50%) scale(1); }
-          50% { transform: translate(-50%, -50%) scale(1.2); }
-          100% { transform: translate(-50%, -50%) scale(1); }
-        }
-
-        @keyframes pulse {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-      `}</style>
     </div>
   );
 };

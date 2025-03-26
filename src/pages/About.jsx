@@ -434,53 +434,74 @@ const About = () => {
               initial={{ opacity: 0, x: 50, rotateZ: 2 }}
               whileInView={{ opacity: 1, x: 0, rotateZ: 0 }}
               viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{
+                duration: 0.6,
+                delay: 0.2,
+                type: "spring",
+                stiffness: 100,
+                damping: 10,
+              }}
               className="relative h-[500px] bg-gradient-to-br from-red-100 to-red-200 rounded-[2.5rem] overflow-hidden shadow-xl"
             >
+              {/* Grid pattern background */}
               <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10" />
 
               {/* Animated blood cells */}
-              <div className="absolute inset-0">
+              <div className="absolute inset-0 pointer-events-none">
                 {[...Array(8)].map((_, i) => (
                   <motion.div
-                    key={i}
+                    key={`blood-cell-${i}`}
                     className="absolute w-8 h-8 bg-red-100 rounded-full"
                     initial={{
                       scale: 0,
-                      x: Math.random() * 100 - 50 + "%",
-                      y: Math.random() * 100 - 50 + "%",
+                      x: `${Math.random() * 100 - 50}%`,
+                      y: `${Math.random() * 100 - 50}%`,
                     }}
                     animate={{
                       scale: [0, 1, 0],
                       opacity: [0, 0.8, 0],
+                      x: `${(Math.random() - 0.5) * 50}%`,
+                      y: `${(Math.random() - 0.5) * 50}%`,
                     }}
                     transition={{
-                      duration: 4 + Math.random() * 4,
+                      duration: 5 + Math.random() * 5,
                       repeat: Infinity,
+                      repeatType: "reverse",
                       ease: "easeInOut",
+                      delay: Math.random() * 2,
                     }}
                   />
                 ))}
               </div>
 
-              {/* Main illustration */}
+              {/* Main illustration with optimized animation */}
               <motion.div
-                className="absolute inset-0"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.3 }}
+                className="absolute inset-0 flex items-center justify-center"
+                whileHover={{ scale: 1.03 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 10,
+                }}
               >
                 <img
                   src="/donation-illustration.png"
-                  alt="Our community"
+                  alt="Blood donation community"
                   className="w-full h-full object-contain object-bottom"
+                  loading="lazy"
                 />
               </motion.div>
 
-              {/* Floating stats */}
-              <div className="absolute top-8 left-8 bg-white p-4 rounded-2xl shadow-lg">
+              {/* Floating stats with smoother animation */}
+              <motion.div
+                className="absolute top-8 left-8 bg-white p-4 rounded-2xl shadow-lg"
+                initial={{ y: 20, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
                 <p className="text-2xl font-bold text-red-600">50K+</p>
                 <p className="text-sm text-gray-600">Daily Active Users</p>
-              </div>
+              </motion.div>
             </motion.div>
           </div>
         </div>
