@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 const ProcessStep = ({ number, title, content, icon, color, delay }) => (
   <motion.div
-    className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow"
+    className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow"
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay }}
@@ -13,9 +13,11 @@ const ProcessStep = ({ number, title, content, icon, color, delay }) => (
     >
       {number}
     </div>
-    <h3 className="text-2xl font-bold text-gray-800 mb-4">{title}</h3>
-    <p className="text-gray-600">{content}</p>
-    <div className="mt-6 text-red-500 text-3xl">{icon}</div>
+    <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+      {title}
+    </h3>
+    <p className="text-gray-600 dark:text-gray-300">{content}</p>
+    <div className="mt-6 text-red-500 dark:text-red-400 text-3xl">{icon}</div>
   </motion.div>
 );
 
