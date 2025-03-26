@@ -13,6 +13,7 @@ import {
   FiFacebook,
   FiTwitter,
   FiInstagram,
+  FiMapPin,
 } from "react-icons/fi";
 import SectionHeading from "../components/SectionHeading.jsx";
 import StatsCard from "../components/StatsCard.jsx";
@@ -263,9 +264,89 @@ const About = () => {
   ];
 
   const companyLogos = [
-    { src: "/logos/hospital1.png", alt: "City General Hospital" },
-    { src: "/logos/hospital2.png", alt: "Red Cross" },
-    { src: "/logos/hospital3.png", alt: "LifeBlood Foundation" },
+    {
+      src: "/logos/hospital1.png",
+      alt: "City General Hospital",
+      url: "https://www.citygeneralhospital.org",
+    },
+    {
+      src: "/logos/hospital2.png",
+      alt: "Red Cross",
+      url: "https://www.redcross.org",
+    },
+    {
+      src: "/logos/hospital3.png",
+      alt: "LifeBlood Foundation",
+      url: "https://www.lifeblood.org",
+    },
+  ];
+
+  const globalStats = [
+    {
+      icon: <FiUsers className="text-red-500" />,
+      value: "1.2M+",
+      label: "Total Donors",
+      color: "text-red-500",
+    },
+    {
+      icon: <FiDroplet className="text-red-600" />,
+      value: "850K+",
+      label: "Units Collected",
+      color: "text-red-600",
+    },
+    {
+      icon: <FiMapPin className="text-red-700" />,
+      value: "92",
+      label: "Countries Reached",
+      color: "text-red-700",
+    },
+    {
+      icon: <FiHeart className="text-red-800" />,
+      value: "3.5M+",
+      label: "Lives Impacted",
+      color: "text-red-800",
+    },
+  ];
+
+  const topCountries = [
+    { name: "United States", donations: 245000 },
+    { name: "India", donations: 187000 },
+    { name: "United Kingdom", donations: 132000 },
+    { name: "Germany", donations: 98000 },
+    { name: "Canada", donations: 87000 },
+  ];
+
+  const globeData = [
+    {
+      lat: 37.7749,
+      lng: -122.4194,
+      label: "San Francisco, USA",
+      value: "500+ Donations",
+    },
+    {
+      lat: 28.6139,
+      lng: 77.209,
+      label: "New Delhi, India",
+      value: "1,200+ Donations",
+    },
+    {
+      lat: 51.5074,
+      lng: -0.1278,
+      label: "London, UK",
+      value: "800+ Donations",
+    },
+    {
+      lat: -33.8688,
+      lng: 151.2093,
+      label: "Sydney, Australia",
+      value: "300+ Donations",
+    },
+    {
+      lat: 35.6895,
+      lng: 139.6917,
+      label: "Tokyo, Japan",
+      value: "400+ Donations",
+    },
   ];
 
   return (
@@ -641,7 +722,64 @@ const About = () => {
             subtitle="Connecting the world through donations"
             icon={<FiGlobe className="text-red-600" />}
           />
-          <InteractiveGlobe />
+
+          <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Globe Visualization */}
+            <div className="h-[400px] w-full rounded-xl bg-gradient-to-br from-red-50 to-white shadow-lg border border-red-100">
+              <InteractiveGlobe data={globeData} />
+            </div>
+
+            {/* Statistics Panel */}
+            <div className="space-y-8">
+              <h3 className="text-2xl font-bold text-gray-800">
+                Our Worldwide Reach
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {globalStats.map((stat, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                    className="p-6 bg-white rounded-lg shadow-md border border-gray-100"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div
+                        className={`p-3 rounded-full ${stat.color} bg-opacity-20`}
+                      >
+                        {stat.icon}
+                      </div>
+                      <div>
+                        <p className="text-3xl font-bold text-gray-900">
+                          {stat.value}
+                        </p>
+                        <p className="text-gray-600">{stat.label}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="pt-6">
+                <h4 className="font-semibold text-gray-700 mb-4">
+                  Top Contributing Countries
+                </h4>
+                <div className="space-y-3">
+                  {topCountries.map((country, index) => (
+                    <div key={index} className="flex items-center">
+                      <span className="w-8 text-gray-500">{index + 1}.</span>
+                      <span className="flex-1 font-medium">{country.name}</span>
+                      <span className="text-red-600 font-semibold">
+                        {country.donations.toLocaleString()}+
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -684,27 +822,43 @@ const About = () => {
             className="mt-24 lg:mt-32"
           >
             <div className="text-center">
-              <p className="text-sm uppercase tracking-widest text-gray-500 mb-8">
+              <motion.p
+                initial={{ y: 10, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                viewport={{ once: true }}
+                className="text-sm uppercase tracking-widest text-gray-500 mb-8"
+              >
                 Trusted by hospitals and organizations worldwide
-              </p>
-              <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+              </motion.p>
+
+              <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 px-4">
                 {companyLogos.map((logo, index) => (
-                  <motion.div
+                  <motion.a
                     key={index}
-                    initial={{ opacity: 0.7, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                    viewport={{ once: true }}
-                    className="h-8 md:h-10"
+                    href={logo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    initial={{ opacity: 0.7, scale: 0.95, y: 10 }}
+                    whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 10,
+                      delay: 0.1 * index,
+                    }}
+                    viewport={{ once: true, margin: "0px 0px -50px 0px" }}
+                    className="h-10 md:h-12 transition-opacity hover:opacity-100"
                   >
                     <img
                       src={logo.src}
                       alt={logo.alt}
-                      className="h-full w-auto object-contain max-w-[120px]"
+                      className="h-full w-auto object-contain max-w-[150px] md:max-w-[180px]"
                       loading="lazy"
                     />
-                  </motion.div>
+                  </motion.a>
                 ))}
               </div>
             </div>
