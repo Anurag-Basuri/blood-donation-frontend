@@ -4,6 +4,7 @@ import About from "../pages/About.jsx";
 import Donate from "../pages/Donate.jsx";
 import Contact from "../pages/Contact.jsx";
 import NGODashboard from "../pages/NGODashboard.jsx";
+import UserDashboard from "../pages/UserDashboard.jsx";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 
@@ -15,6 +16,7 @@ const AppRoutes = () => {
       <Route path="/donate" element={<Donate />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/ngodashboard" element={<NGODashboard />} />
+      <Route path="/userdashboard" element={<UserDashboard />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
     </Routes>

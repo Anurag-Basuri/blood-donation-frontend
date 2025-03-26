@@ -4,51 +4,216 @@ import {
   FiDroplet,
   FiHeart,
   FiUsers,
-  FiClock,
   FiChevronRight,
   FiMapPin,
   FiSearch,
+  FiMenu,
+  FiX,
+  FiUser,
   FiFacebook,
   FiTwitter,
   FiInstagram,
   FiLinkedin,
   FiYoutube,
+  FiClock,
 } from "react-icons/fi";
+import { Menu, Transition } from "@headlessui/react";
 import SectionHeading from "../components/SectionHeading.jsx";
 import StatsCard from "../components/StatsCard.jsx";
 import TestimonialCarousel from "../components/TestimonialCarousel.jsx";
 import ProcessStep from "../components/ProcessStep.jsx";
 
+const Header = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [userType] = useState("user"); // 'user' or 'ngo'
+
+  const navigation = [
+    { name: "Home", href: "/", current: true },
+    { name: "About", href: "/about", current: false },
+    { name: "Donate", href: "/donate", current: false },
+    { name: "Contact", href: "/contact", current: false },
+    {
+      name: "Dashboard",
+      href: userType === "ngo" ? "/ngodashboard" : "/userdashboard",
+      current: false,
+    },
+  ];
+
+  return (
+    <header className="sticky top-0 z-50 bg-white shadow-sm">
+      <nav className="container mx-auto px-4 py-3 flex items-center justify-between">
+        {/* Logo */}
+        <a href="/" className="flex items-center space-x-2">
+          <FiDroplet className="w-7 h-7 bg-gradient-to-r from-red-600 to-red-700 text-white p-1.5 rounded-full" />
+          <span className="text-2xl font-bold text-red-700">Lifesaver</span>
+        </a>
+
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-6">
+          {navigation.map((item) => (
+            <a
+              key={item.name}
+              href={item.href}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                item.current
+                  ? "bg-red-100 text-red-700"
+                  : "text-gray-700 hover:bg-red-50 hover:text-red-700"
+              }`}
+            >
+              {item.name}
+            </a>
+          ))}
+        </div>
+
+        {/* Right Section */}
+        <div className="flex items-center space-x-4">
+          {isLoggedIn ? (
+            <Menu as="div" className="relative">
+              <Menu.Button className="flex items-center space-x-2 focus:outline-none">
+                <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center hover:bg-red-200 transition-colors">
+                  <FiUser className="text-red-700" />
+                </div>
+              </Menu.Button>
+              <Transition
+                enter="transition ease-out duration-100"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-1 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-1 scale-100"
+                leaveTo="transform opacity-0 scale-95"
+              >
+                <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none divide-y divide-gray-100">
+                  <div className="py-1">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <a
+                          href="/profile"
+                          className={`block px-4 py-2 text-sm ${
+                            active ? "bg-red-50 text-red-700" : "text-gray-700"
+                          }`}
+                        >
+                          View Profile
+                        </a>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <a
+                          href="/settings"
+                          className={`block px-4 py-2 text-sm ${
+                            active ? "bg-red-50 text-red-700" : "text-gray-700"
+                          }`}
+                        >
+                          Settings
+                        </a>
+                      )}
+                    </Menu.Item>
+                  </div>
+                  <div className="py-1">
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          onClick={() => setIsLoggedIn(false)}
+                          className={`w-full text-left px-4 py-2 text-sm ${
+                            active ? "bg-red-50 text-red-700" : "text-gray-700"
+                          }`}
+                        >
+                          Logout
+                        </button>
+                      )}
+                    </Menu.Item>
+                  </div>
+                </Menu.Items>
+              </Transition>
+            </Menu>
+          ) : (
+            <div className="hidden md:flex space-x-3">
+              <a
+                href="/login"
+                className="px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 rounded-md transition-colors"
+              >
+                Login
+              </a>
+              <a
+                href="/register"
+                className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-md text-sm font-medium hover:from-red-700 hover:to-red-800 transition-colors shadow-md"
+              >
+                Register
+              </a>
+            </div>
+          )}
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 rounded-md hover:bg-red-50 text-gray-700 hover:text-red-700 transition-colors"
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? (
+              <FiX className="w-5 h-5" />
+            ) : (
+              <FiMenu className="w-5 h-5" />
+            )}
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Menu */}
+      <div
+        className={`md:hidden ${
+          isMobileMenuOpen ? "block" : "hidden"
+        } bg-white pb-4 shadow-md`}
+      >
+        <div className="px-2 pt-2 pb-3 space-y-1">
+          {navigation.map((item) => (
+            <a
+              key={item.name}
+              href={item.href}
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                item.current
+                  ? "bg-red-100 text-red-700"
+                  : "text-gray-700 hover:bg-red-50 hover:text-red-700"
+              }`}
+            >
+              {item.name}
+            </a>
+          ))}
+        </div>
+        {!isLoggedIn && (
+          <div className="px-5 pt-4 pb-2 border-t border-gray-200">
+            <div className="space-y-2">
+              <a
+                href="/login"
+                className="w-full block text-center px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+              >
+                Login
+              </a>
+              <a
+                href="/register"
+                className="w-full block text-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-md hover:from-red-700 hover:to-red-800 transition-colors shadow-md"
+              >
+                Register
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+};
+
 const Home = () => {
   const [stats, setStats] = useState({ donors: 0, units: 0, lives: 0 });
-  const [darkMode, setDarkMode] = useState(false);
   const controls = useAnimation();
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
 
   useEffect(() => {
-    // Check for saved preference or system preference
-    const savedMode = localStorage.getItem("darkMode");
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
-
-    // Use saved preference if exists, otherwise use system preference
-    const initialMode = savedMode ? JSON.parse(savedMode) : prefersDark;
-    setDarkMode(initialMode);
-    document.documentElement.classList.toggle("dark", initialMode);
-
     if (inView) {
       controls.start({ opacity: 1, y: 0 });
       animateStats();
     }
   }, [controls, inView]);
-
-  const toggleDarkMode = () => {
-    const newMode = !darkMode;
-    setDarkMode(newMode);
-    document.documentElement.classList.toggle("dark", newMode);
-    localStorage.setItem("darkMode", JSON.stringify(newMode));
-  };
 
   const animateStats = () => {
     setStats({ donors: 0, units: 0, lives: 0 });
@@ -66,22 +231,22 @@ const Home = () => {
       number: 1,
       title: "Find",
       content: "Locate nearest donation centers using our smart map",
-      icon: <FiMapPin />,
-      color: "bg-red-400 dark:bg-red-500",
+      icon: <FiMapPin className="text-white" />,
+      color: "bg-red-500",
     },
     {
       number: 2,
       title: "Request",
       content: "Schedule your donation appointment in 2 clicks",
-      icon: <FiSearch />,
-      color: "bg-red-500 dark:bg-red-600",
+      icon: <FiSearch className="text-white" />,
+      color: "bg-red-600",
     },
     {
       number: 3,
       title: "Donate",
       content: "Safe & comfortable donation experience",
-      icon: <FiDroplet />,
-      color: "bg-red-600 dark:bg-red-700",
+      icon: <FiDroplet className="text-white" />,
+      color: "bg-red-700",
     },
   ];
 
@@ -107,25 +272,11 @@ const Home = () => {
       role: "Cardiologist",
       avatar: "/avatars/emily.jpg",
     },
-    {
-      quote:
-        "The process was quick and painless. I'll definitely be donating again through BloodHero!",
-      author: "David Wilson",
-      role: "First-time Donor",
-      avatar: "/avatars/david.jpg",
-    },
-    {
-      quote:
-        "After my accident, I needed 4 units of blood. This platform helped my family find donors quickly.",
-      author: "Jessica Martinez",
-      role: "Recipient",
-      avatar: "/avatars/jessica.jpg",
-    },
   ];
 
   const WaveDivider = () => (
     <svg
-      className="absolute bottom-0 left-0 w-full text-white dark:text-gray-900"
+      className="absolute bottom-0 left-0 w-full text-white"
       viewBox="0 0 1440 120"
       style={{ transform: "rotate(180deg)" }}
     >
@@ -146,8 +297,8 @@ const Home = () => {
     return (
       <button
         onClick={onClick}
-        className={`bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 text-white font-semibold rounded-full px-6 py-3 flex items-center justify-center transition-all duration-300 hover:scale-105 ${
-          glow ? "shadow-lg shadow-red-500/50 dark:shadow-red-600/50" : ""
+        className={`bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold rounded-full px-6 py-3 flex items-center justify-center transition-all duration-300 hover:scale-105 hover:from-red-700 hover:to-red-800 ${
+          glow ? "shadow-lg shadow-red-500/30" : ""
         } ${className}`}
         aria-label={text}
       >
@@ -158,23 +309,12 @@ const Home = () => {
   };
 
   return (
-    <div className="font-sans bg-gradient-to-b from-red-50 to-white dark:from-gray-900 dark:to-gray-800 overflow-hidden">
-      {/* Dark Mode Toggle */}
-      <button
-        onClick={toggleDarkMode}
-        className="fixed top-4 right-4 z-50 p-2 rounded-full bg-white dark:bg-gray-800 shadow-lg"
-        aria-label="Toggle dark mode"
-      >
-        {darkMode ? (
-          <span className="text-yellow-300">☀️</span>
-        ) : (
-          <span className="text-gray-700">🌙</span>
-        )}
-      </button>
+    <div className="font-sans bg-gradient-to-b from-red-50 to-white overflow-hidden">
+      <Header />
 
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-black/60 z-0" />
+      <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-red-900/80 z-0" />
         <video
           autoPlay
           muted
@@ -198,13 +338,13 @@ const Home = () => {
             animate={{ y: 0 }}
           >
             <span className="block mb-4">Give Blood,</span>
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-yellow-100">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-200 to-white">
               Save Lives
             </span>
           </motion.h1>
 
           <motion.p
-            className="text-xl md:text-2xl text-red-100 dark:text-red-200 mb-8"
+            className="text-xl md:text-2xl text-red-100 mb-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
@@ -221,8 +361,7 @@ const Home = () => {
               glow
             />
             <button className="px-8 py-4 text-lg text-white border-2 border-white rounded-full hover:bg-white/10 transition-all flex items-center justify-center">
-              Learn More{" "}
-              <FiChevronRight className="ml-2 animate-horizontal-bounce" />
+              Learn More <FiChevronRight className="ml-2 animate-pulse" />
             </button>
           </div>
         </motion.div>
@@ -231,12 +370,12 @@ const Home = () => {
       </section>
 
       {/* Statistics Section */}
-      <section className="py-20 bg-white dark:bg-gray-900" ref={ref}>
+      <section className="py-20 bg-white" ref={ref}>
         <div className="container mx-auto px-4">
           <SectionHeading
             title="Our Impact"
             subtitle="Together we're saving lives"
-            icon={<FiHeart className="text-red-500 dark:text-red-400" />}
+            icon={<FiHeart className="text-red-600" />}
           />
 
           <motion.div
@@ -245,7 +384,7 @@ const Home = () => {
             animate={controls}
           >
             <StatsCard
-              icon={<FiUsers className="text-4xl" />}
+              icon={<FiUsers className="text-4xl text-red-600" />}
               value={stats.donors}
               label="Active Donors"
               prefix="+"
@@ -253,7 +392,7 @@ const Home = () => {
               shimmer
             />
             <StatsCard
-              icon={<FiDroplet className="text-4xl" />}
+              icon={<FiDroplet className="text-4xl text-red-600" />}
               value={stats.units}
               label="Units Donated"
               prefix="+"
@@ -261,7 +400,7 @@ const Home = () => {
               shimmer
             />
             <StatsCard
-              icon={<FiHeart className="text-4xl" />}
+              icon={<FiHeart className="text-4xl text-red-600" />}
               value={stats.lives}
               label="Lives Impacted"
               prefix="+"
@@ -273,12 +412,12 @@ const Home = () => {
       </section>
 
       {/* Process Section */}
-      <section className="py-20 bg-gradient-to-br from-red-50 to-red-100 dark:from-gray-800 dark:to-gray-800 relative">
+      <section className="py-20 bg-gradient-to-b from-red-50 to-red-100 relative">
         <div className="container mx-auto px-4">
           <SectionHeading
             title="How It Works"
             subtitle="Simple steps to become a hero"
-            icon={<FiDroplet className="text-red-500 dark:text-red-400" />}
+            icon={<FiDroplet className="text-red-600" />}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 relative z-10">
@@ -295,16 +434,16 @@ const Home = () => {
             ))}
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/50 dark:from-gray-900/50 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/50 to-transparent" />
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-white dark:bg-gray-900">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <SectionHeading
             title="Hero Stories"
             subtitle="Voices from our community"
-            icon={<FiUsers className="text-red-500 dark:text-red-400" />}
+            icon={<FiUsers className="text-red-600" />}
           />
           <div className="mt-12 max-w-6xl mx-auto">
             <TestimonialCarousel testimonials={testimonials} />
@@ -320,7 +459,7 @@ const Home = () => {
       </section>
 
       {/* Emergency CTA Section */}
-      <section className="relative py-32 bg-gradient-to-br from-red-600 to-red-700 dark:from-red-700 dark:to-red-800 overflow-hidden">
+      <section className="relative py-32 bg-gradient-to-br from-red-700 to-red-800 overflow-hidden">
         <div className="absolute inset-0 bg-[url('/images/blood-cells-pattern.png')] opacity-10" />
         <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div
@@ -332,7 +471,7 @@ const Home = () => {
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
               Urgent Need for Donors!
             </h2>
-            <p className="text-red-100 dark:text-red-200 mb-8 text-xl max-w-2xl mx-auto">
+            <p className="text-red-100 mb-8 text-xl max-w-2xl mx-auto">
               Hospitals are facing critical shortages. Your donation today can
               save up to 3 lives.
             </p>
@@ -344,8 +483,7 @@ const Home = () => {
                 icon={<FiMapPin className="ml-3" />}
               />
               <button className="px-12 py-6 text-xl text-white border-2 border-white rounded-full hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                Emergency Request{" "}
-                <FiChevronRight className="animate-horizontal-bounce" />
+                Emergency Request <FiChevronRight className="animate-pulse" />
               </button>
             </div>
           </motion.div>
@@ -353,52 +491,73 @@ const Home = () => {
 
         {/* Pulsing emergency effect */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="absolute w-64 h-64 bg-red-500 rounded-full opacity-10 animate-ping-slow" />
+          <div className="absolute w-64 h-64 bg-red-600 rounded-full opacity-20 animate-ping-slow" />
         </div>
       </section>
 
       {/* Enhanced Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gradient-to-b from-red-900 to-red-950 text-white py-12">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-xl font-bold mb-4 flex items-center">
-              <FiDroplet className="text-red-500 mr-2" /> BloodHero
+              <FiDroplet className="text-red-300 mr-2" /> Lifesaver
             </h3>
-            <p className="text-gray-400">
+            <p className="text-red-200">
               Connecting donors with those in need since 2023
             </p>
           </div>
           <div>
             <h4 className="font-semibold mb-4">Quick Links</h4>
-            <ul className="space-y-2 text-gray-400">
+            <ul className="space-y-2 text-red-200">
               <li>
-                <a href="#" className="hover:text-red-500 transition-colors">
-                  Donate Blood
+                <a
+                  href="#"
+                  className="hover:text-red-300 transition-colors flex items-center"
+                >
+                  <FiChevronRight className="mr-1 text-xs" /> Donate Blood
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-red-500 transition-colors">
-                  Request Blood
+                <a
+                  href="#"
+                  className="hover:text-red-300 transition-colors flex items-center"
+                >
+                  <FiChevronRight className="mr-1 text-xs" /> Request Blood
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-red-500 transition-colors">
-                  Eligibility
+                <a
+                  href="#"
+                  className="hover:text-red-300 transition-colors flex items-center"
+                >
+                  <FiChevronRight className="mr-1 text-xs" /> Eligibility
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-red-500 transition-colors">
-                  About Us
+                <a
+                  href="#"
+                  className="hover:text-red-300 transition-colors flex items-center"
+                >
+                  <FiChevronRight className="mr-1 text-xs" /> About Us
                 </a>
               </li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold mb-4">Contact</h4>
-            <ul className="space-y-2 text-gray-400">
-              <li>24/7 Helpline: 1-800-HELP-NOW</li>
-              <li>emergency@bloodhero.com</li>
-              <li>Support: help@bloodhero.com</li>
+            <ul className="space-y-2 text-red-200">
+              <li className="flex items-start">
+                <FiMapPin className="mt-1 mr-2 flex-shrink-0" />
+                <span>123 Blood Drive Ave, Health City</span>
+              </li>
+              <li className="flex items-center">
+                <FiClock className="mr-2 flex-shrink-0" />
+                <span>24/7 Helpline: 1-800-HELP-NOW</span>
+              </li>
+              <li className="flex items-center">
+                <FiDroplet className="mr-2 flex-shrink-0" />
+                <span>emergency@lifesaver.com</span>
+              </li>
             </ul>
           </div>
           <div>
@@ -407,44 +566,37 @@ const Home = () => {
               <a
                 href="#"
                 aria-label="Facebook"
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="text-red-200 hover:text-red-300 transition-colors"
               >
                 <FiFacebook className="w-6 h-6" />
               </a>
               <a
                 href="#"
                 aria-label="Twitter"
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="text-red-200 hover:text-red-300 transition-colors"
               >
                 <FiTwitter className="w-6 h-6" />
               </a>
               <a
                 href="#"
                 aria-label="Instagram"
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="text-red-200 hover:text-red-300 transition-colors"
               >
                 <FiInstagram className="w-6 h-6" />
               </a>
               <a
                 href="#"
                 aria-label="LinkedIn"
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="text-red-200 hover:text-red-300 transition-colors"
               >
                 <FiLinkedin className="w-6 h-6" />
-              </a>
-              <a
-                href="#"
-                aria-label="YouTube"
-                className="text-gray-400 hover:text-red-500 transition-colors"
-              >
-                <FiYoutube className="w-6 h-6" />
               </a>
             </div>
           </div>
         </div>
-        <div className="text-center mt-8 pt-8 border-t border-gray-800">
-          <p className="text-gray-400">
-            &copy; {new Date().getFullYear()} BloodHero. All rights reserved.
+        <div className="text-center mt-8 pt-8 border-t border-red-800">
+          <p className="text-red-300">
+            &copy; {new Date().getFullYear()} Lifesaver. All rights reserved.
           </p>
         </div>
       </footer>
