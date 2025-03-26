@@ -105,107 +105,13 @@ const About = () => {
     },
   ];
 
-  const CompanyLogo = ({ index }) => {
-    const logos = [
-      <svg
-        className="w-24 h-12"
-        viewBox="0 0 120 60"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect width="120" height="60" rx="10" fill="#4F46E5" />
-        <text
-          x="50%"
-          y="50%"
-          dominantBaseline="middle"
-          textAnchor="middle"
-          fill="white"
-          fontFamily="Arial"
-          fontSize="20"
-        >
-          Logo {index + 1}
-        </text>
-      </svg>,
-      <svg
-        className="w-24 h-12"
-        viewBox="0 0 120 60"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect width="120" height="60" rx="10" fill="#10B981" />
-        <text
-          x="50%"
-          y="50%"
-          dominantBaseline="middle"
-          textAnchor="middle"
-          fill="white"
-          fontFamily="Arial"
-          fontSize="20"
-        >
-          Logo {index + 1}
-        </text>
-      </svg>,
-      <svg
-        className="w-24 h-12"
-        viewBox="0 0 120 60"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect width="120" height="60" rx="10" fill="#F59E0B" />
-        <text
-          x="50%"
-          y="50%"
-          dominantBaseline="middle"
-          textAnchor="middle"
-          fill="white"
-          fontFamily="Arial"
-          fontSize="20"
-        >
-          Logo {index + 1}
-        </text>
-      </svg>,
-      <svg
-        className="w-24 h-12"
-        viewBox="0 0 120 60"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect width="120" height="60" rx="10" fill="#EF4444" />
-        <text
-          x="50%"
-          y="50%"
-          dominantBaseline="middle"
-          textAnchor="middle"
-          fill="white"
-          fontFamily="Arial"
-          fontSize="20"
-        >
-          Logo {index + 1}
-        </text>
-      </svg>,
-      <svg
-        className="w-24 h-12"
-        viewBox="0 0 120 60"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect width="120" height="60" rx="10" fill="#7C3AED" />
-        <text
-          x="50%"
-          y="50%"
-          dominantBaseline="middle"
-          textAnchor="middle"
-          fill="white"
-          fontFamily="Arial"
-          fontSize="20"
-        >
-          Logo {index + 1}
-        </text>
-      </svg>,
-    ];
-
-    return logos[index % logos.length];
-  };
+  const companyLogos = [
+    { src: "/logos/logo1.png", alt: "Company 1" },
+    { src: "/logos/logo2.png", alt: "Company 2" },
+    { src: "/logos/logo3.png", alt: "Company 3" },
+    { src: "/logos/logo4.png", alt: "Company 4" },
+    { src: "/logos/logo5.png", alt: "Company 5" },
+  ];
 
   return (
     <div
@@ -567,55 +473,86 @@ const About = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="relative py-24 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
+      <section className="relative py-28 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
         {/* Decorative elements */}
-        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-100 to-purple-100 opacity-20 transform -skew-y-2 origin-top-left" />
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 0.2 }}
+          transition={{ duration: 1 }}
+          className="absolute top-0 left-0 w-full h-40 bg-gradient-to-r from-indigo-100 to-purple-100 transform -skew-y-2 origin-top-left pointer-events-none"
+        />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-8xl mx-auto px-5 sm:px-8 relative z-10">
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true, margin: "-50px" }}
+            className="mb-20 lg:mb-28 text-center"
           >
-            <SectionHeading
-              title="Real Stories, Real Impact"
-              subtitle="Hear what our community members say"
-              icon={<FiHeart className="text-pink-500" />}
-              centered
-              highlight="stories"
-            />
-
-            <p className="text-center text-lg text-gray-600 max-w-3xl mx-auto mb-16">
-              Don't just take our word for it. Here's what our customers and
-              partners have to say about their experiences with our platform.
+            <div className="inline-flex items-center justify-center p-4 rounded-full bg-indigo-50 text-indigo-500 mb-6">
+              <FiHeart className="w-6 h-6" />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Real <span className="text-indigo-600">Stories</span>, Real Impact
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Hear what our community members say about their experiences
             </p>
           </motion.div>
 
-          <TestimonialCarousel testimonials={testimonials} />
-
-          {/* Trust indicators */}
-          <div className="mt-16 text-center">
-            <p className="text-sm uppercase tracking-wider text-gray-500 mb-4">
-              Trusted by teams at
-            </p>
-            <div className="flex flex-wrap justify-center items-center gap-8 opacity-70">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <motion.div
-                  key={i}
-                  whileHover={{ scale: 1.05, opacity: 1 }}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <CompanyLogo />{" "}
-                  {/* Replace with your actual logo component */}
-                </motion.div>
-              ))}
+          {/* Testimonial Carousel */}
+          <div className="relative">
+            <div className="absolute -inset-6 rounded-3xl bg-indigo-50/30 hidden lg:block pointer-events-none" />
+            <div className="relative px-2 sm:px-6 lg:px-12">
+              <TestimonialCarousel testimonials={testimonials} />
             </div>
           </div>
+
+          {/* Trust indicators */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            viewport={{ once: true }}
+            className="mt-24 lg:mt-32"
+          >
+            <div className="text-center">
+              <p className="text-sm uppercase tracking-widest text-gray-500 mb-8">
+                Trusted by innovative teams worldwide
+              </p>
+              <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+                {companyLogos.map((logo, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0.7, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    whileHover={{ scale: 1.1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                    viewport={{ once: true }}
+                    className="h-8 md:h-10 grayscale hover:grayscale-0 transition-all"
+                  >
+                    <img
+                      src={logo.src}
+                      alt={logo.alt}
+                      className="h-full w-auto object-contain max-w-[120px]"
+                      loading="lazy"
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
         </div>
 
         {/* Bottom decorative element */}
-        <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-r from-blue-100 to-indigo-100 opacity-20 transform skew-y-2 origin-bottom-left" />
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 0.2 }}
+          transition={{ duration: 1 }}
+          className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-r from-blue-100 to-indigo-100 transform skew-y-2 origin-bottom-left pointer-events-none"
+        />
       </section>
 
       {/* Call to Action */}
