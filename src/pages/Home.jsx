@@ -308,6 +308,12 @@ const Home = () => {
     );
   };
 
+  useEffect(() => {
+    if (inView) {
+      controls.start({ opacity: 1, y: 0 });
+    }
+  }, [controls, inView]);
+
   return (
     <div className="font-sans bg-gradient-to-b from-red-50 to-white overflow-hidden">
       <Header />
