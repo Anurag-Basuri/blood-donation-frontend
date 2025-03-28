@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import axios from "axios";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -26,6 +26,56 @@ const schema = yup.object().shape({
     .min(8, "Password must be at least 8 characters")
     .required("Password is required"),
 });
+
+const OtpForm = memo(({ onVerify, onResend }) => {
+  const [otpValue, setOtpValue] = useState('');
+  
+  const handleOtpChange = useCallback((e) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setOtpValue(value);
+  }, []);
+
+  const handleVerify = useCallback(() => {
+    onVerify(otpValue);
+  }, [otpValue, onVerify]);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-4 mt-8"
+    >
+      <h3 className="text-xl font-semibold mb-4">Enter OTP</h3>
+      <div>
+        <input
+          type="text"
+          value={otpValue}
+          onChange={handleOtpChange}
+          maxLength={6}
+          placeholder="Enter OTP"
+          className="w-full bg-gray-800 rounded-lg px-4 py-3"
+        />
+      </div>
+      <div className="flex space-x-4">
+        <button
+          onClick={handleVerify}
+          className="px-6 py-2 rounded-lg bg-red-600 hover:bg-red-500 transition"
+          disabled={otpValue.length !== 6}
+        >
+          Verify OTP
+        </button>
+        <button
+          onClick={onResend}
+          className="px-6 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition"
+        >
+          Resend OTP
+        </button>
+      </div>
+    </motion.div>
+  );
+});
+
+OtpForm.displayName = 'OtpForm';
 
 export default function DonorForm({ formStep, setFormStep }) {
   const navigate = useNavigate();
@@ -90,7 +140,7 @@ const [userPassword, setUserPassword] = useState('');
         localStorage.setItem('token', response.data.token);
         toast.success('🎉 Welcome! Redirecting to dashboard...');
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate('/userDashboard');
         }, 1500);
       }
     } catch (error) {
@@ -116,11 +166,11 @@ const [userPassword, setUserPassword] = useState('');
     }
   };
   
-  const handleVerifyOtp = async () => {
+  const handleVerifyOtp = useCallback(async (otpValue) => {
     try {
       const response = await axios.post("/api/v1/user/verify-email", {
         email: email,
-        otp: otp
+        otp: otpValue
       });
       toast.success('🎉 Registration successful!');
       // Automatically log in the user
@@ -128,7 +178,7 @@ const [userPassword, setUserPassword] = useState('');
     } catch (error) {
       toast.error(error.response?.data?.message || 'OTP verification failed');
     }
-  };
+  }, [email, userPassword]);
   
   const onSubmit = async (data) => {
     try {
@@ -164,41 +214,6 @@ const [userPassword, setUserPassword] = useState('');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
     }
-  };
-
-  const OtpForm = () => {
-    return (
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="space-y-4 mt-8"
-      >
-        <h3 className="text-xl font-semibold mb-4">Enter OTP</h3>
-        <div>
-          <input
-            type="text"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            placeholder="Enter OTP"
-            className="w-full bg-gray-800 rounded-lg px-4 py-3"
-          />
-        </div>
-        <div className="flex space-x-4">
-          <button
-            onClick={handleVerifyOtp}
-            className="px-6 py-2 rounded-lg bg-red-600 hover:bg-red-500 transition"
-          >
-            Verify OTP
-          </button>
-          <button
-            onClick={handleResendOtp}
-            className="px-6 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition"
-          >
-            Resend OTP
-          </button>
-        </div>
-      </motion.div>
-    );
   };
 
   return (
@@ -403,7 +418,12 @@ const [userPassword, setUserPassword] = useState('');
           )}
         </div>
       </form>
-      {showOtpForm && <OtpForm />}
+      {showOtpForm && (
+        <OtpForm 
+          onVerify={handleVerifyOtp}
+          onResend={handleResendOtp}
+        />
+      )}
       <ToastContainer
         position="top-right"
         autoClose={3000}

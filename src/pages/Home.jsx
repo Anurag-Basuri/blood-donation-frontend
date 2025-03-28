@@ -293,7 +293,29 @@ const Home = () => {
     className = "",
     glow = false,
     onClick,
+    href
   }) => {
+    const ButtonContent = () => (
+      <>
+        {text}
+        {icon && <span className="ml-2">{icon}</span>}
+      </>
+    );
+
+    if (href) {
+      return (
+        <a
+          href={href}
+          className={`bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold rounded-full px-6 py-3 flex items-center justify-center transition-all duration-300 hover:scale-105 hover:from-red-700 hover:to-red-800 ${
+            glow ? "shadow-lg shadow-red-500/30" : ""
+          } ${className}`}
+          aria-label={text}
+        >
+          <ButtonContent />
+        </a>
+      );
+    }
+
     return (
       <button
         onClick={onClick}
@@ -302,8 +324,7 @@ const Home = () => {
         } ${className}`}
         aria-label={text}
       >
-        {text}
-        {icon && <span className="ml-2">{icon}</span>}
+        <ButtonContent />
       </button>
     );
   };
@@ -487,6 +508,7 @@ const Home = () => {
                 className="px-12 py-6 text-xl hover:shadow-2xl"
                 glow
                 icon={<FiMapPin className="ml-3" />}
+                href="/userdashboard"
               />
               <button className="px-12 py-6 text-xl text-white border-2 border-white rounded-full hover:bg-white/10 transition-all flex items-center justify-center gap-2">
                 Emergency Request <FiChevronRight className="animate-pulse" />

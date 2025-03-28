@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Countdown from "react-countdown";
+import axios from "axios";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import {
@@ -23,9 +24,26 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 const UserDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeView, setActiveView] = useState("dashboard");
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
   });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get("/api/v1/user/current-user");
+        setUserData(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   // Color Scheme
   const colors = {
@@ -38,17 +56,23 @@ const UserDashboard = () => {
     mutedText: "#64748B", // Slate-500
   };
 
-  // User data
-  const user = {
-    name: "John Doe",
-    bloodType: "O+",
-    lastDonation: new Date("2024-02-15"),
-    totalDonations: 8,
-    livesSaved: 24,
-    nextDonation: new Date(
-      new Date("2024-02-15").setMonth(new Date("2024-02-15").getMonth() + 3)
-    ),
-  };
+  // Updated user data from API
+  const user = userData ? {
+    name: userData.name,
+    bloodType: userData.bloodType,
+    lastDonation: new Date(userData.lastDonation),
+    totalDonations: userData.totalDonations,
+    livesSaved: userData.totalDonations * 3, // Assuming each donation saves 3 lives
+    nextDonation: userData.lastDonation ? new Date(new Date(userData.lastDonation).setMonth(new Date(userData.lastDonation).getMonth() + 3)) : null,
+  } : null;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: colors.background }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
 
   // Mock data
   const upcomingCamps = [
@@ -703,9 +727,9 @@ const UserDashboard = () => {
                   style={{ color: colors.primary }}
                 />
               </div>
-              {sidebarOpen && (
+              {sidebarOpen && user && (
                 <span className="font-medium" style={{ color: colors.text }}>
-                  John Doe
+                  {user.name}
                 </span>
               )}
             </div>
