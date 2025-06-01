@@ -1,0 +1,255 @@
+{
+  "bloodBank": {
+    "name": "LifeSaver Blood Bank",
+    "type": "BloodBank",
+    "description": "24/7 state-of-the-art blood bank facility with advanced storage capabilities",
+    "contactPerson": {
+      "name": "Dr. Sarah Johnson",
+      "phone": "+91-9876543210",
+      "email": "sarah.j@lifesaver.org"
+    },
+    "location": {
+      "address": "45 Healthcare Avenue, Medical District",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "pinCode": "400001",
+      "coordinates": {
+        "type": "Point",
+        "coordinates": [72.8777, 19.0760]
+      }
+    },
+    "timing": {
+      "establishedDate": "2020-03-15",
+      "isActive": true,
+      "operationalHours": [
+        {
+          "day": "Monday",
+          "openTime": "08:00",
+          "closeTime": "20:00"
+        },
+        {
+          "day": "Tuesday",
+          "openTime": "08:00",
+          "closeTime": "20:00"
+        },
+        {
+          "day": "Wednesday",
+          "openTime": "08:00",
+          "closeTime": "20:00"
+        },
+        {
+          "day": "Thursday",
+          "openTime": "08:00",
+          "closeTime": "20:00"
+        },
+        {
+          "day": "Friday",
+          "openTime": "08:00",
+          "closeTime": "20:00"
+        },
+        {
+          "day": "Saturday",
+          "openTime": "09:00",
+          "closeTime": "18:00"
+        },
+        {
+          "day": "Sunday",
+          "openTime": "09:00",
+          "closeTime": "15:00"
+        }
+      ]
+    },
+    "facilities": [
+      "Blood Testing",
+      "Blood Storage",
+      "Counseling",
+      "Home Collection",
+      "Free Health Checkup"
+    ],
+    "targetBloodGroups": [
+      "A+",
+      "A-",
+      "B+",
+      "B-",
+      "AB+",
+      "AB-",
+      "O+",
+      "O-"
+    ],
+    "staff": [
+      {
+        "name": "Dr. Rajesh Kumar",
+        "role": "Medical Director",
+        "phone": "+91-9876543211",
+        "email": "rajesh.k@lifesaver.org",
+        "isVolunteer": false
+      },
+      {
+        "name": "Priya Sharma",
+        "role": "Lab Technician",
+        "phone": "+91-9876543212",
+        "email": "priya.s@lifesaver.org",
+        "isVolunteer": false
+      },
+      {
+        "name": "Amit Patel",
+        "role": "Counselor",
+        "phone": "+91-9876543213",
+        "email": "amit.p@lifesaver.org",
+        "isVolunteer": true
+      }
+    ],
+    "licenseNumber": "BB-MH-2023-45678",
+    "licenseExpiry": "2026-03-14",
+    "storageCapacity": 5000,
+    "certifications": [
+      {
+        "name": "ISO 9001:2015",
+        "issuedBy": "Quality Council of India",
+        "validUntil": "2026-12-31"
+      },
+      {
+        "name": "NABH Accreditation",
+        "issuedBy": "National Accreditation Board for Hospitals",
+        "validUntil": "2026-06-30"
+      }
+    ],
+    "equipments": [
+      {
+        "name": "Blood Storage Refrigerator",
+        "count": 5,
+        "lastMaintenance": "2025-02-15"
+      },
+      {
+        "name": "Blood Collection Monitor",
+        "count": 8,
+        "lastMaintenance": "2025-03-01"
+      },
+      {
+        "name": "Plasma Freezer",
+        "count": 3,
+        "lastMaintenance": "2025-02-28"
+      }
+    ]
+  },
+  "donationCamp": {
+    "name": "Community Blood Drive 2025",
+    "type": "DonationCamp",
+    "description": "Large-scale community blood donation drive in partnership with local organizations",
+    "contactPerson": {
+      "name": "Anita Desai",
+      "phone": "+91-9876543214",
+      "email": "anita.d@blooddrive.org"
+    },
+    "location": {
+      "address": "City Convention Center, Park Street",
+      "city": "Bangalore",
+      "state": "Karnataka",
+      "pinCode": "560001",
+      "coordinates": {
+        "type": "Point",
+        "coordinates": [77.5946, 12.9716]
+      }
+    },
+    "timing": {
+      "startDate": "2025-04-15",
+      "endDate": "2025-04-17",
+      "operationalHours": [
+        {
+          "day": "All",
+          "openTime": "09:00",
+          "closeTime": "18:00"
+        }
+      ]
+    },
+    "facilities": [
+      "Free Health Checkup",
+      "Refreshments",
+      "Donation Certificates",
+      "Transport",
+      "Blood Testing",
+      "Counseling"
+    ],
+    "targetBloodGroups": ["All"],
+    "staff": [
+      {
+        "name": "Dr. Meera Reddy",
+        "role": "Camp Director",
+        "phone": "+91-9876543215",
+        "email": "meera.r@blooddrive.org",
+        "isVolunteer": false
+      },
+      {
+        "name": "Suresh Kumar",
+        "role": "Volunteer Coordinator",
+        "phone": "+91-9876543216",
+        "email": "suresh.k@blooddrive.org",
+        "isVolunteer": true
+      }
+    ],
+    "campaignName": "Save Lives Together 2025",
+    "targetDonations": 1000,
+    "eventPartners": [
+      {
+        "name": "City Hospital",
+        "type": "Healthcare",
+        "contributionType": "Medical Staff"
+      },
+      {
+        "name": "Tech Corp",
+        "type": "Corporate",
+        "contributionType": "Sponsorship"
+      },
+      {
+        "name": "Local University",
+        "type": "Educational",
+        "contributionType": "Venue and Volunteers"
+      }
+    ],
+    "registrationDeadline": "2025-04-14",
+    "slots": [
+      {
+        "date": "2025-04-15",
+        "startTime": "09:00",
+        "endTime": "12:00",
+        "capacity": 50,
+        "booked": 0
+      },
+      {
+        "date": "2025-04-15",
+        "startTime": "14:00",
+        "endTime": "17:00",
+        "capacity": 50,
+        "booked": 0
+      },
+      {
+        "date": "2025-04-16",
+        "startTime": "09:00",
+        "endTime": "12:00",
+        "capacity": 50,
+        "booked": 0
+      },
+      {
+        "date": "2025-04-16",
+        "startTime": "14:00",
+        "endTime": "17:00",
+        "capacity": 50,
+        "booked": 0
+      },
+      {
+        "date": "2025-04-17",
+        "startTime": "09:00",
+        "endTime": "12:00",
+        "capacity": 50,
+        "booked": 0
+      },
+      {
+        "date": "2025-04-17",
+        "startTime": "14:00",
+        "endTime": "17:00",
+        "capacity": 50,
+        "booked": 0
+      }
+    ]
+  }
+}
