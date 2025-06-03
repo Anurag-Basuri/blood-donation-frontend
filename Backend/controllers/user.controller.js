@@ -1,12 +1,12 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import User from "../models/user.models.js";
-import { Center } from "../models/center.models.js";
+import User from "../src/models/user.models.js";
+import { Center } from "../src/models/center.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/fileUpload.js";
 import jwt from "jsonwebtoken";
 import { sendOTPEmail, generateOTP } from "../utils/emailService.js";
-import BloodDonation from "../models/blood.models.js";
+import BloodDonation from "../src/models/blood.models.js";
 import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
