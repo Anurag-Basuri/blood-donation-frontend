@@ -8,13 +8,13 @@ export class BaseController {
     }
   }
 
-  protected sendResponse(res, statusCode, data, message) {
+  sendResponse(res, statusCode, data, message) {
     return res.status(statusCode).json(
       new ApiResponse(statusCode, data, message)
     );
   }
 
-  protected handlePagination(page = 1, limit = 10) {
+  handlePagination(page = 1, limit = 10) {
     const parsedPage = parseInt(page);
     const parsedLimit = parseInt(limit);
     const skip = (parsedPage - 1) * parsedLimit;
@@ -26,7 +26,7 @@ export class BaseController {
     };
   }
 
-  protected getPaginationInfo(total, page, limit, count) {
+  getPaginationInfo(total, page, limit, count) {
     return {
       total,
       totalPages: Math.ceil(total / limit),
@@ -36,7 +36,7 @@ export class BaseController {
     };
   }
 
-  protected validateGeoCoordinates(coordinates) {
+  validateGeoCoordinates(coordinates) {
     if (!Array.isArray(coordinates) || 
         coordinates.length !== 2 ||
         typeof coordinates[0] !== 'number' || 
