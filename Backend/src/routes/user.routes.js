@@ -17,7 +17,7 @@ import {
   findNearbyNGOsForDonation,
   updateUserLocation,
   getAllBloodDonationCamps
-} from "../controllers/user.controller.js";
+} from "../../controllers/user.controller.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 
