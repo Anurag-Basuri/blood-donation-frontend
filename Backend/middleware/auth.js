@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { AuthenticationError } from '../utils/errors.js';
+import { AuthenticationError } from "../src/utils/errors.js";
 
 export const auth = (allowedRoles = []) => {
     return async (req, res, next) => {
