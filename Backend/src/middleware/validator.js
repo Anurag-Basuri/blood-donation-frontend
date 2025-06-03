@@ -1,4 +1,4 @@
-import { ValidationError } from "../src/utils/errors.js";
+import { ValidationError } from "../utils/errors.js";
 import Joi from "joi";
 
 export const validateRequest = (schema) => {
