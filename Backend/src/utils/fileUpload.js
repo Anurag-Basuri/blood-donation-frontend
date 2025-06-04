@@ -6,6 +6,7 @@ import { ApiError } from "./ApiError.js";
 // File type constants for blood donation system
 const ALLOWED_FILE_TYPES = {
     "image/jpeg": "jpg",
+    "image/jpg": "jpg",
     "image/png": "png",
     "application/pdf": "pdf",
 };
