@@ -366,6 +366,4 @@ hospitalSchema.pre("save", async function (next) {
     next();
 });
 
-const Hospital = mongoose.model('Hospital', hospitalSchema);
-
-export default Hospital;
+export const Hospital = mongoose.model('Hospital', hospitalSchema);

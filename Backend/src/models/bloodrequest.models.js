@@ -282,6 +282,4 @@ bloodRequestSchema.statics = {
     },
 };
 
-const BloodRequest = mongoose.model("BloodRequest", bloodRequestSchema);
-
-export default BloodRequest;
+export const BloodRequest = mongoose.model("BloodRequest", bloodRequestSchema);
