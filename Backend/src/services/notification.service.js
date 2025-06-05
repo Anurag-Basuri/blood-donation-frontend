@@ -5,82 +5,109 @@ import Notification from "../models/notification.models.js";
 import { emailTemplates } from "../templates/email.templates.js";
 
 class NotificationService {
+    constructor() {
+        this.handlers = {
+            "urgent-blood-request": this.handleUrgentBloodRequest,
+            "donation-reminder": this.handleDonationReminder,
+            "appointment-confirmation": this.handleAppointmentConfirmation,
+            "blood-availability": this.handleBloodAvailability,
+        };
+    }
+
+    /**
+     * Send notification (email/SMS) based on type
+     * @param {string} type - Notification type
+     * @param {object} recipient - User object with email/phone
+     * @param {object} data - Payload for notification
+     */
     async sendNotification(type, recipient, data) {
         try {
-            // Create notification record
-            const notification = await this.createNotificationRecord(
-                type,
-                recipient,
-                data
-            );
+            const notification = await this.createNotificationRecord(type, recipient, data);
 
-            // Handle notification
             await this.processNotification(type, recipient, data);
 
-            // Update status
-            await this.updateNotificationStatus(notification._id);
+            await this.markNotificationSent(notification._id);
 
             return { success: true, notificationId: notification._id };
         } catch (error) {
+            console.error(`Notification [${type}] error:`, error);
             throw new ApiError(500, `Notification failed: ${error.message}`);
         }
     }
 
-    // Notification Handlers
+    /**
+     * Central processor for notification based on type
+     */
+    async processNotification(type, recipient, data) {
+        const handler = this.handlers[type];
+        if (!handler) {
+            throw new ApiError(400, `Unsupported notification type: ${type}`);
+        }
+
+        await handler.call(this, recipient, data);
+    }
+
+    // ---------------------
+    //   Notification Types
+    // ---------------------
+
     async handleUrgentBloodRequest(recipient, data) {
-        const { bloodType, hospital, urgency } = data;
+        const { bloodType, hospital } = data;
 
-        // Send urgent SMS
-        await sendSMS({
-            to: recipient.phone,
-            body: `URGENT: ${bloodType} blood needed at ${hospital}. Your donation can save a life!`,
-        });
-
-        // Send detailed email
-        await sendMail({
-            to: recipient.email,
-            subject: `Urgent Blood Request: ${bloodType} needed`,
-            html: emailTemplates.urgentRequest(data),
-        });
+        await Promise.all([
+            sendSMS({
+                to: recipient.phone,
+                body: `URGENT: ${bloodType} blood needed at ${hospital}. Your donation can save a life!`,
+            }),
+            sendMail({
+                to: recipient.email,
+                subject: `Urgent Blood Request: ${bloodType} Needed`,
+                html: emailTemplates.urgentRequest(data),
+            }),
+        ]);
     }
 
     async handleDonationReminder(recipient, data) {
-        const { nextDonationDate, center } = data;
+        const { nextDonationDate, center, sendSMS: shouldSendSMS } = data;
 
-        await sendMail({
-            to: recipient.email,
-            subject: "Time for Your Next Blood Donation",
-            html: emailTemplates.donationReminder(data),
-        });
+        const tasks = [
+            sendMail({
+                to: recipient.email,
+                subject: "Time for Your Next Blood Donation",
+                html: emailTemplates.donationReminder(data),
+            }),
+        ];
 
-        // Optional SMS reminder
-        if (data.sendSMS) {
-            await sendSMS({
-                to: recipient.phone,
-                body: `Reminder: You're eligible to donate blood on ${nextDonationDate} at ${center}`,
-            });
+        if (shouldSendSMS) {
+            tasks.push(
+                sendSMS({
+                    to: recipient.phone,
+                    body: `Reminder: You're eligible to donate blood on ${nextDonationDate} at ${center}.`,
+                })
+            );
         }
+
+        await Promise.all(tasks);
     }
 
     async handleAppointmentConfirmation(recipient, data) {
-        const { date, center, donationType } = data;
+        const { date, center } = data;
 
-        // Send confirmation email
-        await sendMail({
-            to: recipient.email,
-            subject: "Blood Donation Appointment Confirmation",
-            html: emailTemplates.appointmentConfirmation(data),
-        });
-
-        // Send SMS confirmation
-        await sendSMS({
-            to: recipient.phone,
-            body: `Your blood donation appointment is confirmed for ${date} at ${center}`,
-        });
+        await Promise.all([
+            sendMail({
+                to: recipient.email,
+                subject: "Blood Donation Appointment Confirmation",
+                html: emailTemplates.appointmentConfirmation(data),
+            }),
+            sendSMS({
+                to: recipient.phone,
+                body: `Appointment confirmed for ${date} at ${center}.`,
+            }),
+        ]);
     }
 
     async handleBloodAvailability(recipient, data) {
-        const { bloodType, quantity, hospital } = data;
+        const { bloodType } = data;
 
         await sendMail({
             to: recipient.email,
@@ -89,7 +116,10 @@ class NotificationService {
         });
     }
 
-    // Helper Methods
+    // ---------------------
+    //       Helpers
+    // ---------------------
+
     async createNotificationRecord(type, recipient, data) {
         return await Notification.create({
             type,
@@ -99,23 +129,7 @@ class NotificationService {
         });
     }
 
-    async processNotification(type, recipient, data) {
-        const handlers = {
-            "urgent-blood-request": this.handleUrgentBloodRequest,
-            "donation-reminder": this.handleDonationReminder,
-            "appointment-confirmation": this.handleAppointmentConfirmation,
-            "blood-availability": this.handleBloodAvailability,
-        };
-
-        const handler = handlers[type];
-        if (!handler) {
-            throw new ApiError(400, "Invalid notification type");
-        }
-
-        await handler.call(this, recipient, data);
-    }
-
-    async updateNotificationStatus(notificationId) {
+    async markNotificationSent(notificationId) {
         await Notification.findByIdAndUpdate(notificationId, {
             status: "sent",
             sentAt: new Date(),
