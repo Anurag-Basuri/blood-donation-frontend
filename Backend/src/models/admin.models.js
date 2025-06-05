@@ -88,11 +88,6 @@ adminSchema.methods.generateRefreshToken = function () {
     });
 };
 
-// Lock account after too many failed attempts (optional future implementation)
-adminSchema.methods.isAccountLocked = function () {
-    return this.lockedUntil && this.lockedUntil > Date.now();
-};
-
 // Create model
 const Admin = mongoose.model("Admin", adminSchema);
 export default Admin;
