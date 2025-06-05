@@ -10,6 +10,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 
+// Generate Access and Refresh Tokens
 const generateAccessAndRefreshTokens = async (adminId) => {
     try {
         const admin = await Admin.findById(adminId);
@@ -56,6 +57,7 @@ const registerAdmin = asyncHandler(async (req, res) => {
         );
 });
 
+// Admin Login
 const loginAdmin = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
@@ -120,6 +122,7 @@ const updateAdminProfile = asyncHandler(async (req, res) => {
         );
 });
 
+// Admin Dashboard
 const getAdminDashboard = asyncHandler(async (req, res) => {
     const stats = await Promise.all([
         Admin.countDocuments({}),
@@ -282,7 +285,7 @@ const updateSystemSettings = asyncHandler(async (req, res) => {
         );
 });
 
-// Advanced Dashboard Analytics
+// Dashboard Analytics
 const getAdvancedDashboard = asyncHandler(async (req, res) => {
     const [
         adminStats,
@@ -445,7 +448,7 @@ const getAuditLogs = asyncHandler(async (req, res) => {
         );
 });
 
-// Advanced Blood Bank Management
+// Blood Bank Management
 const manageBloodTransfers = asyncHandler(async (req, res) => {
     const { sourceId, destinationId, bloodGroup, units, transferType } =
         req.body;
@@ -488,7 +491,7 @@ const manageBloodTransfers = asyncHandler(async (req, res) => {
         );
 });
 
-// Enhanced Hospital Management
+// Hospital Management
 const manageHospitalOperations = asyncHandler(async (req, res) => {
     const { hospitalId } = req.params;
     const { action, settings } = req.body;
