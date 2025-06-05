@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { User } from "../models/user.models.js";
 import { BloodDonation } from "../models/blood.models.js";
 import { Center } from "../models/center.models.js";
@@ -117,6 +118,53 @@ const verifyEmail = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, null, "Email verified successfully"));
 });
 
+// Login User
+const loginUser = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        throw new ApiError(400, "Email and password are required");
+    }
+
+    const user = await User.findOne({ email }).select("+password");
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+        throw new ApiError(403, "Account is locked. Try again later");
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
+        return res
+            .status(401)
+            .json(new ApiResponse(401, null, "Invalid credentials"));
+    }
+
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    user.loginAttempts = 0;
+    user.lastLogin = new Date();
+    await user.save();
+
+    const loggedInUser = await User.findById(user._id).select("-password");
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, { httpOnly: true })
+        .cookie("refreshToken", refreshToken, { httpOnly: true })
+        .json(
+            new ApiResponse(
+                200,
+                { user: loggedInUser, accessToken, refreshToken },
+                "Login successful"
+            )
+        );
+});
+
 // Password Management
 const changePassword = asyncHandler(async (req, res) => {
     const { oldPassword, newPassword } = req.body;
@@ -137,7 +185,7 @@ const changePassword = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, null, "Password changed successfully"));
 });
 
-// Enhanced Profile Management
+// Profile Management
 const updateProfile = asyncHandler(async (req, res) => {
     const { fullName, phone, address, donationPreferences, medicalHistory } =
         req.body;
@@ -184,7 +232,53 @@ const updateProfile = asyncHandler(async (req, res) => {
         );
 });
 
-// Enhanced Donation Management
+// Donation Eligibility Check
+const checkDonationEligibility = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+
+    // Check age
+    const age = new Date().getFullYear() - user.dateOfBirth.getFullYear();
+    if (age < 18 || age > 65) {
+        throw new ApiError(400, "Age must be between 18 and 65 years");
+    }
+
+    // Check last donation date
+    if (user.lastDonationDate) {
+        const daysSinceLastDonation = Math.floor(
+            (new Date() - user.lastDonationDate) / (1000 * 60 * 60 * 24)
+        );
+        if (daysSinceLastDonation < 56) {
+            throw new ApiError(
+                400,
+                `Must wait ${
+                    56 - daysSinceLastDonation
+                } more days before next donation`
+            );
+        }
+    }
+
+    // Check medical conditions
+    const restrictedConditions = ["HIV", "Hepatitis"];
+    const hasRestrictedCondition = user.medicalHistory?.conditions?.some(
+        (condition) => restrictedConditions.includes(condition)
+    );
+    if (hasRestrictedCondition) {
+        throw new ApiError(400, "Medical conditions prevent donation");
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { isEligible: true, nextEligibleDate: user.nextEligibleDate },
+                "User is eligible to donate"
+            )
+        );
+});
+
+// Donation Management
 const scheduleDonation = asyncHandler(async (req, res) => {
     const { centerId, date, timeSlot, healthInfo } = req.body;
     const userId = req.user._id;
@@ -235,6 +329,81 @@ const scheduleDonation = asyncHandler(async (req, res) => {
         );
 });
 
+// Manage Donation Appointment
+const manageDonationAppointment = asyncHandler(async (req, res) => {
+    const { action, appointmentId } = req.body;
+    const userId = req.user._id;
+
+    const appointment = await DonationAppointment.findOne({
+        _id: appointmentId,
+        userId,
+    });
+
+    if (!appointment) {
+        throw new ApiError(404, "Appointment not found");
+    }
+
+    switch (action) {
+        case "cancel":
+            if (!["Scheduled", "Confirmed"].includes(appointment.status)) {
+                throw new ApiError(400, "Cannot cancel this appointment");
+            }
+            appointment.status = "Cancelled";
+            appointment.cancellationReason = req.body.reason;
+            break;
+
+        case "reschedule":
+            const { newDate, newTimeSlot } = req.body;
+            if (!newDate || !newTimeSlot) {
+                throw new ApiError(400, "New date and time slot required");
+            }
+
+            // Verify slot availability
+            const center = await Center.findById(appointment.centerId);
+            const isSlotAvailable = await center.checkSlotAvailability(
+                newDate,
+                newTimeSlot
+            );
+
+            if (!isSlotAvailable) {
+                throw new ApiError(400, "Selected slot is not available");
+            }
+
+            appointment.date = newDate;
+            appointment.timeSlot = newTimeSlot;
+            appointment.status = "Rescheduled";
+            break;
+
+        default:
+            throw new ApiError(400, "Invalid action");
+    }
+
+    await appointment.save();
+
+    // Send email notification
+    await sendMail({
+        to: req.user.email,
+        subject: `Donation Appointment ${
+            action.charAt(0).toUpperCase() + action.slice(1)
+        }`,
+        html: `Your appointment has been ${action}ed. ${
+            action === "reschedule"
+                ? `New date: ${new Date(appointment.date).toLocaleDateString()}`
+                : ""
+        }`,
+    });
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                appointment,
+                `Appointment ${action}ed successfully`
+            )
+        );
+});
+
 // Donation Tracking
 const trackDonationProgress = asyncHandler(async (req, res) => {
     const { appointmentId } = req.params;
@@ -265,7 +434,7 @@ const trackDonationProgress = asyncHandler(async (req, res) => {
     );
 });
 
-// Enhanced History with Analytics
+// History with Analytics
 const getDonationHistory = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const { page = 1, limit = 10 } = req.query;
@@ -362,7 +531,10 @@ export {
     loginUser,
     changePassword,
     updateProfile,
+    checkDonationEligibility,
     scheduleDonation,
+    manageDonationAppointment,
+    getUpcomingAppointments,
     trackDonationProgress,
     getDonationHistory,
     findNearbyCenters,
