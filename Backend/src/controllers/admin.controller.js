@@ -1,8 +1,14 @@
 import Admin from "../models/admin.models.js";
+import Hospital from "../models/hospital.models.js";
+import BloodDonation from "../models/blood.models.js";
+import BloodRequest from "../models/bloodrequest.models.js";
+import Center from "../models/center.models.js";
+import NGO from "../models/ngo.models.js";
+import User from "../models/user.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import jwt from "jsonwebtoken";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 const generateAccessAndRefreshTokens = async (adminId) => {
     try {
@@ -241,6 +247,285 @@ const generateReports = asyncHandler(async (req, res) => {
         );
 });
 
+// System Configuration Management
+const updateSystemSettings = asyncHandler(async (req, res) => {
+    const {
+        minDonationAge,
+        maxDonationAge,
+        donationCooldownDays,
+        emergencyRadius,
+        automaticRequestExpiry,
+    } = req.body;
+
+    const settings = await SystemSettings.findOneAndUpdate(
+        {},
+        {
+            $set: {
+                minDonationAge,
+                maxDonationAge,
+                donationCooldownDays,
+                emergencyRadius,
+                automaticRequestExpiry,
+            },
+        },
+        { new: true, upsert: true }
+    );
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                settings,
+                "System settings updated successfully"
+            )
+        );
+});
+
+// Advanced Dashboard Analytics
+const getAdvancedDashboard = asyncHandler(async (req, res) => {
+    const [
+        adminStats,
+        bloodStats,
+        requestStats,
+        hospitalStats,
+        ngoStats,
+        userStats,
+    ] = await Promise.all([
+        Admin.countDocuments({}),
+        BloodDonation.aggregate([
+            {
+                $group: {
+                    _id: "$bloodGroup",
+                    available: {
+                        $sum: {
+                            $cond: [{ $eq: ["$status", "available"] }, 1, 0],
+                        },
+                    },
+                    total: { $sum: 1 },
+                },
+            },
+        ]),
+        BloodRequest.aggregate([
+            {
+                $group: {
+                    _id: "$status",
+                    count: { $sum: 1 },
+                    urgentCount: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ["$urgencyLevel", "Emergency"] },
+                                1,
+                                0,
+                            ],
+                        },
+                    },
+                },
+            },
+        ]),
+        Hospital.aggregate([
+            {
+                $group: {
+                    _id: "$isVerified",
+                    count: { $sum: 1 },
+                },
+            },
+        ]),
+        NGO.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalCamps: { $sum: "$statistics.totalCampsOrganized" },
+                    totalCollection: {
+                        $sum: "$statistics.totalDonationsCollected",
+                    },
+                },
+            },
+        ]),
+        User.aggregate([
+            {
+                $group: {
+                    _id: "$donorStatus",
+                    count: { $sum: 1 },
+                },
+            },
+        ]),
+    ]);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                adminStats,
+                bloodStats,
+                requestStats,
+                hospitalStats,
+                ngoStats,
+                userStats,
+            },
+            "Advanced dashboard data fetched"
+        )
+    );
+});
+
+// Emergency Management
+const handleEmergencyRequest = asyncHandler(async (req, res) => {
+    const { requestId, action, priority } = req.body;
+
+    const bloodRequest = await BloodRequest.findById(requestId);
+    if (!bloodRequest) {
+        throw new ApiError(404, "Blood request not found");
+    }
+
+    // Find nearest available blood units
+    const nearestCenters = await Center.find({
+        "location.coordinates": {
+            $near: {
+                $geometry: bloodRequest.hospital.location,
+                $maxDistance: 50000, // 50km radius for emergency
+            },
+        },
+        "bloodInventory.bloodGroup": bloodRequest.bloodGroup,
+        "bloodInventory.available": { $gte: bloodRequest.unitsNeeded },
+    }).limit(5);
+
+    // Notify nearby donors
+    const nearbyDonors = await User.find({
+        "address.location": {
+            $near: {
+                $geometry: bloodRequest.hospital.location,
+                $maxDistance: 20000, // 20km for donors
+            },
+        },
+        bloodType: bloodRequest.bloodGroup,
+        donorStatus: "Active",
+    });
+
+    // Update request status and priority
+    bloodRequest.status = action;
+    bloodRequest.priority = priority;
+    await bloodRequest.save();
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                request: bloodRequest,
+                nearestCenters,
+                potentialDonors: nearbyDonors.length,
+            },
+            "Emergency request handled"
+        )
+    );
+});
+
+// Admin Audit Management
+const getAuditLogs = asyncHandler(async (req, res) => {
+    const { startDate, endDate, actionType, adminId } = req.query;
+
+    const query = {};
+    if (startDate && endDate) {
+        query.timestamp = {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate),
+        };
+    }
+    if (actionType) query.actionType = actionType;
+    if (adminId) query.adminId = adminId;
+
+    const auditLogs = await AuditLog.find(query)
+        .populate("adminId", "fullName email")
+        .sort({ timestamp: -1 })
+        .limit(100);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, auditLogs, "Audit logs retrieved successfully")
+        );
+});
+
+// Advanced Blood Bank Management
+const manageBloodTransfers = asyncHandler(async (req, res) => {
+    const { sourceId, destinationId, bloodGroup, units, transferType } =
+        req.body;
+
+    // Validate source and destination
+    const [source, destination] = await Promise.all([
+        Center.findById(sourceId),
+        Center.findById(destinationId),
+    ]);
+
+    if (!source || !destination) {
+        throw new ApiError(404, "Invalid source or destination center");
+    }
+
+    // Create transfer record
+    const transfer = await BloodTransfer.create({
+        source: sourceId,
+        destination: destinationId,
+        bloodGroup,
+        units,
+        transferType,
+        initiatedBy: req.admin._id,
+        status: "In Transit",
+    });
+
+    // Update inventories
+    await Promise.all([
+        source.updateBloodInventory(bloodGroup, -units),
+        destination.updateBloodInventory(bloodGroup, units),
+    ]);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                transfer,
+                "Blood transfer initiated successfully"
+            )
+        );
+});
+
+// Enhanced Hospital Management
+const manageHospitalOperations = asyncHandler(async (req, res) => {
+    const { hospitalId } = req.params;
+    const { action, settings } = req.body;
+
+    const hospital = await Hospital.findById(hospitalId);
+    if (!hospital) {
+        throw new ApiError(404, "Hospital not found");
+    }
+
+    switch (action) {
+        case "suspend":
+            hospital.status = "Suspended";
+            hospital.suspensionReason = settings.reason;
+            break;
+        case "restore":
+            hospital.status = "Active";
+            break;
+        case "updateLimits":
+            hospital.bloodRequestLimits = settings.limits;
+            break;
+        default:
+            throw new ApiError(400, "Invalid action");
+    }
+
+    await hospital.save();
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                hospital,
+                "Hospital operations updated successfully"
+            )
+        );
+});
+
 export {
     registerAdmin,
     loginAdmin,
@@ -250,4 +535,10 @@ export {
     verifyHospital,
     manageBloodRequest,
     generateReports,
+    updateSystemSettings,
+    getAdvancedDashboard,
+    handleEmergencyRequest,
+    getAuditLogs,
+    manageBloodTransfers,
+    manageHospitalOperations,
 };
