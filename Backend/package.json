@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "nodemon -r dotenv/config --experimental-json-modules src/server.js",
     "create-admin": "node scripts/createAdmin.js"
   },
   "dependencies": {
