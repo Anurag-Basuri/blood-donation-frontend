@@ -161,7 +161,7 @@ class MapsService {
      * @returns {Promise<Object[]>} Geocoding results
      */
     async batchGeocode(addresses) {
-        if (!Array.isArray(addresses) {
+        if (!Array.isArray(addresses)) {
             throw new ApiError(400, "Addresses must be an array");
         }
 
