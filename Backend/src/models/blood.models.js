@@ -381,4 +381,4 @@ bloodDonationSchema.statics = {
     },
 };
 
-const BloodDonation = mongoose.model('BloodDonation', bloodDonationSchema);
+export const BloodDonation = mongoose.model('BloodDonation', bloodDonationSchema);
