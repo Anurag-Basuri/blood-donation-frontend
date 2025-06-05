@@ -10,6 +10,7 @@
     "create-admin": "node scripts/createAdmin.js"
   },
   "dependencies": {
+    "@googlemaps/google-maps-services-js": "^3.4.1",
     "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.6.0",
