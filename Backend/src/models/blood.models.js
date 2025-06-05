@@ -1,232 +1,384 @@
 import mongoose from 'mongoose';
+import { ApiError } from "../utils/ApiError.js";
 
-const bloodDonationSchema = new mongoose.Schema({
-  // Reference to user who donated
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  // Reference to the NGO that collected the blood
-  ngoId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'NGO',
-    required: true
-  },
-  // Reference to the center where blood was collected
-  centerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Center',
-    required: true
-  },
-  // Center type (DonationCamp or BloodBank)
-  centerType: {
-    type: String,
-    enum: ['DonationCamp', 'BloodBank'],
-    required: true
-  },
-  // Blood group with validation
-  bloodGroup: {
-    type: String,
-    required: true,
-    enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
-    index: true // Add index for faster queries by blood group
-  },
-  // Amount of blood donated (in ml)
-  donationAmount: {
-    type: Number,
-    required: true,
-    min: 100, // Minimum donation amount
-    default: 450 // Standard donation amount
-  },
-  // Donation date
-  donationDate: {
-    type: Date,
-    required: true,
-    default: Date.now
-  },
-  // Location of donation
-  donationCenter: {
-    type: String,
-    required: true
-  },
-  // Health metrics at time of donation
-  healthMetrics: {
-    hemoglobin: Number,
-    bloodPressure: String,
-    pulse: Number,
-    temperature: Number
-  },
-  // Status of donation (processing, available, used)
-  status: { 
-    type: String,
-    enum: ['processing', 'available', 'assigned', 'used', 'expired', 'discarded'],
-    default: 'processing'
-  },
-  // Expiration date (calculated based on donation date)
-  expiryDate: {
-    type: Date
-  },
-  // Track transfers between centers/hospitals
-  transferHistory: [{
-    fromId: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: 'transferHistory.fromType'
+// Constants for blood donation
+const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const MIN_DONATION_AMOUNT = 200; // ml
+const MAX_DONATION_AMOUNT = 500; // ml
+const STANDARD_DONATION_AMOUNT = 450; // ml
+const BLOOD_EXPIRY_DAYS = 42; // Whole blood expiry
+
+const bloodDonationSchema = new mongoose.Schema(
+    {
+        // Donor Information
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: [true, "Donor information is required"],
+            index: true,
+        },
+
+        // Collection Information
+        ngoId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "NGO",
+            required: [true, "Collection NGO is required"],
+            index: true,
+        },
+
+        centerId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Center",
+            required: [true, "Collection center is required"],
+            index: true,
+        },
+
+        centerType: {
+            type: String,
+            enum: {
+                values: ["DonationCamp", "BloodBank"],
+                message: "{VALUE} is not a valid center type",
+            },
+            required: true,
+        },
+
+        // Blood Information
+        bloodGroup: {
+            type: String,
+            required: true,
+            enum: {
+                values: BLOOD_TYPES,
+                message: "{VALUE} is not a valid blood group",
+            },
+            index: true,
+        },
+
+        donationAmount: {
+            type: Number,
+            required: true,
+            min: [
+                MIN_DONATION_AMOUNT,
+                `Minimum donation amount is ${MIN_DONATION_AMOUNT}ml`,
+            ],
+            max: [
+                MAX_DONATION_AMOUNT,
+                `Maximum donation amount is ${MAX_DONATION_AMOUNT}ml`,
+            ],
+            default: STANDARD_DONATION_AMOUNT,
+        },
+
+        // Donation Details
+        donationDate: {
+            type: Date,
+            required: true,
+            default: Date.now,
+            validate: {
+                validator: function (date) {
+                    return date <= new Date();
+                },
+                message: "Donation date cannot be in the future",
+            },
+        },
+
+        donationCenter: {
+            name: {
+                type: String,
+                required: true,
+            },
+            address: String,
+            coordinates: {
+                type: {
+                    type: String,
+                    enum: ["Point"],
+                    default: "Point",
+                },
+                coordinates: {
+                    type: [Number],
+                    validate: {
+                        validator: function (coords) {
+                            return (
+                                coords.length === 2 &&
+                                coords[0] >= -180 &&
+                                coords[0] <= 180 &&
+                                coords[1] >= -90 &&
+                                coords[1] <= 90
+                            );
+                        },
+                        message: "Invalid coordinates",
+                    },
+                },
+            },
+        },
+
+        // Health Metrics
+        healthMetrics: {
+            hemoglobin: {
+                type: Number,
+                min: [12, "Hemoglobin too low"],
+                max: [20, "Hemoglobin too high"],
+            },
+            bloodPressure: {
+                systolic: {
+                    type: Number,
+                    min: [90, "Systolic pressure too low"],
+                    max: [180, "Systolic pressure too high"],
+                },
+                diastolic: {
+                    type: Number,
+                    min: [60, "Diastolic pressure too low"],
+                    max: [110, "Diastolic pressure too high"],
+                },
+            },
+            pulse: {
+                type: Number,
+                min: [60, "Pulse too low"],
+                max: [100, "Pulse too high"],
+            },
+            temperature: {
+                type: Number,
+                min: [35.5, "Temperature too low"],
+                max: [37.5, "Temperature too high"],
+            },
+            weight: {
+                type: Number,
+                min: [45, "Weight too low"],
+            },
+        },
+
+        // Status Management
+        status: {
+            type: String,
+            enum: [
+                "processing",
+                "available",
+                "assigned",
+                "used",
+                "expired",
+                "discarded",
+            ],
+            default: "processing",
+            index: true,
+        },
+
+        expiryDate: {
+            type: Date,
+            index: true,
+        },
+
+        // Transfer History
+        transferHistory: [
+            {
+                fromId: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    refPath: "transferHistory.fromType",
+                    required: true,
+                },
+                fromType: {
+                    type: String,
+                    enum: ["NGO", "Center", "Hospital"],
+                    required: true,
+                },
+                toId: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    refPath: "transferHistory.toType",
+                    required: true,
+                },
+                toType: {
+                    type: String,
+                    enum: ["NGO", "Center", "Hospital"],
+                    required: true,
+                },
+                transferDate: {
+                    type: Date,
+                    default: Date.now,
+                    required: true,
+                },
+                reason: {
+                    type: String,
+                    required: true,
+                },
+                transferredBy: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Admin",
+                    required: true,
+                },
+            },
+        ],
+
+        // Current Location
+        currentLocation: {
+            entityId: {
+                type: mongoose.Schema.Types.ObjectId,
+                refPath: "currentLocation.entityType",
+                required: true,
+            },
+            entityType: {
+                type: String,
+                enum: ["NGO", "Center", "Hospital"],
+                required: true,
+            },
+            updatedAt: {
+                type: Date,
+                default: Date.now,
+            },
+        },
+
+        // Quality Control
+        qualityChecks: [
+            {
+                checkType: {
+                    type: String,
+                    enum: ["visual", "serological", "compatibility"],
+                    required: true,
+                },
+                result: {
+                    type: String,
+                    enum: ["pass", "fail", "pending"],
+                    required: true,
+                },
+                checkedBy: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Admin",
+                    required: true,
+                },
+                checkDate: {
+                    type: Date,
+                    default: Date.now,
+                },
+                notes: String,
+            },
+        ],
+
+        notes: String,
+        adminNotes: String,
+
+        lastVerifiedBy: {
+            adminId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Admin",
+            },
+            date: Date,
+        },
     },
-    fromType: {
-      type: String,
-      enum: ['NGO', 'Center', 'Hospital']
-    },
-    toId: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: 'transferHistory.toType'
-    },
-    toType: {
-      type: String,
-      enum: ['NGO', 'Center', 'Hospital']
-    },
-    transferDate: {
-      type: Date,
-      default: Date.now
-    },
-    reason: String
-  }],
-  // Current location of the blood unit
-  currentLocation: {
-    entityId: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: 'currentLocation.entityType'
-    },
-    entityType: {
-      type: String,
-      enum: ['NGO', 'Center', 'Hospital'],
-      default: 'Center'
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now
+    {
+        timestamps: true,
     }
-  },
-  // Additional notes
-  notes: String,
-  // For admin tracking and auditing
-  adminNotes: String,
-  lastVerifiedBy: {
-    adminId: mongoose.Schema.Types.ObjectId,
-    date: Date
-  }
-}, {
-  timestamps: true // Adds createdAt and updatedAt timestamps
-});
+);
 
-// Add composite indexes for faster queries
+// Indexes
 bloodDonationSchema.index({ ngoId: 1, status: 1 });
 bloodDonationSchema.index({ centerId: 1, bloodGroup: 1 });
 bloodDonationSchema.index({ status: 1, expiryDate: 1 });
-bloodDonationSchema.index({ 'currentLocation.entityId': 1, 'currentLocation.entityType': 1 });
+bloodDonationSchema.index({
+    "currentLocation.entityId": 1,
+    "currentLocation.entityType": 1,
+});
+bloodDonationSchema.index({ "donationCenter.coordinates": "2dsphere" });
 
-// Pre-save hook to calculate expiry date (typically 42 days for whole blood)
-bloodDonationSchema.pre('save', function(next) {
-  if (!this.expiryDate && this.donationDate) {
-    // Set expiry to 42 days after donation
-    this.expiryDate = new Date(this.donationDate);
-    this.expiryDate.setDate(this.expiryDate.getDate() + 42);
-  }
-  
-  // Initialize current location if not set
-  if (!this.currentLocation.entityId) {
-    this.currentLocation.entityId = this.centerId;
-    this.currentLocation.entityType = 'Center';
-    this.currentLocation.updatedAt = new Date();
-  }
-  
-  next();
+// Pre-save middleware
+bloodDonationSchema.pre("save", function (next) {
+    if (this.isNew || !this.expiryDate) {
+        this.expiryDate = new Date(this.donationDate);
+        this.expiryDate.setDate(this.expiryDate.getDate() + BLOOD_EXPIRY_DAYS);
+    }
+
+    if (!this.currentLocation.entityId) {
+        this.currentLocation = {
+            entityId: this.centerId,
+            entityType: "Center",
+            updatedAt: new Date(),
+        };
+    }
+
+    next();
 });
 
-// Method to check if blood donation is still valid
-bloodDonationSchema.methods.isValid = function() {
-  return this.status === 'available' && new Date() < this.expiryDate;
-};
-
-// Method to transfer blood to a different entity (NGO, Center, Hospital)
-bloodDonationSchema.methods.transferTo = async function(toEntityId, toEntityType, reason) {
-  // Add to transfer history
-  this.transferHistory.push({
-    fromId: this.currentLocation.entityId,
-    fromType: this.currentLocation.entityType,
-    toId: toEntityId,
-    toType: toEntityType,
-    transferDate: new Date(),
-    reason: reason || 'Transfer requested'
-  });
-  
-  // Update current location
-  this.currentLocation = {
-    entityId: toEntityId,
-    entityType: toEntityType,
-    updatedAt: new Date()
-  };
-  
-  return this.save();
-};
-
-// Static method to find available donations by blood group
-bloodDonationSchema.statics.findAvailableByBloodGroup = function(bloodGroup, options = {}) {
-  const query = {
-    bloodGroup,
-    status: 'available',
-    expiryDate: { $gt: new Date() }
-  };
-  
-  // Add optional filters if provided
-  if (options.ngoId) query.ngoId = options.ngoId;
-  if (options.centerId) query.centerId = options.centerId;
-  
-  return this.find(query)
-    .sort({ expiryDate: 1 }) // Sort by expiry date (oldest first)
-    .populate('ngoId', 'name') // Populate NGO name
-    .populate('centerId', 'name location.city'); // Populate center details
-};
-
-// Admin methods for blood management
-bloodDonationSchema.statics.findForAdmin = function(filters = {}, page = 1, limit = 50) {
-  const query = {};
-  
-  // Apply optional filters
-  if (filters.bloodGroup) query.bloodGroup = filters.bloodGroup;
-  if (filters.status) query.status = filters.status;
-  if (filters.ngoId) query.ngoId = filters.ngoId;
-  if (filters.centerId) query.centerId = filters.centerId;
-  if (filters.expiringBefore) {
-    query.expiryDate = { $lt: new Date(filters.expiringBefore) };
-  }
-  
-  const skip = (page - 1) * limit;
-  
-  return this.find(query)
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .populate('userId', 'name email')
-    .populate('ngoId', 'name')
-    .populate('centerId', 'name type')
-    .populate('currentLocation.entityId', 'name');
-};
-
-// Method to verify and update the status of blood units
-bloodDonationSchema.statics.verifyAndUpdateStatus = async function(bloodId, adminId, status, notes) {
-  return this.findByIdAndUpdate(
-    bloodId,
-    {
-      status,
-      adminNotes: notes,
-      lastVerifiedBy: {
-        adminId,
-        date: new Date()
-      }
+// Methods
+bloodDonationSchema.methods = {
+    isValid() {
+        return this.status === "available" && new Date() < this.expiryDate;
     },
-    { new: true }
-  );
+
+    async transferTo(toEntityId, toEntityType, reason, adminId) {
+        if (!this.isValid()) {
+            throw new ApiError(400, "Invalid blood unit for transfer");
+        }
+
+        this.transferHistory.push({
+            fromId: this.currentLocation.entityId,
+            fromType: this.currentLocation.entityType,
+            toId: toEntityId,
+            toType: toEntityType,
+            transferDate: new Date(),
+            reason,
+            transferredBy: adminId,
+        });
+
+        this.currentLocation = {
+            entityId: toEntityId,
+            entityType: toEntityType,
+            updatedAt: new Date(),
+        };
+
+        return this.save();
+    },
+
+    addQualityCheck(checkData) {
+        this.qualityChecks.push(checkData);
+        if (checkData.result === "fail") {
+            this.status = "discarded";
+        }
+        return this.save();
+    },
+};
+
+// Static methods
+bloodDonationSchema.statics = {
+    async findAvailableByBloodGroup(bloodGroup, options = {}) {
+        const query = {
+            bloodGroup,
+            status: "available",
+            expiryDate: { $gt: new Date() },
+        };
+
+        if (options.ngoId) query.ngoId = options.ngoId;
+        if (options.centerId) query.centerId = options.centerId;
+        if (options.location) {
+            query["donationCenter.coordinates"] = {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: options.location,
+                    },
+                    $maxDistance: options.radius || 50000, // 50km default
+                },
+            };
+        }
+
+        return this.find(query)
+            .sort({ expiryDate: 1 })
+            .populate("ngoId", "name")
+            .populate("centerId", "name location")
+            .populate("currentLocation.entityId", "name location");
+    },
+
+    async getInventoryStats() {
+        return this.aggregate([
+            {
+                $match: {
+                    status: "available",
+                    expiryDate: { $gt: new Date() },
+                },
+            },
+            {
+                $group: {
+                    _id: "$bloodGroup",
+                    count: { $sum: 1 },
+                    totalVolume: { $sum: "$donationAmount" },
+                },
+            },
+        ]);
+    },
 };
 
 const BloodDonation = mongoose.model('BloodDonation', bloodDonationSchema);
