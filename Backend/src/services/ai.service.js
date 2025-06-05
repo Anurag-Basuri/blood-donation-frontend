@@ -11,6 +11,7 @@ class AiService {
         });
     }
 
+    // 1. Donor Matching
     async findOptimalDonorMatch(requestData) {
         try {
             const {
@@ -21,47 +22,49 @@ class AiService {
                 specialRequirements,
             } = requestData;
 
-            // Get available donors
+            const compatibleTypes = this.getCompatibleBloodTypes(bloodType);
+
             const potentialDonors = await User.find({
                 role: "donor",
-                bloodType: this.getCompatibleBloodTypes(bloodType),
+                bloodType: { $in: compatibleTypes },
                 "location.coordinates": {
                     $near: {
                         $geometry: {
                             type: "Point",
                             coordinates: location,
                         },
-                        $maxDistance: 50000, // 50km radius
+                        $maxDistance: 50_000, // 50 km
                     },
                 },
             }).lean();
 
-            // Generate match scores using AI
+            if (!potentialDonors.length) {
+                return [];
+            }
+
             const donorScores = await this.calculateDonorScores(
                 potentialDonors,
                 requestData
             );
-
             return donorScores;
         } catch (error) {
-            throw new ApiError(
-                500,
-                "Failed to find optimal donor match: " + error.message
-            );
+            console.error("Error in findOptimalDonorMatch:", error);
+            throw new ApiError(500, `Donor match failed: ${error.message}`);
         }
     }
 
+    // 2. Blood Supply Prediction
     async predictBloodSupply(locationId) {
         try {
+            const ninetyDaysAgo = new Date(
+                Date.now() - 90 * 24 * 60 * 60 * 1000
+            );
+
             const historicalData = await Blood.aggregate([
                 {
                     $match: {
-                        locationId: locationId,
-                        createdAt: {
-                            $gte: new Date(
-                                Date.now() - 90 * 24 * 60 * 60 * 1000
-                            ), // Last 90 days
-                        },
+                        locationId,
+                        createdAt: { $gte: ninetyDaysAgo },
                     },
                 },
                 {
@@ -85,19 +88,20 @@ class AiService {
             );
             return prediction;
         } catch (error) {
+            console.error("Error in predictBloodSupply:", error);
             throw new ApiError(
                 500,
-                "Failed to predict blood supply: " + error.message
+                `Supply prediction failed: ${error.message}`
             );
         }
     }
 
-    async optimizeEmergencyResponse(emergencyData) {
+    // 3. Emergency Response
+    async optimizeEmergencyResponse(data) {
         try {
-            const { location, bloodType, quantity, urgency } = emergencyData;
+            const { location, bloodType, quantity } = data;
 
-            // Find nearest hospitals with required blood
-            const nearbyHospitals = await Hospital.find({
+            const hospitals = await Hospital.find({
                 "inventory.bloodType": bloodType,
                 "inventory.quantity": { $gte: quantity },
                 "location.coordinates": {
@@ -112,52 +116,66 @@ class AiService {
                 .limit(5)
                 .lean();
 
-            const responseStrategy = await this.calculateOptimalRoute(
-                nearbyHospitals,
-                emergencyData
-            );
+            if (!hospitals.length) {
+                return {
+                    message: "No nearby hospitals with sufficient supply.",
+                };
+            }
 
-            return responseStrategy;
+            const strategy = await this.calculateOptimalRoute(hospitals, data);
+            return strategy;
         } catch (error) {
+            console.error("Error in optimizeEmergencyResponse:", error);
             throw new ApiError(
                 500,
-                "Failed to optimize emergency response: " + error.message
+                `Emergency response optimization failed: ${error.message}`
             );
         }
     }
 
+    // 4. Donor Retention Analysis
     async analyzeDonorRetention(donorId) {
         try {
-            const donorData = await User.findById(donorId)
-                .select("donationHistory feedback communications")
+            const donor = await User.findById(donorId)
+                .select(
+                    "donationHistory feedback communications campaignParticipation"
+                )
                 .lean();
 
-            const retentionAnalysis = await this.generateRetentionInsights(
-                donorData
-            );
-            return retentionAnalysis;
+            if (!donor) {
+                throw new ApiError(404, "Donor not found.");
+            }
+
+            const insights = await this.generateRetentionInsights(donor);
+            return insights;
         } catch (error) {
+            console.error("Error in analyzeDonorRetention:", error);
             throw new ApiError(
                 500,
-                "Failed to analyze donor retention: " + error.message
+                `Retention analysis failed: ${error.message}`
             );
         }
     }
 
-    // Helper Methods
+    // -------------------------
+    //      Helper Methods
+    // -------------------------
+
+    // Generate scores using AI
     async calculateDonorScores(donors, requirements) {
         const prompt = this.buildDonorMatchingPrompt(donors, requirements);
+
         const response = await this.openai.chat.completions.create({
             model: "gpt-4",
-            messages: [{ role: "system", prompt }],
-            temperature: 0.5,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.4,
         });
 
         return this.parseDonorScores(response.choices[0].message.content);
     }
 
     getCompatibleBloodTypes(requestedType) {
-        const compatibility = {
+        const table = {
             "A+": ["A+", "A-", "O+", "O-"],
             "A-": ["A-", "O-"],
             "B+": ["B+", "B-", "O+", "O-"],
@@ -167,7 +185,41 @@ class AiService {
             "O+": ["O+", "O-"],
             "O-": ["O-"],
         };
-        return compatibility[requestedType] || [];
+        return table[requestedType] || [];
+    }
+
+    buildDonorMatchingPrompt(donors, requirements) {
+        const donorList = donors.map((d, i) => ({
+            id: d._id,
+            bloodType: d.bloodType,
+            location: d.location?.coordinates,
+            lastDonation: d.lastDonationDate,
+            distance: "to be calculated by model",
+        }));
+
+        return `
+You are a medical AI assistant. Based on the following requirements:
+- Blood Type: ${requirements.bloodType}
+- Urgency: ${requirements.urgency}
+- Quantity Needed: ${requirements.quantity}
+- Location: ${requirements.location}
+- Special Requirements: ${requirements.specialRequirements || "None"}
+
+Evaluate the list of donors:
+${JSON.stringify(donorList, null, 2)}
+
+Rank them from best to least suitable with a score (0–100), estimated donation time, and reason.
+Output should be a JSON array.
+        `.trim();
+    }
+
+    parseDonorScores(content) {
+        try {
+            return JSON.parse(content);
+        } catch (err) {
+            console.error("Failed to parse AI response:", err);
+            throw new ApiError(500, "AI response parsing failed.");
+        }
     }
 }
 
