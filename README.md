@@ -109,3 +109,120 @@ Every few seconds, someone needs **blood**, **plasma**, **platelets**, or even *
 
 ## 📁 Folder Structure
 
+```
+Backend/
+├── app.js              # Express app configuration
+├── server.js           # Server entry point
+├── controllers/        # Request handlers
+├── models/            # Database schemas
+├── routes/            # API routes
+├── middleware/        # Custom middleware
+├── scripts/           # Utility scripts
+└── utils/             # Helper functions
+
+Frontend/
+├── src/
+│   ├── components/    # Reusable components
+│   ├── pages/         # Page components
+│   ├── router/        # Route configurations
+│   └── services/      # API services
+├── public/            # Static assets
+└── vite.config.js     # Vite configuration
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js v18+
+- MongoDB Atlas or local instance
+- Google Maps API key
+- Cloudinary account
+
+### Backend Setup
+
+1. Navigate to backend directory:
+```bash
+cd Backend
+npm install
+```
+
+2. Create `.env` in Backend root:
+```env
+PORT=8000
+MONGODB_URI=your_mongodb_uri
+ACCESS_TOKEN_SECRET=your_access_secret
+REFRESH_TOKEN_SECRET=your_refresh_secret
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_password
+CLOUDINARY_CLOUD_NAME=your_cloudinary_name
+CLOUDINARY_API_KEY=your_cloudinary_key
+CLOUDINARY_API_SECRET=your_cloudinary_secret
+CORS_ORIGIN=http://localhost:5173
+```
+
+3. Start development server:
+```bash
+npm run dev
+```
+
+### Frontend Setup
+
+1. Navigate to frontend directory:
+```bash
+cd Frontend
+npm install
+```
+
+2. Create `.env` in Frontend root:
+```env
+VITE_API_URL=http://localhost:8000/api/v1
+VITE_GOOGLE_MAPS_KEY=your_maps_key
+```
+
+3. Start development server:
+```bash
+npm run dev
+```
+
+## 🔌 API Overview
+
+| Category  | Endpoints |
+|-----------|-----------|
+| Auth      | `/auth/register`, `/auth/login`, `/auth/refresh-token` |
+| Users     | `/users`, `/users/:id`, `/users/history` |
+| Donations | `/donations`, `/donations/:id` |
+| Requests  | `/requests`, `/requests/fulfill` |
+| Hospitals | `/hospitals`, `/hospitals/inventory` |
+| NGOs      | `/ngo/camps`, `/ngo/requests` |
+
+Full API documentation available in `Backend/docs/`.
+
+## 🤝 Contributing
+
+1. Fork this repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'feat: Add AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📜 License
+
+Distributed under the ISC License. See `LICENSE` for more information.
+
+## 🙏 Acknowledgements
+
+- [React](https://react.dev)
+- [Express](https://expressjs.com)
+- [MongoDB](https://mongodb.com)
+- [Tailwind CSS](https://tailwindcss.com)
+- [Framer Motion](https://framer.com/motion)
+- [Cloudinary](https://cloudinary.com)
+- [Chart.js](https://chartjs.org)
+- [Google Maps Platform](https://developers.google.com/maps)
+
+---
+
+<div align="center">
+Built with 💖 to connect lives and care beyond boundaries.
+</div>
