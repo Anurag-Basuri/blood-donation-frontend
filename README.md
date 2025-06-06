@@ -1,127 +1,105 @@
-# Blood Donation Management System
+# LifeLink - Blood Donation Management System
 
-A comprehensive platform connecting blood donors, recipients, NGOs, hospitals, and blood banks to streamline the blood donation process and save lives.
+<div align="center">
 
----
+![LifeLink Logo](public/images/logo.png)
 
-## Table of Contents
-- [Why This Project Matters](#why-this-project-matters)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [API Overview](#api-overview)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgements](#acknowledgements)
+A comprehensive healthcare platform connecting blood donors, recipients, NGOs, and hospitals to streamline blood donation and save lives.
 
----
+[![License](https://img.shields.io/badge/license-ISC-blue.svg)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/yourusername/blood-donation)](https://github.com/yourusername/blood-donation/stargazers)
+[![GitHub Issues](https://img.shields.io/github/issues/yourusername/blood-donation)](https://github.com/yourusername/blood-donation/issues)
 
-## Why This Project Matters
+[View Demo](https://lifelink-demo.vercel.app) · [Report Bug](https://github.com/yourusername/blood-donation/issues) · [Request Feature](https://github.com/yourusername/blood-donation/issues)
 
-- **Increase Blood Donation Rates:** Makes it easy to find donation centers and schedule appointments
-- **Improve Supply Chain:** Optimizes blood distribution to ensure availability where needed
-- **Reduce Blood Wastage:** Minimizes expired blood through efficient inventory management
-- **Enhance Transparency:** Secure platform fostering trust between donors and recipients
-- **Empower Stakeholders:** Real-time blood availability info for informed decisions
+</div>
 
-## Features
+## 🩸 Why LifeLink Matters
 
-- **User Management**
-  - Multi-role authentication (Users, NGOs, Hospitals, Admin)
-  - Role-specific dashboards and permissions
-  - Profile management and verification
+Every two seconds, someone needs blood. LifeLink addresses critical challenges in blood donation:
 
-- **Blood Donation**
-  - Donation scheduling and tracking
-  - Real-time inventory management
-  - Donation history and certificates
-  - Blood camp management
+- **Saves Lives**: Connects donors with recipients in real-time
+- **Reduces Wastage**: Smart inventory management prevents blood expiration
+- **Improves Access**: Makes finding and scheduling donations effortless
+- **Ensures Trust**: Verified institutions and transparent processes
+- **Data-Driven**: Analytics for better resource allocation
 
-- **Hospital & NGO Features**
-  - Blood request management
-  - Inventory tracking
-  - Camp organization tools
-  - Analytics dashboard
+## ✨ Key Features
 
-- **Additional Features**
-  - Real-time donor-recipient matching
-  - Interactive maps for centers
-  - Statistics and reporting
-  - Email notifications
+### 🔐 User Management
+- Multi-role authentication system (Donors, Recipients, NGOs, Hospitals)
+- Role-specific dashboards and access controls
+- Verified profiles with trust scores
+- Secure data handling and privacy controls
 
-## Tech Stack
+### 🏥 Blood Donation Management
+- Smart donor-recipient matching
+- Real-time inventory tracking
+- Automated appointment scheduling
+- Digital certificates and donation history
+- Blood camp organization tools
+
+### 📊 Analytics & Reporting
+- Real-time availability dashboards
+- Donation impact statistics
+- Predictive supply-demand analysis
+- Custom report generation
+
+### 🗺️ Location Services
+- Interactive map for donation centers
+- Proximity-based matching
+- Route optimization for emergency requests
+- Blood camp location tracking
+
+## 🛠️ Tech Stack
 
 ### Frontend
-- React with Vite
-- Tailwind CSS for styling
-- Framer Motion for animations
-- Chart.js for statistics
-- React Google Maps
-- Axios for API calls
+```
+React + Vite │ Tailwind CSS │ Framer Motion │ Chart.js │ React Google Maps
+```
 
 ### Backend
-- Node.js & Express
-- MongoDB with Mongoose
-- JWT authentication
-- Cloudinary for media
-- Nodemailer for emails
-
-### DevOps & Tools
-- ESLint & Prettier
-- Git & GitHub
-- Docker support
-- Jest for testing
-
-## Project Structure
-
 ```
-Backend/
-├── app.js
-├── server.js
-├── package.json
-├── controllers/
-├── db/
-├── middleware/
-├── models/
-├── routes/
-├── scripts/
-├── test-data/
-└── utils/
-
-Frontend/
-├── src/
-│   ├── App.jsx
-│   ├── main.jsx
-│   ├── components/
-│   ├── pages/
-│   ├── router/
-│   └── services/
-├── public/
-├── package.json
-└── vite.config.js
+Node.js │ Express │ MongoDB │ JWT │ Cloudinary │ Nodemailer
 ```
 
-## Getting Started
+### DevOps
+```
+Docker │ GitHub Actions │ Jest │ ESLint │ Prettier
+```
+
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v18+ recommended)
-- npm or yarn
-- MongoDB instance (local or Atlas)
-- Cloudinary account
-- Google Maps API key
+- Node.js (v18+)
+- MongoDB
+- Cloudinary Account
+- Google Maps API Key
 
-### Backend Setup
+### Installation
 
-1. **Clone & Install:**
+1. **Clone Repository**
 ```bash
 git clone https://github.com/yourusername/blood-donation.git
-cd blood-donation/Backend
+cd blood-donation
+```
+
+2. **Backend Setup**
+```bash
+cd Backend
 npm install
 ```
 
-2. **Environment Setup:**
+3. **Frontend Setup**
+```bash
+cd ../Frontend
+npm install
+```
+
+4. **Environment Variables**
+
+Create a `.env` file in the `Backend` directory and add the following:
+
 ```env
 PORT=8000
 MONGODB_URI=your_mongodb_uri
@@ -135,27 +113,24 @@ EMAIL_PASS=your_password
 CORS_ORIGIN=http://localhost:5173
 ```
 
-3. **Start Server:**
-```bash
-npm run dev
-```
+In the `Frontend` directory, create a `.env` file and add:
 
-### Frontend Setup
-
-1. **Install Dependencies:**
-```bash
-cd ../Frontend
-npm install
-```
-
-2. **Environment Setup:**
 ```env
 VITE_API_URL=http://localhost:8000/api/v1
 VITE_GOOGLE_MAPS_KEY=your_google_maps_key
 ```
 
-3. **Start Development Server:**
+5. **Run the Application**
+
+- **Backend:**
 ```bash
+cd Backend
+npm run dev
+```
+
+- **Frontend:**
+```bash
+cd Frontend
 npm run dev
 ```
 
