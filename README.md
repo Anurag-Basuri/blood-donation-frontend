@@ -1,182 +1,111 @@
-# LifeLink - Blood Donation Management System
+# 🌐 **LifeLink – Smart Health Resource Coordination Platform**
 
 <div align="center">
+  <img src="public/images/logo.png" alt="LifeLink Logo" width="200" />
 
-![LifeLink Logo](public/images/logo.png)
+  <p align="center">
+    A unified, intelligent, and real-time platform that connects <strong>donors, recipients, hospitals, NGOs, and volunteers</strong> to simplify health donations, manage emergencies, and save lives — beyond just blood.
+  </p>
 
-A comprehensive healthcare platform connecting blood donors, recipients, NGOs, and hospitals to streamline blood donation and save lives.
+  [![License](https://img.shields.io/badge/license-ISC-blue.svg)](LICENSE)
+  [![GitHub Stars](https://img.shields.io/github/stars/yourusername/lifelink)](https://github.com/yourusername/lifelink/stargazers)
+  [![GitHub Issues](https://img.shields.io/github/issues/yourusername/lifelink)](https://github.com/yourusername/lifelink/issues)
 
-[![License](https://img.shields.io/badge/license-ISC-blue.svg)](LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/yourusername/blood-donation)](https://github.com/yourusername/blood-donation/stargazers)
-[![GitHub Issues](https://img.shields.io/github/issues/yourusername/blood-donation)](https://github.com/yourusername/blood-donation/issues)
-
-[View Demo](https://lifelink-demo.vercel.app) · [Report Bug](https://github.com/yourusername/blood-donation/issues) · [Request Feature](https://github.com/yourusername/blood-donation/issues)
-
+  🔗 [View Live Demo](https://lifelink-demo.vercel.app) · 🐞 [Report Bug](https://github.com/yourusername/lifelink/issues) · 💡 [Request Feature](https://github.com/yourusername/lifelink/issues)
 </div>
-
-## 🩸 Why LifeLink Matters
-
-Every two seconds, someone needs blood. LifeLink addresses critical challenges in blood donation:
-
-- **Saves Lives**: Connects donors with recipients in real-time
-- **Reduces Wastage**: Smart inventory management prevents blood expiration
-- **Improves Access**: Makes finding and scheduling donations effortless
-- **Ensures Trust**: Verified institutions and transparent processes
-- **Data-Driven**: Analytics for better resource allocation
-
-## ✨ Key Features
-
-### 🔐 User Management
-- Multi-role authentication system (Donors, Recipients, NGOs, Hospitals)
-- Role-specific dashboards and access controls
-- Verified profiles with trust scores
-- Secure data handling and privacy controls
-
-### 🏥 Blood Donation Management
-- Smart donor-recipient matching
-- Real-time inventory tracking
-- Automated appointment scheduling
-- Digital certificates and donation history
-- Blood camp organization tools
-
-### 📊 Analytics & Reporting
-- Real-time availability dashboards
-- Donation impact statistics
-- Predictive supply-demand analysis
-- Custom report generation
-
-### 🗺️ Location Services
-- Interactive map for donation centers
-- Proximity-based matching
-- Route optimization for emergency requests
-- Blood camp location tracking
-
-## 🛠️ Tech Stack
-
-### Frontend
-```
-React + Vite │ Tailwind CSS │ Framer Motion │ Chart.js │ React Google Maps
-```
-
-### Backend
-```
-Node.js │ Express │ MongoDB │ JWT │ Cloudinary │ Nodemailer
-```
-
-### DevOps
-```
-Docker │ GitHub Actions │ Jest │ ESLint │ Prettier
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js (v18+)
-- MongoDB
-- Cloudinary Account
-- Google Maps API Key
-
-### Installation
-
-1. **Clone Repository**
-```bash
-git clone https://github.com/yourusername/blood-donation.git
-cd blood-donation
-```
-
-2. **Backend Setup**
-```bash
-cd Backend
-npm install
-```
-
-3. **Frontend Setup**
-```bash
-cd ../Frontend
-npm install
-```
-
-4. **Environment Variables**
-
-Create a `.env` file in the `Backend` directory and add the following:
-
-```env
-PORT=8000
-MONGODB_URI=your_mongodb_uri
-ACCESS_TOKEN_SECRET=your_secret
-REFRESH_TOKEN_SECRET=your_refresh_secret
-CLOUDINARY_CLOUD_NAME=your_cloudinary_name
-CLOUDINARY_API_KEY=your_key
-CLOUDINARY_API_SECRET=your_secret
-EMAIL_USER=your_email
-EMAIL_PASS=your_password
-CORS_ORIGIN=http://localhost:5173
-```
-
-In the `Frontend` directory, create a `.env` file and add:
-
-```env
-VITE_API_URL=http://localhost:8000/api/v1
-VITE_GOOGLE_MAPS_KEY=your_google_maps_key
-```
-
-5. **Run the Application**
-
-- **Backend:**
-```bash
-cd Backend
-npm run dev
-```
-
-- **Frontend:**
-```bash
-cd Frontend
-npm run dev
-```
-
-## API Overview
-
-### Core Endpoints
-
-- **Authentication**
-  - `/api/v1/auth/register`
-  - `/api/v1/auth/login`
-  - `/api/v1/auth/refresh-token`
-
-- **Users & Profiles**
-  - `/api/v1/users`
-  - `/api/v1/ngo`
-  - `/api/v1/hospitals`
-
-- **Blood Donation**
-  - `/api/v1/donations`
-  - `/api/v1/requests`
-  - `/api/v1/inventory`
-
-Full API documentation available in the [Backend/docs](Backend/docs) directory.
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the ISC License - see [LICENSE](LICENSE) for details.
-
-## Acknowledgements
-
-- [React](https://react.dev/)
-- [Express](https://expressjs.com/)
-- [MongoDB](https://www.mongodb.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Framer Motion](https://www.framer.com/motion/)
-- [Cloudinary](https://cloudinary.com/)
-- [Chart.js](https://www.chartjs.org/)
 
 ---
 
-Created with ❤️ for saving lives
+## ❓ Why LifeLink?
+
+Every few seconds, someone needs **blood**, **plasma**, **platelets**, or even **equipment like oxygen or wheelchairs**. LifeLink is built to address:
+
+- ⏱️ **Urgency**: Matches donors & needs instantly
+- 📦 **Coordination**: Links verified NGOs, hospitals, and donors
+- 🌍 **Reach**: Location-based access to healthcare support
+- 🔐 **Trust & Transparency**: Verified data and institutions
+- 📊 **Insights**: Tracks donation activity and health resource analytics
+
+---
+
+## 👤 Supported User Roles
+
+### 1. **Users / Donors / Recipients**
+- Register as a donor or request blood/resources
+- Track donation history & receive certificates
+- Set preferences for alerts, availability, and past contributions
+
+### 2. **Hospitals**
+- Create blood and plasma requests
+- Manage real-time inventory (non-storage-based)
+- View nearby donors and campaign details
+- Track fulfilled vs pending requests
+
+### 3. **NGOs**
+- Organize donation camps and drives
+- Post verified emergency requests
+- Volunteer coordination dashboard
+- Analytics on drive performance and impact
+
+### 4. **Volunteers**
+- Join and assist NGOs or hospitals in donation drives
+- Earn digital certificates for verified participation
+- Access training guides (CPR, safety, etc.)
+
+---
+
+## ✨ Key Features
+
+### 🔐 Role-Based Access & Dashboards
+- Admin, NGO, Hospital, User
+- Secure JWT authentication
+- Dynamic dashboards with modular UIs
+
+### 🩸 Smart Donation Matching
+- Match donors with recipients using blood type, location, and urgency
+- Real-time request visibility and fulfillment flow
+
+### 📆 Campaign & Camp Management
+- NGOs/Hospitals can schedule, promote, and manage donation events
+- Users can join based on interest/location
+
+### 📡 Location-Based Discovery
+- Map view to explore active camps, donation centers, and hospitals
+- Filter by blood group/resource type
+
+### 📥 Request & Inventory Overview
+- Hospitals post verified requests
+- Track real-time status, fulfillment, and urgency
+- Inventory is just-in-time (non-storage-based)
+
+### 📊 Insightful Analytics
+- Contribution history
+- Camp performance reports
+- Demand forecasting via simple statistics
+
+---
+
+## 🛠️ Tech Stack
+
+### ⚙️ Backend
+- Node.js · Express.js
+- MongoDB with Mongoose
+- JWT · bcrypt · Nodemailer
+- Cloudinary for media uploads
+
+### 🎨 Frontend
+- React.js (Vite) · Tailwind CSS
+- Framer Motion · Chart.js
+- React Google Maps API
+- Axios
+
+### 🧪 Testing & DevOps
+- Jest
+- ESLint & Prettier
+- Docker (optional)
+- GitHub Actions
+
+---
+
+## 📁 Folder Structure
+
