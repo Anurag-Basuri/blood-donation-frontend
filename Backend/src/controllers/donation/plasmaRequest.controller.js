@@ -1,26 +1,28 @@
-import { OrganRequest } from "../models/donation/organrequest.models.js";
-import { Hospital } from "../models/users/hospital.models.js";
-import { NGO } from "../models/users/ngo.models.js";
-import { User } from "../models/users/user.models.js";
-import { Activity } from "../models/others/activity.model.js";
-import { Notification } from "../models/others/notification.model.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import { PlasmaRequest } from "../../models/donation/plasmarequest.models.js";
+import { Hospital } from "../../models/users/hospital.models.js";
+import { NGO } from "../../models/users/ngo.models.js";
+import { User } from "../../models/users/user.models.js";
+import { Activity } from "../../models/others/activity.model.js";
+import { Notification } from "../../models/others/notification.model.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { ApiError } from "../../utils/ApiError.js";
+import { ApiResponse } from "../../utils/ApiResponse.js";
 
-// Create Organ Request
-const createOrganRequest = asyncHandler(async (req, res) => {
+// Create Plasma Request
+const createPlasmaRequest = asyncHandler(async (req, res) => {
     const {
-        hospitalId,
-        organType,
         bloodGroup,
+        units,
+        urgency,
+        requiredBy,
+        hospitalId,
         patientInfo,
-        matchingCriteria,
-        documents,
+        covidRecovered,
+        antibodyTiter,
     } = req.body;
 
     // Validate request
-    if (!organType || !bloodGroup || !hospitalId || !patientInfo) {
+    if (!bloodGroup || !units || !hospitalId) {
         throw new ApiError(400, "Missing required fields");
     }
 
@@ -29,32 +31,37 @@ const createOrganRequest = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Hospital not found");
     }
 
-    // Create organ request
-    const request = await OrganRequest.create({
-        requestId: `OR${Date.now()}`,
+    // Find nearby NGOs
+    const nearbyNGOs = await hospital.findNearbyNGOs(20000); // 20km radius
+    if (!nearbyNGOs?.length) {
+        throw new ApiError(404, "No NGOs found in nearby area");
+    }
+
+    const request = await PlasmaRequest.create({
         hospitalId,
-        organType,
         bloodGroup,
+        units,
+        urgency,
+        requiredBy,
         patientInfo,
-        matchingCriteria,
-        documents,
-        status: "REGISTERED",
+        covidRecovered,
+        antibodyTiter,
+        status: "PENDING",
     });
 
-    // Notify relevant NGOs
-    const nearbyNGOs = await hospital.findNearbyNGOs(50000); // 50km radius for organs
+    // Notify NGOs
     await Promise.all(
         nearbyNGOs.map((ngo) =>
             Notification.create({
-                type: "URGENT_ORGAN_REQUEST",
+                type: "URGENT_BLOOD_REQUEST",
                 recipient: ngo._id,
                 recipientModel: "NGO",
                 data: {
                     requestId: request._id,
-                    organType,
                     bloodGroup,
                     hospital: hospital.name,
-                    urgencyScore: patientInfo.urgencyScore,
+                    urgency,
+                    isPlasma: true,
                 },
             })
         )
@@ -62,23 +69,23 @@ const createOrganRequest = asyncHandler(async (req, res) => {
 
     // Log activity
     await Activity.create({
-        type: "ORGAN_REQUEST_CREATED",
+        type: "PLASMA_REQUEST_CREATED",
         performedBy: {
             userId: req.user._id,
             userModel: req.user.role,
         },
         details: {
             requestId: request._id,
-            organType,
             bloodGroup,
-            urgencyScore: patientInfo.urgencyScore,
+            units,
+            urgency,
         },
     });
 
     return res
         .status(201)
         .json(
-            new ApiResponse(201, request, "Organ request created successfully")
+            new ApiResponse(201, request, "Plasma request created successfully")
         );
 });
 
@@ -87,22 +94,23 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
     const { requestId } = req.params;
     const { status, notes } = req.body;
 
-    const request = await OrganRequest.findById(requestId);
+    const request = await PlasmaRequest.findById(requestId);
     if (!request) {
-        throw new ApiError(404, "Organ request not found");
+        throw new ApiError(404, "Plasma request not found");
     }
 
     await request.updateStatus(status, req.user._id, notes);
 
-    // Notify relevant parties
+    // Notify hospital
     await Notification.create({
-        type: "ORGAN_REQUEST_UPDATE",
+        type: "REQUEST_STATUS_UPDATE",
         recipient: request.hospitalId,
         recipientModel: "Hospital",
         data: {
             requestId: request._id,
             status,
             notes,
+            requestType: "plasma",
         },
     });
 
@@ -113,49 +121,46 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
         );
 });
 
-// Find Potential Donors
-const findPotentialDonors = asyncHandler(async (req, res) => {
+// Find Eligible Donors
+const findEligibleDonors = asyncHandler(async (req, res) => {
     const { requestId } = req.params;
 
-    const request = await OrganRequest.findById(requestId);
+    const request = await PlasmaRequest.findById(requestId);
     if (!request) {
         throw new ApiError(404, "Request not found");
     }
 
-    // Find potential donors based on criteria
-    const potentialDonors = await User.find({
+    // Find eligible donors based on criteria
+    const donors = await User.find({
         bloodType: request.bloodGroup,
-        "organDonorStatus.isRegistered": true,
-        "organDonorStatus.organs": request.organType,
+        donorStatus: "Active",
         "address.location": {
             $near: {
                 $geometry: request.hospital.location,
-                $maxDistance: 100000, // 100km radius for organs
+                $maxDistance: 10000, // 10km radius
             },
         },
-    }).select("name bloodType phone email organDonorStatus");
+        covidRecovered: true, // Only COVID recovered donors for plasma
+        lastDonationDate: {
+            $lt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days gap
+        },
+    }).select("name bloodType lastDonationDate phone email covidRecoveryDate");
 
     return res
         .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                potentialDonors,
-                "Potential organ donors found"
-            )
-        );
+        .json(new ApiResponse(200, donors, "Eligible plasma donors found"));
 });
 
-// Track Request Status
+// Track Request
 const trackRequest = asyncHandler(async (req, res) => {
     const { requestId } = req.params;
 
-    const request = await OrganRequest.findById(requestId)
+    const request = await PlasmaRequest.findById(requestId)
         .populate("hospitalId", "name address")
         .select("-patientInfo.confidential");
 
     if (!request) {
-        throw new ApiError(404, "Organ request not found");
+        throw new ApiError(404, "Plasma request not found");
     }
 
     return res
@@ -163,10 +168,10 @@ const trackRequest = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, request, "Request details fetched"));
 });
 
-// Get High Priority Requests
-const getHighPriorityRequests = asyncHandler(async (req, res) => {
-    const highPriorityRequests = await OrganRequest.find({
-        "patientInfo.urgencyScore": { $gte: 80 },
+// Get Emergency Plasma Requests
+const getEmergencyRequests = asyncHandler(async (req, res) => {
+    const emergencyRequests = await PlasmaRequest.find({
+        urgency: "Critical",
         status: { $nin: ["COMPLETED", "CANCELLED"] },
     }).populate("hospitalId", "name address");
 
@@ -175,8 +180,8 @@ const getHighPriorityRequests = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                highPriorityRequests,
-                "High priority organ requests fetched"
+                emergencyRequests,
+                "Emergency plasma requests fetched"
             )
         );
 });
@@ -186,16 +191,16 @@ const cancelRequest = asyncHandler(async (req, res) => {
     const { requestId } = req.params;
     const { reason } = req.body;
 
-    const request = await OrganRequest.findById(requestId);
+    const request = await PlasmaRequest.findById(requestId);
     if (!request) {
-        throw new ApiError(404, "Organ request not found");
+        throw new ApiError(404, "Plasma request not found");
     }
 
     await request.updateStatus("CANCELLED", req.user._id, reason);
 
     // Log activity
     await Activity.create({
-        type: "ORGAN_REQUEST_CANCELLED",
+        type: "PLASMA_REQUEST_CANCELLED",
         performedBy: {
             userId: req.user._id,
             userModel: req.user.role,
@@ -212,16 +217,16 @@ const cancelRequest = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 request,
-                "Organ request cancelled successfully"
+                "Plasma request cancelled successfully"
             )
         );
 });
 
 export {
-    createOrganRequest,
+    createPlasmaRequest,
     updateRequestStatus,
-    findPotentialDonors,
+    findEligibleDonors,
     trackRequest,
-    getHighPriorityRequests,
+    getEmergencyRequests,
     cancelRequest,
 };
