@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
-import { User } from "../models/user.models.js";
-import { BloodDonation } from "../models/blood.models.js";
-import { Center } from "../models/center.models.js";
-import { DonationAppointment } from "../models/appointment.models.js";
+import { User } from "../../models/user.models.js";
+import { BloodDonation } from "../../models/blood.models.js";
+import { Center } from "../../models/center.models.js";
+import { DonationAppointment } from "../../models/appointment.models.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { uploadFile, deleteFile } from "../../utils/fileUpload.js";
-import { sendMail } from "../services/mail.service.js";
+import { sendMail } from "../../services/mail.service.js";
 
 // Authentication Controllers
 const registerUser = asyncHandler(async (req, res) => {
