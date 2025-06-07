@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
-import { NGO } from "../models/ngo.models.js";
+import { NGO } from "../../models/ngo.models.js";
 import { Center } from "../models/center.models.js";
 import { BloodDonation } from "../models/blood.models.js";
 import { DonationCamp } from "../models/camp.models.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { uploadFile } from "../utils/fileUpload.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { ApiError } from "../../utils/ApiError.js";
+import { ApiResponse } from "../../utils/ApiResponse.js";
+import { uploadFile } from "../../utils/fileUpload.js";
 import { sendMail } from "../services/mail.service.js";
 
 // Authentication Controllers

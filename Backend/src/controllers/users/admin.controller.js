@@ -1,12 +1,12 @@
-import Admin from "../models/admin.models.js";
-import Hospital from "../models/hospital.models.js";
-import BloodRequest from "../models/bloodrequest.models.js";
-import Center from "../models/center.models.js";
-import NGO from "../models/ngo.models.js";
-import User from "../models/user.models.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import Admin from "../../models/admin.models.js";
+import Hospital from "../../models/hospital.models.js";
+import BloodRequest from "../../models/bloodrequest.models.js";
+import Center from "../../models/center.models.js";
+import NGO from "../../models/ngo.models.js";
+import User from "../../models/user.models.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { ApiError } from "../../utils/ApiError.js";
+import { ApiResponse } from "../../utils/ApiResponse.js";
 
 // Auth Token Generator
 const generateTokens = async (adminId) => {
