@@ -1,9 +1,8 @@
 import Admin from "../../models/admin.models.js";
 import Hospital from "../../models/hospital.models.js";
-import BloodRequest from "../../models/bloodrequest.models.js";
-import Center from "../../models/center.models.js";
 import NGO from "../../models/ngo.models.js";
-import User from "../../models/user.models.js";
+import { Activity } from "../../models/others/activity.model.js";
+import { Analytics } from "../../models/others/analytics.model.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
@@ -22,9 +21,14 @@ const generateTokens = async (adminId) => {
     }
 };
 
-// AUTH CONTROLLERS
+// ADMIN AUTH
 const registerAdmin = asyncHandler(async (req, res) => {
-    const { fullName, email, password } = req.body;
+    const { fullName, email, password, role = "admin" } = req.body;
+
+    // Only superadmin can create new admins
+    if (req.admin && req.admin.role !== "superadmin") {
+        throw new ApiError(403, "Only superadmin can create new admins");
+    }
 
     if ([fullName, email, password].some((field) => !field?.trim())) {
         throw new ApiError(400, "All fields are required");
@@ -39,71 +43,112 @@ const registerAdmin = asyncHandler(async (req, res) => {
         fullName,
         email,
         password,
-        role: "admin",
+        role,
     });
 
-    const createdAdmin = await Admin.findById(admin._id).select(
-        "-password -refreshToken"
-    );
+    await Activity.create({
+        type: "ADMIN_CREATED",
+        performedBy: {
+            userId: req.admin?._id || admin._id,
+            userModel: "Admin",
+        },
+        details: {
+            adminId: admin._id,
+            role: admin.role,
+        },
+    });
 
     return res
         .status(201)
-        .json(
-            new ApiResponse(201, createdAdmin, "Admin registered successfully")
-        );
+        .json(new ApiResponse(201, admin, "Admin registered successfully"));
 });
 
-const loginAdmin = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
+// VERIFICATION CONTROLLERS
+const verifyHospital = asyncHandler(async (req, res) => {
+    const { hospitalId } = req.params;
+    const { status, remarks, verificationDocuments } = req.body;
 
-    if (!email || !password) {
-        throw new ApiError(400, "Email and password required");
+    const hospital = await Hospital.findById(hospitalId);
+    if (!hospital) {
+        throw new ApiError(404, "Hospital not found");
     }
 
-    const admin = await Admin.findByEmailWithPassword(email);
-    if (!admin || !(await admin.isPasswordCorrect(password))) {
-        throw new ApiError(401, "Invalid credentials");
-    }
+    hospital.isVerified = status === "approved";
+    hospital.verificationRemarks = remarks;
+    hospital.verificationDocuments = verificationDocuments;
+    hospital.verifiedBy = {
+        adminId: req.admin._id,
+        verifiedAt: new Date(),
+    };
 
-    const { accessToken, refreshToken } = await generateTokens(admin._id);
-    const loggedInAdmin = await Admin.findById(admin._id).select(
-        "-password -refreshToken"
-    );
+    await hospital.save();
+
+    await Activity.create({
+        type: "HOSPITAL_VERIFICATION",
+        performedBy: {
+            userId: req.admin._id,
+            userModel: "Admin",
+        },
+        details: {
+            hospitalId,
+            status,
+            remarks,
+        },
+    });
 
     return res
         .status(200)
-        .cookie("accessToken", accessToken, { httpOnly: true })
-        .cookie("refreshToken", refreshToken, { httpOnly: true })
-        .json(
-            new ApiResponse(
-                200,
-                {
-                    admin: loggedInAdmin,
-                    accessToken,
-                    refreshToken,
-                },
-                "Login successful"
-            )
-        );
+        .json(new ApiResponse(200, hospital, "Hospital verification updated"));
 });
 
-// DASHBOARD CONTROLLERS
-const getDashboardStats = asyncHandler(async (req, res) => {
-    const [hospitals, requests, ngos, users] = await Promise.all([
-        Hospital.countDocuments({ isVerified: true }),
-        BloodRequest.aggregate([
+const verifyNGO = asyncHandler(async (req, res) => {
+    const { ngoId } = req.params;
+    const { status, remarks, verificationDocuments } = req.body;
+
+    const ngo = await NGO.findById(ngoId);
+    if (!ngo) {
+        throw new ApiError(404, "NGO not found");
+    }
+
+    ngo.isVerified = status === "approved";
+    ngo.verificationRemarks = remarks;
+    ngo.verificationDocuments = verificationDocuments;
+    ngo.verifiedBy = {
+        adminId: req.admin._id,
+        verifiedAt: new Date(),
+    };
+
+    await ngo.save();
+
+    await Activity.create({
+        type: "NGO_VERIFICATION",
+        performedBy: {
+            userId: req.admin._id,
+            userModel: "Admin",
+        },
+        details: {
+            ngoId,
+            status,
+            remarks,
+        },
+    });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, ngo, "NGO verification updated"));
+});
+
+// ANALYTICS & MONITORING
+const getSystemAnalytics = asyncHandler(async (req, res) => {
+    const [hospitals, ngos, analytics] = await Promise.all([
+        Hospital.aggregate([
             {
                 $group: {
-                    _id: "$status",
+                    _id: "$isVerified",
                     count: { $sum: 1 },
-                    urgent: {
-                        $sum: {
-                            $cond: [
-                                { $eq: ["$urgencyLevel", "Emergency"] },
-                                1,
-                                0,
-                            ],
-                        },
+                    totalRequests: { $sum: "$statistics.totalRequestsMade" },
+                    emergencyRequests: {
+                        $sum: "$statistics.emergencyRequests",
                     },
                 },
             },
@@ -111,7 +156,8 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         NGO.aggregate([
             {
                 $group: {
-                    _id: null,
+                    _id: "$isVerified",
+                    count: { $sum: 1 },
                     totalCamps: { $sum: "$statistics.totalCampsOrganized" },
                     totalDonations: {
                         $sum: "$statistics.totalDonationsCollected",
@@ -119,14 +165,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
                 },
             },
         ]),
-        User.aggregate([
-            {
-                $group: {
-                    _id: "$donorStatus",
-                    count: { $sum: 1 },
-                },
-            },
-        ]),
+        Analytics.findOne().sort({ createdAt: -1 }),
     ]);
 
     return res.status(200).json(
@@ -134,96 +173,40 @@ const getDashboardStats = asyncHandler(async (req, res) => {
             200,
             {
                 hospitals,
-                requests,
                 ngos,
-                users,
+                analytics,
             },
-            "Dashboard data fetched"
+            "System analytics fetched"
         )
     );
 });
 
-// HOSPITAL MANAGEMENT
-const verifyHospital = asyncHandler(async (req, res) => {
-    const { hospitalId } = req.params;
-    const { status, remarks } = req.body;
+// ACTIVITY MONITORING
+const getSystemActivities = asyncHandler(async (req, res) => {
+    const { startDate, endDate, type } = req.query;
 
-    const hospital = await Hospital.findByIdAndUpdate(
-        hospitalId,
-        {
-            $set: {
-                isVerified: status === "approved",
-                verificationRemarks: remarks,
-            },
-        },
-        { new: true }
-    );
+    const query = {};
+    if (startDate && endDate) {
+        query.createdAt = {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate),
+        };
+    }
+    if (type) query.type = type;
+
+    const activities = await Activity.find(query)
+        .sort({ createdAt: -1 })
+        .limit(100);
 
     return res
         .status(200)
-        .json(new ApiResponse(200, hospital, "Hospital verification updated"));
-});
-
-// BLOOD REQUEST MANAGEMENT
-const handleBloodRequest = asyncHandler(async (req, res) => {
-    const { requestId } = req.params;
-    const { status, notes } = req.body;
-
-    const bloodRequest = await BloodRequest.findById(requestId);
-    if (!bloodRequest) {
-        throw new ApiError(404, "Request not found");
-    }
-
-    await bloodRequest.updateStatus(status, req.admin._id, notes);
-
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(200, bloodRequest, "Request updated successfully")
-        );
-});
-
-// EMERGENCY HANDLING
-const handleEmergency = asyncHandler(async (req, res) => {
-    const { requestId } = req.params;
-    const { action } = req.body;
-
-    const request = await BloodRequest.findById(requestId);
-    if (!request) {
-        throw new ApiError(404, "Emergency request not found");
-    }
-
-    const nearbyDonors = await User.find({
-        "address.location": {
-            $near: {
-                $geometry: request.hospital.location,
-                $maxDistance: 20000, // 20km radius
-            },
-        },
-        bloodType: request.bloodGroup,
-        donorStatus: "Active",
-    });
-
-    request.status = action;
-    await request.save();
-
-    return res.status(200).json(
-        new ApiResponse(
-            200,
-            {
-                request,
-                potentialDonors: nearbyDonors.length,
-            },
-            "Emergency handled"
-        )
-    );
+        .json(new ApiResponse(200, activities, "System activities fetched"));
 });
 
 export {
     registerAdmin,
-    loginAdmin,
-    getDashboardStats,
     verifyHospital,
-    handleBloodRequest,
-    handleEmergency,
+    verifyNGO,
+    getSystemAnalytics,
+    getSystemActivities,
 };
