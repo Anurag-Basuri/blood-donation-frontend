@@ -1,6 +1,6 @@
-import Admin from "../../models/admin.models.js";
-import Hospital from "../../models/hospital.models.js";
-import NGO from "../../models/ngo.models.js";
+import { Admin } from "../../models/admin.models.js";
+import { Hospital } from "../../models/hospital.models.js";
+import { NGO } from "../../models/ngo.models.js";
 import { Activity } from "../../models/others/activity.model.js";
 import { Analytics } from "../../models/others/analytics.model.js";
 import { Notification } from "../../models/others/notification.model.js";
