@@ -1,18 +1,44 @@
 import mongoose from "mongoose";
-import { NGO } from "../../models/ngo.models.js";
-import { Center } from "../models/center.models.js";
-import { BloodDonation } from "../models/blood.models.js";
-import { DonationCamp } from "../models/camp.models.js";
+import { NGO } from "../../models/users/ngo.models.js";
+import { Center } from "../../models/donation/center.models.js";
+import { DonationCamp } from "../../models/donation/camp.models.js";
+import { BloodRequest } from "../../models/donation/bloodrequest.models.js";
+import { Activity } from "../../models/others/activity.model.js";
+import { Notification } from "../../models/others/notification.model.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { uploadFile } from "../../utils/fileUpload.js";
-import { sendMail } from "../services/mail.service.js";
+import { notificationService } from "../../services/notification.service.js";
 
-// Authentication Controllers
+// Generate Auth Tokens
+const generateTokens = async (ngoId) => {
+    try {
+        const ngo = await NGO.findById(ngoId);
+        const accessToken = ngo.generateAccessToken();
+        const refreshToken = ngo.generateRefreshToken();
+
+        ngo.refreshToken = refreshToken;
+        ngo.lastLogin = new Date();
+        await ngo.save({ validateBeforeSave: false });
+
+        return { accessToken, refreshToken };
+    } catch (error) {
+        throw new ApiError(500, "Token generation failed");
+    }
+};
+
+// Auth Controllers
 const registerNGO = asyncHandler(async (req, res) => {
-    const { name, email, password, contactPerson, address, regNumber } =
-        req.body;
+    const {
+        name,
+        email,
+        password,
+        contactPerson,
+        address,
+        regNumber,
+        facilities,
+    } = req.body;
 
     // Validate required fields
     if (
@@ -23,17 +49,21 @@ const registerNGO = asyncHandler(async (req, res) => {
         throw new ApiError(400, "All required fields must be provided");
     }
 
-    // Check if NGO already exists
+    // Check existing NGO
     const existingNGO = await NGO.findOne({
         $or: [{ email }, { regNumber }],
     });
 
     if (existingNGO) {
-        throw new ApiError(
-            409,
-            existingNGO.email === email
-                ? "NGO with email already exists"
-                : "Registration number already registered"
+        throw new ApiError(409, "NGO already exists");
+    }
+
+    // Upload documents if provided
+    let registrationDocument;
+    if (req.files?.registrationCert) {
+        registrationDocument = await uploadFile(
+            req.files.registrationCert,
+            "ngo-documents"
         );
     }
 
@@ -45,145 +75,250 @@ const registerNGO = asyncHandler(async (req, res) => {
         contactPerson,
         address,
         regNumber,
+        facilities,
+        registrationDocument,
+        verificationStatus: "PENDING",
     });
 
-    // Handle document uploads
-    if (req.files?.registrationCert) {
-        ngo.registrationDocument = await uploadFile({
-            file: req.files.registrationCert,
-            folder: "ngo-documents",
-        });
-        await ngo.save();
-    }
+    // Log activity
+    await Activity.create({
+        type: "NGO_REGISTERED",
+        performedBy: {
+            userId: ngo._id,
+            userModel: "NGO",
+        },
+        details: {
+            ngoId: ngo._id,
+            name: ngo.name,
+        },
+    });
 
     return res
         .status(201)
-        .json(new ApiResponse(201, { ngo }, "NGO registered successfully"));
+        .json(new ApiResponse(201, ngo, "NGO registered successfully"));
 });
 
-// Center Management
+// Login Controller
+const loginNGO = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        throw new ApiError(400, "Email and password required");
+    }
+
+    const ngo = await NGO.findOne({ email }).select("+password");
+    if (!ngo || !(await ngo.isPasswordCorrect(password))) {
+        throw new ApiError(401, "Invalid credentials");
+    }
+
+    if (!ngo.isVerified) {
+        throw new ApiError(403, "NGO not verified. Please contact admin.");
+    }
+
+    const { accessToken, refreshToken } = await generateTokens(ngo._id);
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, { httpOnly: true })
+        .cookie("refreshToken", refreshToken, { httpOnly: true })
+        .json(
+            new ApiResponse(
+                200,
+                { ngo, tokens: { accessToken, refreshToken } },
+                "Login successful"
+            )
+        );
+});
+
+// Donation Center Management
 const manageDonationCenter = asyncHandler(async (req, res) => {
     const { action } = req.params;
     const ngoId = req.ngo._id;
 
-    const result = await (action === "create"
-        ? Center.create({ ...req.body, ngoId })
-        : Center.findOneAndUpdate(
-              { _id: req.params.centerId, ngoId },
-              { $set: req.body },
-              { new: true }
-          ));
-
-    if (!result && action !== "create") {
-        throw new ApiError(404, "Center not found");
-    }
-
-    return res
-        .status(action === "create" ? 201 : 200)
-        .json(
-            new ApiResponse(
-                action === "create" ? 201 : 200,
-                { center: result },
-                `Center ${action}d successfully`
-            )
-        );
-});
-
-// Campaign Management
-const manageDonationCampaign = asyncHandler(async (req, res) => {
-    const ngoId = req.ngo._id;
-    const { action } = req.params;
-
-    if (action === "schedule") {
-        const campaign = await DonationCamp.create({
+    if (action === "create") {
+        const center = await Center.create({
             ...req.body,
             ngoId,
-            status: "Planned",
+            status: "INACTIVE", // Requires admin verification
         });
 
-        // Notify nearby donors
-        await sendMail({
-            to: req.body.notifyEmails,
-            subject: "New Blood Donation Camp",
-            html: `Camp scheduled for ${new Date(
-                campaign.date
-            ).toLocaleDateString()}`,
+        await Activity.create({
+            type: "CENTER_CREATED",
+            performedBy: {
+                userId: ngoId,
+                userModel: "NGO",
+            },
+            details: {
+                centerId: center._id,
+                location: center.address,
+            },
         });
 
         return res
             .status(201)
-            .json(
-                new ApiResponse(
-                    201,
-                    { campaign },
-                    "Campaign scheduled successfully"
-                )
-            );
+            .json(new ApiResponse(201, center, "Center created successfully"));
     }
 
-    const campaigns = await DonationCamp.find({ ngoId })
-        .sort({ date: -1 })
-        .select("name date status location");
+    // For update/delete operations
+    const center = await Center.findOne({ _id: req.params.centerId, ngoId });
+    if (!center) {
+        throw new ApiError(404, "Center not found");
+    }
+
+    if (action === "update") {
+        Object.assign(center, req.body);
+        await center.save();
+    } else if (action === "delete") {
+        // Soft delete if center has donation history
+        if (center.statistics.totalDonations > 0) {
+            center.status = "INACTIVE";
+            await center.save();
+        } else {
+            await center.deleteOne();
+        }
+    }
 
     return res
         .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                { campaigns },
-                "Campaigns fetched successfully"
-            )
-        );
+        .json(new ApiResponse(200, center, `Center ${action}d successfully`));
 });
 
-// Blood Inventory Management
-const manageBloodInventory = asyncHandler(async (req, res) => {
-    const { centerId } = req.params;
-    const inventory = await BloodDonation.aggregate([
-        {
-            $match: {
-                centerId: mongoose.Types.ObjectId(centerId),
-                status: "available",
+// Camp Management
+const manageDonationCamp = asyncHandler(async (req, res) => {
+    const { action } = req.params;
+    const ngoId = req.ngo._id;
+
+    if (action === "create") {
+        const camp = await DonationCamp.create({
+            ...req.body,
+            ngoId,
+            status: "PLANNED",
+        });
+
+        // Find nearby donors
+        const nearbyUsers = await User.find({
+            "address.location": {
+                $near: {
+                    $geometry: camp.venue.location,
+                    $maxDistance: 10000, // 10km radius
+                },
             },
-        },
-        {
-            $group: {
-                _id: "$bloodGroup",
-                available: { $sum: 1 },
-                expiring: {
-                    $sum: {
-                        $cond: [
-                            {
-                                $lte: [
-                                    "$expiryDate",
-                                    new Date(
-                                        Date.now() + 7 * 24 * 60 * 60 * 1000
-                                    ),
-                                ],
-                            },
-                            1,
-                            0,
-                        ],
+            donorStatus: "Active",
+        });
+
+        // Send notifications
+        await Promise.all(
+            nearbyUsers.map((user) =>
+                notificationService.sendNotification(
+                    "CAMP_ANNOUNCEMENT",
+                    user,
+                    {
+                        campId: camp._id,
+                        campName: camp.name,
+                        date: camp.schedule.startDate,
+                    }
+                )
+            )
+        );
+
+        return res
+            .status(201)
+            .json(new ApiResponse(201, camp, "Camp created successfully"));
+    }
+
+    // Handle other camp operations (update, cancel, complete)
+    const camp = await DonationCamp.findOne({ _id: req.params.campId, ngoId });
+    if (!camp) {
+        throw new ApiError(404, "Camp not found");
+    }
+
+    if (action === "update") {
+        Object.assign(camp, req.body);
+        await camp.save();
+    } else if (action === "cancel") {
+        await camp.updateStatus("CANCELLED");
+        // Notify registered donors
+        await notificationService.notifyRegisteredDonors(
+            camp._id,
+            "CAMP_CANCELLED"
+        );
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, camp, `Camp ${action}d successfully`));
+});
+
+// Request Management
+const handleBloodRequest = asyncHandler(async (req, res) => {
+    const { requestId } = req.params;
+    const { action, notes } = req.body;
+    const ngoId = req.ngo._id;
+
+    const request = await BloodRequest.findOne({ _id: requestId, ngoId });
+    if (!request) {
+        throw new ApiError(404, "Request not found");
+    }
+
+    await request.updateStatus(action, req.ngo._id, notes);
+
+    // For accepted requests, find potential donors
+    if (action === "ACCEPTED") {
+        const potentialDonors = await findEligibleDonors(request);
+        await notificationService.notifyDonors(potentialDonors, request);
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, request, "Request status updated"));
+});
+
+// Analytics & Reports
+const getNGOAnalytics = asyncHandler(async (req, res) => {
+    const ngoId = req.ngo._id;
+    const { startDate, endDate } = req.query;
+
+    const [campStats, donationStats, requestStats] = await Promise.all([
+        DonationCamp.aggregate([
+            {
+                $match: {
+                    ngoId: mongoose.Types.ObjectId(ngoId),
+                    createdAt: {
+                        $gte: new Date(startDate),
+                        $lte: new Date(endDate),
                     },
                 },
             },
-        },
+            {
+                $group: {
+                    _id: null,
+                    totalCamps: { $sum: 1 },
+                    totalDonors: { $sum: "$statistics.totalDonors" },
+                    totalUnits: { $sum: "$statistics.totalUnitsCollected" },
+                },
+            },
+        ]),
+        // Add other aggregations for donations and requests
     ]);
 
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                { inventory },
-                "Inventory fetched successfully"
-            )
-        );
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                campStats,
+                donationStats,
+                requestStats,
+            },
+            "Analytics fetched successfully"
+        )
+    );
 });
 
 export {
     registerNGO,
+    loginNGO,
     manageDonationCenter,
-    manageDonationCampaign,
-    manageBloodInventory,
+    manageDonationCamp,
+    handleBloodRequest,
+    getNGOAnalytics,
 };
