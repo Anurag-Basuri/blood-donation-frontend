@@ -21,29 +21,17 @@ const adminSchema = new mongoose.Schema(
                 /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/,
                 "Please enter a valid email",
             ],
-            index: true, // Optimize email queries
         },
         password: {
             type: String,
             required: [true, "Password is required"],
-            minlength: [8, "Password must be at least 8 characters long"],
-            validate: {
-                validator: function (password) {
-                    // Require at least one uppercase, lowercase, number, and special character
-                    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
-                        password
-                    );
-                },
-                message:
-                    "Password must contain at least one uppercase letter, lowercase letter, number, and special character",
-            },
+            minlength: [8, "Password must be at least 8 characters"],
             select: false,
         },
         role: {
             type: String,
-            enum: ["admin", "superadmin"],
+            enum: ["admin"],
             default: "admin",
-            immutable: true,
         },
         permissions: [
             {
@@ -55,7 +43,6 @@ const adminSchema = new mongoose.Schema(
                     "manage_ngos",
                     "view_analytics",
                     "manage_admins",
-                    "system_settings",
                 ],
             },
         ],
@@ -63,35 +50,9 @@ const adminSchema = new mongoose.Schema(
             type: String,
             select: false,
         },
-        lastLogin: {
-            type: Date,
-        },
-        loginAttempts: {
-            type: Number,
-            default: 0,
-        },
-        lockedUntil: {
-            type: Date,
-        },
         isActive: {
             type: Boolean,
             default: true,
-        },
-        lastPasswordChange: {
-            type: Date,
-            default: Date.now,
-        },
-        requirePasswordChange: {
-            type: Boolean,
-            default: false,
-        },
-        twoFactorEnabled: {
-            type: Boolean,
-            default: false,
-        },
-        twoFactorSecret: {
-            type: String,
-            select: false,
         },
     },
     {
@@ -99,63 +60,26 @@ const adminSchema = new mongoose.Schema(
     }
 );
 
-// Indexes for optimization
+// Index for optimization
 adminSchema.index({ email: 1 });
-adminSchema.index({ role: 1 });
 
-// Pre-save middleware
+// Hash password before saving
 adminSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
-
-    try {
-        // Check password history
-        if (
-            this.previousPasswords &&
-            this.previousPasswords.some(
-                async (oldPass) => await bcrypt.compare(this.password, oldPass)
-            )
-        ) {
-            throw new Error("Cannot reuse previous passwords");
-        }
-
-        this.password = await bcrypt.hash(this.password, 12);
-        this.lastPasswordChange = Date.now();
-        next();
-    } catch (error) {
-        next(error);
-    }
+    this.password = await bcrypt.hash(this.password, 12);
+    next();
 });
 
-// Methods
+// Instance methods
 adminSchema.methods = {
-    // Verify password
-    isPasswordCorrect: async function (candidatePassword) {
+    isPasswordCorrect: async function (password) {
         try {
-            const isMatch = await bcrypt.compare(
-                candidatePassword,
-                this.password
-            );
-
-            // Handle login attempts
-            if (!isMatch) {
-                this.loginAttempts += 1;
-                if (this.loginAttempts >= 5) {
-                    this.lockedUntil = new Date(Date.now() + 30 * 60 * 1000); // Lock for 30 minutes
-                }
-                await this.save();
-            } else {
-                this.loginAttempts = 0;
-                this.lastLogin = new Date();
-                await this.save();
-            }
-
-            return isMatch;
+            return await bcrypt.compare(password, this.password);
         } catch (error) {
             throw new ApiError(500, "Password verification failed");
         }
     },
 
-    // Generate access token
     generateAccessToken: function () {
         return jwt.sign(
             {
@@ -169,27 +93,15 @@ adminSchema.methods = {
         );
     },
 
-    // Check specific permission
     hasPermission: function (permission) {
         return (
             this.role === "superadmin" || this.permissions.includes(permission)
         );
     },
-
-    // Check if account is locked
-    isAccountLocked: function () {
-        return this.lockedUntil && this.lockedUntil > new Date();
-    },
 };
 
-// Statics
+// Static methods
 adminSchema.statics = {
-    // Find active admins
-    findActive: function () {
-        return this.find({ isActive: true });
-    },
-
-    // Find by email with password
     findByEmailWithPassword: function (email) {
         return this.findOne({ email }).select("+password");
     },
