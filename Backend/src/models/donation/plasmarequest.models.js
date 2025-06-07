@@ -110,4 +110,4 @@ plasmaRequestSchema.index({ status: 1, urgency: 1 });
 plasmaRequestSchema.index({ bloodGroup: 1, status: 1 });
 
 const PlasmaRequest = mongoose.model("PlasmaRequest", plasmaRequestSchema);
-export default PlasmaRequest;
+export { PlasmaRequest };

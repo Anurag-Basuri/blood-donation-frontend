@@ -159,4 +159,4 @@ organRequestSchema.methods = {
 };
 
 const OrganRequest = mongoose.model("OrganRequest", organRequestSchema);
-export default OrganRequest;
+export { OrganRequest };

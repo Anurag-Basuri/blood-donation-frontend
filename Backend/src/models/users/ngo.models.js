@@ -454,4 +454,4 @@ ngoSchema.pre("save", async function (next) {
 
 const NGO = mongoose.model('NGO', ngoSchema);
 
-export default NGO;
+export { NGO };
