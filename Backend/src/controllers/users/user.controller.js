@@ -2,12 +2,22 @@ import { User } from "../../models/users/user.models.js";
 import { Activity } from "../../models/others/activity.model.js";
 import { DonationAppointment } from "../../models/donation/appointment.models.js";
 import { BloodRequest } from "../../models/donation/bloodrequest.models.js";
-import { Center } from "../../models/donation/center.models.js";
+import { Facility } from "../../models/donation/facility.models.js";
 import { Notification } from "../../models/others/notification.model.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+
+// Constants
+const ALLOWED_PROFILE_UPDATES = [
+    "fullName",
+    "phone",
+    "address",
+    "preferences",
+    "emergencyContact",
+    "medicalInfo",
+];
 
 // AUTH CONTROLLERS
 const registerUser = asyncHandler(async (req, res) => {
@@ -19,20 +29,47 @@ const registerUser = asyncHandler(async (req, res) => {
         bloodType,
         address,
         dateOfBirth,
+        medicalInfo,
     } = req.body;
 
-    // Validate required fields
-    if ([fullName, email, password, phone].some((field) => !field?.trim())) {
-        throw new ApiError(400, "All required fields must be provided");
+    // Enhanced validation
+    const validations = [
+        { condition: !fullName?.trim(), message: "Full name is required" },
+        { condition: !email?.trim(), message: "Email is required" },
+        { condition: !password?.trim(), message: "Password is required" },
+        { condition: !phone?.trim(), message: "Phone number is required" },
+        {
+            condition: phone && !/^\+?[\d\s-]{10,}$/.test(phone),
+            message: "Invalid phone number format",
+        },
+        {
+            condition:
+                email &&
+                !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/.test(email),
+            message: "Invalid email format",
+        },
+    ];
+
+    const failedValidation = validations.find((v) => v.condition);
+    if (failedValidation) {
+        throw new ApiError(400, failedValidation.message);
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    // Check existing user
+    const existingUser = await User.findOne({
+        $or: [{ email }, { phone }],
+    });
+
     if (existingUser) {
-        throw new ApiError(409, "User with this email already exists");
+        throw new ApiError(
+            409,
+            existingUser.email === email
+                ? "Email already registered"
+                : "Phone number already registered"
+        );
     }
 
-    // Create user
+    // Create user with enhanced details
     const user = await User.create({
         fullName,
         email,
@@ -41,10 +78,15 @@ const registerUser = asyncHandler(async (req, res) => {
         bloodType,
         address,
         dateOfBirth,
-        donorStatus: "Pending",
+        medicalInfo,
+        donorStatus: "PENDING",
+        verificationStatus: "UNVERIFIED",
+        lastHealthCheck: medicalInfo?.lastCheckup || null,
+        registrationIP: req.ip,
+        deviceInfo: req.headers["user-agent"],
     });
 
-    // Log activity
+    // Log activity with detailed tracking
     await Activity.create({
         type: "USER_REGISTERED",
         performedBy: {
@@ -53,12 +95,41 @@ const registerUser = asyncHandler(async (req, res) => {
         },
         details: {
             email: user.email,
+            registrationIP: req.ip,
+            deviceInfo: req.headers["user-agent"],
+            timestamp: new Date(),
         },
     });
 
-    return res
-        .status(201)
-        .json(new ApiResponse(201, user, "User registered successfully"));
+    // Send welcome notification
+    await Notification.create({
+        type: "WELCOME",
+        recipient: user._id,
+        recipientModel: "User",
+        data: {
+            name: user.fullName,
+            nextSteps: [
+                "Complete your profile",
+                "Schedule your first donation",
+                "Join our community",
+            ],
+        },
+    });
+
+    return res.status(201).json(
+        new ApiResponse(
+            201,
+            {
+                user: {
+                    _id: user._id,
+                    fullName: user.fullName,
+                    email: user.email,
+                    donorStatus: user.donorStatus,
+                },
+            },
+            "Registration successful. Please verify your email."
+        )
+    );
 });
 
 // Generate Tokens Helper
@@ -164,16 +235,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 // PROFILE MANAGEMENT
 const updateProfile = asyncHandler(async (req, res) => {
-    const allowedUpdates = [
-        "fullName",
-        "phone",
-        "address",
-        "preferences",
-        "emergencyContact",
-    ];
-
     const updates = Object.keys(req.body)
-        .filter((key) => allowedUpdates.includes(key))
+        .filter((key) => ALLOWED_PROFILE_UPDATES.includes(key))
         .reduce((obj, key) => {
             obj[key] = req.body[key];
             return obj;
@@ -218,44 +281,105 @@ const changePassword = asyncHandler(async (req, res) => {
 
 // DONATION MANAGEMENT
 const bookDonationAppointment = asyncHandler(async (req, res) => {
-    const { centerId, date, slotTime } = req.body;
+    const { facilityId, date, slotTime, donationType } = req.body;
 
-    // Check eligibility
-    if (!req.user.isEligibleToDonate()) {
-        throw new ApiError(400, "You are not eligible to donate at this time");
+    // Enhanced eligibility check
+    const eligibility = await req.user.checkDonationEligibility();
+    if (!eligibility.isEligible) {
+        throw new ApiError(
+            400,
+            `Not eligible to donate: ${eligibility.reason}`
+        );
     }
 
-    // Verify center and slot availability
-    const center = await Center.findById(centerId);
-    if (!center) {
-        throw new ApiError(404, "Donation center not found");
+    // Verify facility and slot
+    const facility = await Facility.findById(facilityId);
+    if (!facility) {
+        throw new ApiError(404, "Donation facility not found");
     }
 
+    // Check facility schedule
+    if (facility.facilityType === "CAMP") {
+        const campDate = new Date(date).setHours(0, 0, 0, 0);
+        const startDate = new Date(facility.schedule.startDate).setHours(
+            0,
+            0,
+            0,
+            0
+        );
+        const endDate = new Date(facility.schedule.endDate).setHours(
+            23,
+            59,
+            59,
+            999
+        );
+
+        if (campDate < startDate || campDate > endDate) {
+            throw new ApiError(400, "Selected date is outside camp schedule");
+        }
+    }
+
+    // Verify slot availability
+    const isSlotAvailable = await facility.checkSlotAvailability(
+        date,
+        slotTime
+    );
+    if (!isSlotAvailable) {
+        throw new ApiError(400, "Selected time slot is not available");
+    }
+
+    // Create appointment with enhanced tracking
     const appointment = await DonationAppointment.create({
         userId: req.user._id,
-        centerId,
+        facilityId,
         date,
         slotTime,
-        status: "Scheduled",
+        donationType,
+        status: "SCHEDULED",
+        healthInfo: req.user.medicalInfo,
+        previousDonations: await req.user.getDonationCount(),
+        specialNotes: req.user.medicalConditions,
     });
 
-    // Create notification
+    // Reserve slot
+    await facility.reserveSlot(date, slotTime);
+
+    // Send confirmation notification with reminders
     await Notification.create({
         type: "APPOINTMENT_CONFIRMATION",
         recipient: req.user._id,
         recipientModel: "User",
         data: {
+            appointmentId: appointment._id,
+            facility: facility.name,
             date,
-            center: center.name,
-            message: "Your donation appointment has been scheduled",
+            slotTime,
+            preparationSteps: [
+                "Get adequate sleep",
+                "Eat within 3 hours",
+                "Bring valid ID",
+                "Wear comfortable clothing",
+            ],
+            directions: await facility.getDirections(
+                req.user.address?.location
+            ),
         },
     });
 
-    return res
-        .status(201)
-        .json(
-            new ApiResponse(201, appointment, "Appointment booked successfully")
-        );
+    return res.status(201).json(
+        new ApiResponse(
+            201,
+            {
+                appointment,
+                facility: {
+                    name: facility.name,
+                    address: facility.contactInfo.address,
+                    contact: facility.contactInfo.person,
+                },
+            },
+            "Appointment scheduled successfully"
+        )
+    );
 });
 
 // REQUEST MANAGEMENT
@@ -390,6 +514,9 @@ const updateEmergencyContact = asyncHandler(async (req, res) => {
 
 export {
     registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
     updateProfile,
     bookDonationAppointment,
     createBloodRequest,
@@ -397,10 +524,7 @@ export {
     getRequestHistory,
     getNotifications,
     markNotificationsRead,
-    loginUser,
-    logoutUser,
-    refreshAccessToken,
-    changePassword,
     getCurrentUser,
     updateEmergencyContact,
+    changePassword,
 };
