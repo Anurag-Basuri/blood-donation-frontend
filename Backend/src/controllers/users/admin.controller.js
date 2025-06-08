@@ -1,25 +1,38 @@
+import mongoose from "mongoose";
 import { Admin } from "../../models/admin.models.js";
 import { Hospital } from "../../models/hospital.models.js";
 import { NGO } from "../../models/ngo.models.js";
 import { Activity } from "../../models/others/activity.model.js";
 import { Analytics } from "../../models/others/analytics.model.js";
 import { Notification } from "../../models/others/notification.model.js";
+import { BloodRequest } from "../../models/donation/bloodrequest.models.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
+
+// Admin Permission Levels
+const ADMIN_PERMISSIONS = {
+    SUPERADMIN: ["all"],
+    ADMIN: ["basic", "verify", "monitor"],
+    MODERATOR: ["basic", "monitor"],
+};
 
 // 🔐 Authentication Controllers
 class AuthController {
     static generateTokens = async (adminId) => {
         try {
             const admin = await Admin.findById(adminId);
-            const accessToken = admin.generateAccessToken();
-            const refreshToken = admin.generateRefreshToken();
+            const accessToken = await generateActionToken(admin, "access");
+            const refreshToken = await generateActionToken(admin, "refresh");
 
             admin.refreshToken = refreshToken;
             admin.lastLogin = new Date();
-            await admin.save({ validateBeforeSave: false });
+            admin.loginHistory.push({
+                timestamp: new Date(),
+                success: true,
+            });
 
+            await admin.save({ validateBeforeSave: false });
             return { accessToken, refreshToken };
         } catch (error) {
             throw new ApiError(500, "Token generation failed");
@@ -29,71 +42,122 @@ class AuthController {
     static register = asyncHandler(async (req, res) => {
         const { fullName, email, password, role = "admin" } = req.body;
 
-        // Superadmin validation
-        if (role === "superadmin") {
-            const superadminExists = await Admin.findOne({
-                role: "superadmin",
-            });
-            if (superadminExists) {
-                throw new ApiError(403, "Superadmin already exists");
-            }
+        // Enhanced validation
+        if (!email?.includes("@") || password?.length < 8) {
+            throw new ApiError(400, "Invalid email or password too short");
         }
 
-        // Regular admin creation requires superadmin
-        if (
-            role === "admin" &&
-            (!req.admin || req.admin.role !== "superadmin")
-        ) {
-            throw new ApiError(403, "Only superadmin can create admins");
-        }
+        // Role-based creation logic
+        await AuthController.validateRoleCreation(role, req.admin);
 
-        // Create admin
         const admin = await Admin.create({
             fullName,
             email,
             password,
             role,
-            permissions: role === "superadmin" ? ["all"] : ["basic"],
+            permissions: ADMIN_PERMISSIONS[role.toUpperCase()],
+            createdBy: req.admin?._id,
         });
 
-        // Log activity
+        // Log activity with enhanced details
         await Activity.create({
             type: "ADMIN_CREATED",
             performedBy: {
                 userId: req.admin?._id || admin._id,
                 userModel: "Admin",
             },
-            details: { adminId: admin._id, role },
+            details: {
+                adminId: admin._id,
+                role,
+                permissions: admin.permissions,
+                createdAt: new Date(),
+            },
         });
 
-        return res
-            .status(201)
-            .json(new ApiResponse(201, admin, "Admin registered successfully"));
+        return res.status(201).json(
+            new ApiResponse(
+                201,
+                {
+                    admin: {
+                        _id: admin._id,
+                        fullName: admin.fullName,
+                        email: admin.email,
+                        role: admin.role,
+                        permissions: admin.permissions,
+                    },
+                },
+                "Admin registered successfully"
+            )
+        );
     });
 
     static login = asyncHandler(async (req, res) => {
         const { email, password } = req.body;
 
-        const admin = await Admin.findByEmailWithPassword(email);
+        const admin = await Admin.findOne({ email }).select(
+            "+password +loginHistory"
+        );
         if (!admin || !(await admin.isPasswordCorrect(password))) {
+            await Activity.create({
+                type: "FAILED_LOGIN_ATTEMPT",
+                details: { email, timestamp: new Date() },
+            });
             throw new ApiError(401, "Invalid credentials");
         }
 
         const { accessToken, refreshToken } =
             await AuthController.generateTokens(admin._id);
 
+        // Cache admin permissions for quick access
+        await cacheManager.set(
+            `admin:${admin._id}:permissions`,
+            admin.permissions
+        );
+
         return res
             .status(200)
-            .cookie("accessToken", accessToken, { httpOnly: true })
-            .cookie("refreshToken", refreshToken, { httpOnly: true })
+            .cookie("accessToken", accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict",
+            })
+            .cookie("refreshToken", refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict",
+            })
             .json(
                 new ApiResponse(
                     200,
-                    { admin, tokens: { accessToken, refreshToken } },
+                    {
+                        admin: {
+                            _id: admin._id,
+                            fullName: admin.fullName,
+                            role: admin.role,
+                            permissions: admin.permissions,
+                        },
+                        tokens: { accessToken, refreshToken },
+                    },
                     "Login successful"
                 )
             );
     });
+
+    private static async validateRoleCreation(role, requestingAdmin) {
+        if (role === "superadmin") {
+            const superadminExists = await Admin.findOne({ role: "superadmin" });
+            if (superadminExists) {
+                throw new ApiError(403, "Superadmin already exists");
+            }
+        }
+
+        if (
+            role === "admin" &&
+            (!requestingAdmin || requestingAdmin.role !== "superadmin")
+        ) {
+            throw new ApiError(403, "Only superadmin can create admins");
+        }
+    }
 }
 
 // 🏥 Verification Controllers
