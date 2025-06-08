@@ -10,10 +10,10 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 
-// Admin Permission Levels
+// Admin Permission Levels with detailed access control
 const ADMIN_PERMISSIONS = {
     SUPERADMIN: ["all"],
-    ADMIN: ["basic", "verify", "monitor"],
+    ADMIN: ["basic", "verify", "monitor", "reports"],
     MODERATOR: ["basic", "monitor"],
 };
 
@@ -22,14 +22,15 @@ class AuthController {
     static generateTokens = async (adminId) => {
         try {
             const admin = await Admin.findById(adminId);
-            const accessToken = await generateActionToken(admin, "access");
-            const refreshToken = await generateActionToken(admin, "refresh");
+            const accessToken = admin.generateAccessToken();
+            const refreshToken = admin.generateRefreshToken();
 
             admin.refreshToken = refreshToken;
             admin.lastLogin = new Date();
             admin.loginHistory.push({
                 timestamp: new Date(),
-                success: true,
+                ipAddress: req.ip,
+                userAgent: req.headers["user-agent"],
             });
 
             await admin.save({ validateBeforeSave: false });
@@ -162,7 +163,16 @@ class AuthController {
 
 // 🏥 Verification Controllers
 class VerificationController {
+    static async validateVerificationAccess(adminId) {
+        const admin = await Admin.findById(adminId);
+        if (!admin.permissions.includes("verify")) {
+            throw new ApiError(403, "Insufficient permissions for verification");
+        }
+    }
+
     static verifyHospital = asyncHandler(async (req, res) => {
+        await VerificationController.validateVerificationAccess(req.admin._id);
+
         const { hospitalId } = req.params;
         const { status, remarks, verificationDocuments } = req.body;
 
@@ -212,6 +222,8 @@ class VerificationController {
     });
 
     static verifyNGO = asyncHandler(async (req, res) => {
+        await VerificationController.validateVerificationAccess(req.admin._id);
+
         const { ngoId } = req.params;
         const { status, remarks, verificationDocuments } = req.body;
 
@@ -262,17 +274,22 @@ class VerificationController {
 // 📊 Analytics Controllers
 class AnalyticsController {
     static getSystemAnalytics = asyncHandler(async (req, res) => {
+        const timeframe = req.query.timeframe || "24h";
         const [hospitals, ngos, analytics, urgentRequests] = await Promise.all([
             Hospital.aggregate([
                 {
                     $group: {
                         _id: "$isVerified",
                         count: { $sum: 1 },
-                        totalRequests: {
-                            $sum: "$statistics.totalRequestsMade",
-                        },
-                        emergencyRequests: {
-                            $sum: "$statistics.emergencyRequests",
+                        totalRequests: { $sum: "$statistics.totalRequestsMade" },
+                        emergencyRequests: { $sum: "$statistics.emergencyRequests" },
+                        capacityUtilization: {
+                            $avg: {
+                                $divide: [
+                                    "$statistics.currentPatients",
+                                    { $max: ["$statistics.totalCapacity", 1] },
+                                ],
+                            },
                         },
                     },
                 },
@@ -283,8 +300,14 @@ class AnalyticsController {
                         _id: "$isVerified",
                         count: { $sum: 1 },
                         totalCamps: { $sum: "$statistics.totalCampsOrganized" },
-                        totalDonations: {
-                            $sum: "$statistics.totalDonationsCollected",
+                        totalDonations: { $sum: "$statistics.totalDonationsCollected" },
+                        successRate: {
+                            $avg: {
+                                $divide: [
+                                    "$statistics.successfulDonations",
+                                    { $max: ["$statistics.totalAttempts", 1] },
+                                ],
+                            },
                         },
                     },
                 },
@@ -293,8 +316,13 @@ class AnalyticsController {
             BloodRequest.find({
                 urgencyLevel: "Emergency",
                 status: { $nin: ["Completed", "Cancelled"] },
+                createdAt: {
+                    $gte: new Date(Date.now() - this.getTimeframeInMS(timeframe)),
+                },
             }).count(),
         ]);
+
+        const systemMetrics = await this.calculateSystemMetrics();
 
         return res.status(200).json(
             new ApiResponse(
@@ -304,51 +332,48 @@ class AnalyticsController {
                     ngos,
                     analytics,
                     urgentRequests,
-                    systemHealth: {
-                        status: "Operational",
-                        lastChecked: new Date(),
-                        activeUsers: await getActiveUsers(),
-                    },
+                    systemMetrics,
+                    systemHealth: await this.getSystemHealth(),
                 },
                 "System analytics fetched"
             )
         );
     });
 
-    static getActivityLogs = asyncHandler(async (req, res) => {
-        const { startDate, endDate, type, page = 1, limit = 100 } = req.query;
+    static getTimeframeInMS(timeframe) {
+        const timeframes = {
+            "24h": 24 * 60 * 60 * 1000,
+            "7d": 7 * 24 * 60 * 60 * 1000,
+            "30d": 30 * 24 * 60 * 60 * 1000,
+        };
+        return timeframes[timeframe] || timeframes["24h"];
+    }
 
-        const query = {};
-        if (startDate && endDate) {
-            query.createdAt = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate),
-            };
-        }
-        if (type) query.type = type;
+    static async calculateSystemMetrics() {
+        // Add system-wide metrics calculation
+        return {
+            donorRetentionRate: await this.calculateDonorRetention(),
+            emergencyResponseTime: await this.calculateResponseTime(),
+            resourceUtilization: await this.calculateResourceUtilization(),
+        };
+    }
 
-        const activities = await Activity.find(query)
-            .sort({ createdAt: -1 })
-            .skip((page - 1) * limit)
-            .limit(limit);
-
-        const totalCount = await Activity.countDocuments(query);
-
-        return res.status(200).json(
-            new ApiResponse(
-                200,
-                {
-                    activities,
-                    pagination: {
-                        currentPage: page,
-                        totalPages: Math.ceil(totalCount / limit),
-                        totalItems: totalCount,
-                    },
-                },
-                "Activity logs fetched"
-            )
-        );
-    });
+    static async getSystemHealth() {
+        return {
+            status: "Operational",
+            lastChecked: new Date(),
+            metrics: {
+                cpuUsage: process.cpuUsage(),
+                memoryUsage: process.memoryUsage(),
+                activeConnections: await this.getActiveConnections(),
+            },
+            services: {
+                database: await this.checkDatabaseHealth(),
+                cache: await this.checkCacheHealth(),
+                storage: await this.checkStorageHealth(),
+            },
+        };
+    }
 }
 
 // Export controllers
