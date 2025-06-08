@@ -1,22 +1,50 @@
 import { DonationAppointment } from "../../models/donation/appointment.models.js";
 import { Center } from "../../models/donation/center.models.js";
 import { Activity } from "../../models/others/activity.model.js";
-import notificationService from "../../services/notification.service.js";
+import { notificationService } from "../../services/notification.service.js";
+import { aiService } from "../../services/ai.service.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
+
+// Appointment status enums
+const APPOINTMENT_STATUS = {
+    SCHEDULED: "SCHEDULED",
+    CONFIRMED: "CONFIRMED",
+    COMPLETED: "COMPLETED",
+    CANCELLED: "CANCELLED",
+    RESCHEDULED: "RESCHEDULED",
+    NO_SHOW: "NO_SHOW",
+};
 
 const createAppointment = asyncHandler(async (req, res) => {
     const { centerId, date, slotTime, bloodGroup, donationType } = req.body;
     const userId = req.user._id;
 
-    // Validate center and slot availability
+    // Enhanced validation
+    if (!date || new Date(date) < new Date()) {
+        throw new ApiError(400, "Invalid appointment date");
+    }
+
+    // Check center availability and validation
     const center = await Center.findById(centerId);
     if (!center) {
         throw new ApiError(404, "Donation center not found");
     }
 
-    // Create appointment
+    // Check if slot is available
+    const isSlotAvailable = await center.checkSlotAvailability(date, slotTime);
+    if (!isSlotAvailable) {
+        throw new ApiError(400, "Selected time slot is not available");
+    }
+
+    // Validate donor eligibility
+    const isEligible = await req.user.isEligibleToDonate();
+    if (!isEligible.status) {
+        throw new ApiError(400, `Not eligible to donate: ${isEligible.reason}`);
+    }
+
+    // Create appointment with enhanced details
     const appointment = await DonationAppointment.create({
         userId,
         centerId,
@@ -24,46 +52,58 @@ const createAppointment = asyncHandler(async (req, res) => {
         slotTime,
         bloodGroup,
         donationType,
-        status: "SCHEDULED",
+        status: APPOINTMENT_STATUS.SCHEDULED,
+        donorDetails: {
+            previousDonations: req.user.donations?.length || 0,
+            healthInfo: req.user.healthInfo,
+            specialNotes: req.user.medicalConditions,
+        },
     });
 
-    // Send confirmation notifications
-    await notificationService.sendNotification(
-        "appointment-confirmation",
-        req.user,
-        {
-            date: appointment.date,
-            center: center.name,
-            donationType,
-            sendSMS: true,
-            metadata: {
+    // Update center slot
+    await center.reserveSlot(date, slotTime);
+
+    // Send notifications with enhanced information
+    await Promise.all([
+        notificationService.sendNotification(
+            "appointment-confirmation",
+            req.user,
+            {
+                date: appointment.date,
+                center: center.name,
+                donationType,
+                sendSMS: true,
+                metadata: {
+                    appointmentId: appointment._id,
+                    centerAddress: center.address,
+                    instructions: center.donationInstructions,
+                    requirements: await center.getDonationRequirements(
+                        donationType
+                    ),
+                    directions: await center.getDirections(
+                        req.user.address?.location
+                    ),
+                },
+            }
+        ),
+        Activity.create({
+            type: "APPOINTMENT_CREATED",
+            performedBy: { userId, userModel: "User" },
+            details: {
                 appointmentId: appointment._id,
-                centerAddress: center.address,
-                instructions: center.donationInstructions,
+                center: center.name,
+                date,
+                donationType,
             },
-        }
-    );
-
-    // Log activity
-    await Activity.create({
-        type: "APPOINTMENT_CREATED",
-        performedBy: {
-            userId,
-            userModel: "User",
-        },
-        details: {
-            appointmentId: appointment._id,
-            center: center.name,
-            date,
-        },
-    });
+        }),
+    ]);
 
     return res
         .status(201)
         .json(
             new ApiResponse(
                 201,
-                appointment,
+                { appointment },
                 "Appointment scheduled successfully"
             )
         );
@@ -71,28 +111,77 @@ const createAppointment = asyncHandler(async (req, res) => {
 
 const updateAppointment = asyncHandler(async (req, res) => {
     const { appointmentId } = req.params;
-    const { status, reason } = req.body;
+    const { status, reason, newDate, newSlotTime } = req.body;
 
-    const appointment = await DonationAppointment.findById(appointmentId);
+    const appointment = await DonationAppointment.findById(appointmentId)
+        .populate("centerId")
+        .populate("userId", "email phone");
+
     if (!appointment) {
         throw new ApiError(404, "Appointment not found");
     }
 
-    appointment.status = status;
-    if (reason) appointment.statusReason = reason;
+    // Handle rescheduling
+    if (newDate && newSlotTime) {
+        const isNewSlotAvailable =
+            await appointment.centerId.checkSlotAvailability(
+                newDate,
+                newSlotTime
+            );
+
+        if (!isNewSlotAvailable) {
+            throw new ApiError(400, "New time slot is not available");
+        }
+
+        // Release old slot and reserve new one
+        await Promise.all([
+            appointment.centerId.releaseSlot(
+                appointment.date,
+                appointment.slotTime
+            ),
+            appointment.centerId.reserveSlot(newDate, newSlotTime),
+        ]);
+
+        appointment.date = newDate;
+        appointment.slotTime = newSlotTime;
+        appointment.status = APPOINTMENT_STATUS.RESCHEDULED;
+    } else if (status) {
+        appointment.status = status;
+        appointment.statusReason = reason;
+
+        // Release slot if cancelled
+        if (status === APPOINTMENT_STATUS.CANCELLED) {
+            await appointment.centerId.releaseSlot(
+                appointment.date,
+                appointment.slotTime
+            );
+        }
+    }
+
     await appointment.save();
 
-    // Send status update notification
-    const center = await Center.findById(appointment.centerId);
+    // Send notifications based on update type
+    const notificationType =
+        status === APPOINTMENT_STATUS.CANCELLED
+            ? "appointment-cancelled"
+            : newDate
+            ? "appointment-rescheduled"
+            : "appointment-update";
+
     await notificationService.sendNotification(
-        status === "CANCELLED" ? "appointment-cancelled" : "appointment-update",
-        req.user,
+        notificationType,
+        appointment.userId,
         {
             date: appointment.date,
-            center: center.name,
-            status,
+            center: appointment.centerId.name,
+            status: appointment.status,
             reason,
             sendSMS: true,
+            metadata: {
+                appointmentId: appointment._id,
+                newDate,
+                newSlotTime,
+            },
         }
     );
 
@@ -101,7 +190,7 @@ const updateAppointment = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                appointment,
+                { appointment },
                 "Appointment updated successfully"
             )
         );
@@ -111,14 +200,27 @@ const sendReminder = asyncHandler(async (req, res) => {
     const { appointmentId } = req.params;
 
     const appointment = await DonationAppointment.findById(appointmentId)
-        .populate("centerId", "name address donationInstructions")
-        .populate("userId", "email phone");
+        .populate("centerId", "name address donationInstructions requirements")
+        .populate("userId", "email phone address");
 
     if (!appointment) {
         throw new ApiError(404, "Appointment not found");
     }
 
-    // Send reminder notification
+    // Get traffic and weather information
+    const [trafficInfo, weatherInfo] = await Promise.all([
+        aiService.getTrafficEstimate(
+            appointment.userId.address?.location,
+            appointment.centerId.address.location,
+            appointment.date
+        ),
+        aiService.getWeatherForecast(
+            appointment.centerId.address.location,
+            appointment.date
+        ),
+    ]);
+
+    // Send comprehensive reminder
     await notificationService.sendNotification(
         "donation-reminder",
         appointment.userId,
@@ -129,7 +231,12 @@ const sendReminder = asyncHandler(async (req, res) => {
             metadata: {
                 appointmentId: appointment._id,
                 instructions: appointment.centerId.donationInstructions,
-                requirements: "Please bring valid ID and avoid heavy meals",
+                requirements: appointment.centerId.requirements,
+                trafficInfo,
+                weatherInfo,
+                directions: await appointment.centerId.getDirections(
+                    appointment.userId.address?.location
+                ),
             },
         }
     );
@@ -139,4 +246,9 @@ const sendReminder = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "Reminder sent successfully"));
 });
 
-export { createAppointment, updateAppointment, sendReminder };
+export {
+    createAppointment,
+    updateAppointment,
+    sendReminder,
+    APPOINTMENT_STATUS,
+};
