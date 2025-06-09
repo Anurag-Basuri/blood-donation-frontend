@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { upload } from '../middleware/multer.middleware.js';
+import { upload } from '../../middleware/multer.middleware.js';
 import {
   registerNGO,
   verifyNGOEmail,
@@ -15,7 +15,7 @@ import {
   respondToConnectionRequest,
   changePassword
 } from '../controllers/ngo.controller.js';
-import { verifyJWT } from '../middleware/auth.middleware.js';
+import { verifyJWT } from '../../middleware/auth.middleware.js';
 
 const router = Router();
 
