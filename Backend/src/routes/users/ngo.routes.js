@@ -1,41 +1,148 @@
 import { Router } from 'express';
 import { upload } from '../../middleware/multer.middleware.js';
+import { validateRequest } from "../../middleware/validator.middleware.js";
+import { verifyNGO, verifyJWT } from "../../middleware/auth.middleware.js";
+import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
-  registerNGO,
-  verifyNGOEmail,
-  // requestNewOTP,
-  resendVerificationOtp,
-  loginNGO,
-  logoutNGO,
-  refreshAccessToken,
-  getNGOProfile,
-  updateNGOProfile,
-  updateBloodInventory,
-  getConnectedHospitals,
-  respondToConnectionRequest,
-  changePassword
-} from '../controllers/ngo.controller.js';
-import { verifyJWT } from '../../middleware/auth.middleware.js';
+    registerNGO,
+    loginNGO,
+    logoutNGO,
+    verifyNGOEmail,
+    resendVerificationOtp,
+    refreshAccessToken,
+    getNGOProfile,
+    updateNGOProfile,
+    manageFacility,
+    handleBloodRequest,
+    updateBloodInventory,
+    getConnectedHospitals,
+    respondToConnectionRequest,
+    getNGOAnalytics,
+    changePassword,
+} from "../../controllers/users/ngo.controller.js";
 
 const router = Router();
 
-// Public routes
-router.post('/register', upload.fields([{ name: 'logo', maxCount: 1 }]), registerNGO);
-router.post('/verify-email', verifyNGOEmail);
-router.post('/resend-otp', resendVerificationOtp);
-// router.post('/request-otp', requestNewOTP);
-router.post('/login', loginNGO);
-router.post('/refresh-token', refreshAccessToken);
+// File upload configurations
+const documentUpload = upload.fields([
+    { name: "logo", maxCount: 1 },
+    { name: "registrationCert", maxCount: 1 },
+    { name: "licenseCert", maxCount: 1 },
+    { name: "taxExemptionCert", maxCount: 1 },
+]);
 
-// Protected routes
-router.use(verifyJWT); // Apply verifyJWT middleware to all routes below
+// Auth Routes (Public)
+router.post(
+    "/register",
+    rateLimiter({
+        windowMs: 60 * 60 * 1000, // 1 hour
+        max: 3, // 3 registration attempts per hour
+    }),
+    documentUpload,
+    validateRequest("ngo.register"),
+    registerNGO
+);
 
-router.get('/logout', logoutNGO);
-router.get('/profile', getNGOProfile);
-router.post('/update-profile', upload.fields([{ name: 'logo', maxCount: 1 }]), updateNGOProfile);
-router.post('/update-blood-inventory', updateBloodInventory);
-router.get('/connected-hospitals', getConnectedHospitals);
-router.post('/connection-response', respondToConnectionRequest);
-router.post('/change-password', changePassword);
+router.post(
+    "/login",
+    rateLimiter({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 5, // 5 login attempts
+    }),
+    validateRequest("ngo.login"),
+    loginNGO
+);
+
+router.post(
+    "/verify-email",
+    validateRequest("ngo.emailVerification"),
+    verifyNGOEmail
+);
+router.post(
+    "/resend-otp",
+    validateRequest("ngo.resendOTP"),
+    resendVerificationOtp
+);
+router.post("/refresh-token", refreshAccessToken);
+
+// Protected Routes (Require Authentication)
+router.use(verifyJWT);
+router.use(verifyNGO);
+
+// Profile Management
+router.get("/logout", logoutNGO);
+
+router
+    .route("/profile")
+    .get(getNGOProfile)
+    .patch(
+        documentUpload,
+        validateRequest("ngo.profileUpdate"),
+        updateNGOProfile
+    );
+
+router.post(
+    "/change-password",
+    validateRequest("ngo.passwordChange"),
+    changePassword
+);
+
+// Facility Management
+router
+    .route("/facilities")
+    .post(validateRequest("ngo.facilityCreate"), manageFacility)
+    .get(validateRequest("ngo.facilityList"), async (req, res) => {
+        req.params.action = "LIST";
+        await manageFacility(req, res);
+    });
+
+router
+    .route("/facilities/:facilityId")
+    .patch(validateRequest("ngo.facilityUpdate"), async (req, res) => {
+        req.params.action = "UPDATE";
+        await manageFacility(req, res);
+    })
+    .delete(async (req, res) => {
+        req.params.action = "DELETE";
+        await manageFacility(req, res);
+    });
+
+// Blood Inventory Management
+router
+    .route("/inventory")
+    .post(validateRequest("ngo.inventoryUpdate"), updateBloodInventory)
+    .get(async (req, res) => {
+        req.params.action = "GET";
+        await updateBloodInventory(req, res);
+    });
+
+// Hospital Connections
+router.get("/hospitals/connected", getConnectedHospitals);
+router.post(
+    "/hospitals/respond",
+    validateRequest("ngo.connectionResponse"),
+    respondToConnectionRequest
+);
+
+// Blood Request Management
+router
+    .route("/blood-requests/:requestId")
+    .post(validateRequest("ngo.bloodRequestResponse"), handleBloodRequest);
+
+// Analytics
+router.get(
+    "/analytics",
+    validateRequest("ngo.analyticsQuery"),
+    getNGOAnalytics
+);
+
+// Health Check
+router.get("/health", (req, res) => {
+    res.status(200).json({
+        status: "healthy",
+        ngoId: req.ngo?._id,
+        timestamp: new Date(),
+    });
+});
 
 export default router;
