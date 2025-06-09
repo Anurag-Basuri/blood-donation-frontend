@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { upload } from '../../middleware/multer.middleware.js';
 import { validateRequest } from "../../middleware/validator.middleware.js";
-import { verifyJWT, verifyHospital } from '../../middleware/auth.middleware.js';
+import { verifyJWT } from '../../middleware/auth.middleware.js';
 import { rateLimiter } from '../../middleware/rateLimit.middleware.js';
 import {
     registerHospital,
@@ -62,7 +62,6 @@ router.post('/refresh-token', refreshAccessToken);
 
 // Protected routes
 router.use(verifyJWT);
-router.use(verifyHospital);
 
 // Profile Management
 router.get('/logout', logoutHospital);
