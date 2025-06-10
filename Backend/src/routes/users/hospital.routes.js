@@ -150,18 +150,11 @@ router.get(
 
 // Health Check
 router.get('/health', (req, res) => {
-
-
-
-
-
-
-
-
-export default router;});    });        timestamp: new Date()        hospitalId: req.hospital?._id,        status: 'healthy',    res.status(200).json({    res.status(200).json({
-        status: 'healthy',
+    res.status(200).json({
+        status: "healthy",
         hospitalId: req.hospital?._id,
-        timestamp: new Date()
+        timestamp: new Date(),
+        version: process.env.API_VERSION || "1.0.0",
     });
 });
 
