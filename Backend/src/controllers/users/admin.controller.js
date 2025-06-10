@@ -144,7 +144,7 @@ class AuthController {
             );
     });
 
-    private static async validateRoleCreation(role, requestingAdmin) {
+    static async validateRoleCreation(role, requestingAdmin) {
         if (role === "superadmin") {
             const superadminExists = await Admin.findOne({ role: "superadmin" });
             if (superadminExists) {
