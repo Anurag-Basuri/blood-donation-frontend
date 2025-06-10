@@ -167,6 +167,34 @@ const registerNGO = asyncHandler(async (req, res) => {
     );
 });
 
+const loginNGO = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+        throw new ApiError(400, "Email and password are required");
+    }
+
+    // Find NGO by email
+    const ngo = await NGO.findOne({ email });
+    if (!ngo) {
+        throw new ApiError(404, "NGO not found");
+    }
+
+    // Check password
+    const isMatch = await ngo.comparePassword(password);
+    if (!isMatch) {
+        throw new ApiError(401, "Invalid credentials");
+    }
+
+    // Generate tokens
+    const tokens = await generateTokens(ngo._id);
+
+    return res.status(200).json(
+        new ApiResponse(200, { ngo, ...tokens }, "Login successful")
+    );
+});
+
 // Facility Management
 const manageFacility = asyncHandler(async (req, res) => {
     const { action } = req.params;
