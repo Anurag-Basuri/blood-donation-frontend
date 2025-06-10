@@ -1,6 +1,12 @@
 import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
-import redis from '../config/redis.js';
+import { createClient } from 'redis';
+
+const redis = createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379'
+});
+
+redis.connect().catch(console.error);
 
 export const apiLimiter = rateLimit({
   store: new RedisStore({
