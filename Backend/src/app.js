@@ -45,7 +45,7 @@ app.use(limiter);
 // CORS configuration
 app.use(
     cors({
-        origin: process.env.CORS_ORIGIN || "http://localhost:8000",
+        origin: process.env.CORS_ORIGIN || "http://localhost:000",
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
         allowedHeaders: ["Content-Type", "Authorization"],
