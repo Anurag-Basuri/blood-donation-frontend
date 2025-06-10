@@ -8,61 +8,6 @@ import {
     sendReminder,
     APPOINTMENT_STATUS,
 } from "../../controllers/donation/appointment.controller.js";
-import Joi from "joi";
-
-export const appointmentValidationRules = {
-    create: Joi.object({
-        facilityId: Joi.string()
-            .required()
-            .trim()
-            .regex(/^[0-9a-fA-F]{24}$/)
-            .message("Invalid facility ID"),
-        date: Joi.date().greater("now").required().messages({
-            "date.greater": "Appointment date must be in the future",
-        }),
-        slotTime: Joi.string().required().trim(),
-        bloodGroup: Joi.string()
-            .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
-            .required(),
-        donationType: Joi.string()
-            .valid("WHOLE_BLOOD", "PLASMA", "PLATELETS")
-            .required(),
-        healthDeclaration: Joi.object({
-            recentIllness: Joi.boolean(),
-            medications: Joi.array().items(Joi.string()),
-            lastMeal: Joi.date(),
-            restingHours: Joi.number(),
-        }),
-    }),
-
-    update: Joi.object({
-        status: Joi.string()
-            .valid(...Object.values(APPOINTMENT_STATUS))
-            .when("newDate", { is: Joi.exist(), then: Joi.forbidden() }),
-        reason: Joi.string()
-            .when("status", {
-                is: APPOINTMENT_STATUS.CANCELLED,
-                then: Joi.required(),
-                otherwise: Joi.optional(),
-            })
-            .min(10)
-            .max(200),
-        newDate: Joi.date()
-            .greater("now")
-            .when("status", { is: Joi.exist(), then: Joi.forbidden() }),
-        newSlotTime: Joi.string().when("newDate", {
-            is: Joi.exist(),
-            then: Joi.required(),
-            otherwise: Joi.forbidden(),
-        }),
-    }).xor("status", "newDate"),
-
-    reminder: Joi.object({
-        includeTraffic: Joi.boolean().default(true),
-        includeWeather: Joi.boolean().default(true),
-        sendSMS: Joi.boolean().default(true),
-    }),
-};
 
 // Error handler
 router.use((err, req, res, next) => {
