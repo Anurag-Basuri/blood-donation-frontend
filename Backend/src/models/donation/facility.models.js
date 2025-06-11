@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { BLOOD_TYPES } from "./blood.models.js";
+import { BLOOD_TYPES } from "..donation/blood.models.js";
 import { ApiError } from "../../utils/ApiError.js";
 
 const FACILITY_TYPE = {
