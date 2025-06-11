@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
-import { ApiError } from "../utils/ApiError.js";
-
+import { ApiError } from "../../utils/ApiError.js";
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const URGENCY_LEVELS = {
     EMERGENCY: "Emergency", // Need within 2 hours
