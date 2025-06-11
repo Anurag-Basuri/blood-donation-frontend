@@ -1,5 +1,8 @@
 import { Router } from 'express';
-import { upload } from '../../middleware/multer.middleware.js';
+import {
+    uploadFields,
+    handleMulterError,
+} from "../../middleware/multer.middleware.js";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
 import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
@@ -23,7 +26,7 @@ import {
 const router = Router();
 
 // File upload configurations
-const documentUpload = upload.fields([
+const documentUpload = uploadFields([
     { name: "logo", maxCount: 1 },
     { name: "registrationCert", maxCount: 1 },
     { name: "licenseCert", maxCount: 1 },
@@ -38,6 +41,7 @@ router.post(
         max: 3, // 3 registration attempts per hour
     }),
     documentUpload,
+    handleMulterError,
     validateRequest("ngo.register"),
     registerNGO
 );
@@ -62,7 +66,6 @@ router.post(
     validateRequest("ngo.resendOTP"),
     resendVerificationOtp
 );
-router.post("/refresh-token", refreshAccessToken);
 
 // Protected Routes (Require Authentication)
 router.use(verifyJWT);
@@ -75,6 +78,7 @@ router
     .get(getNGOProfile)
     .patch(
         documentUpload,
+        handleMulterError,
         validateRequest("ngo.profileUpdate"),
         updateNGOProfile
     );
