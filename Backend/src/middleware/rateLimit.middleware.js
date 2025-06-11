@@ -1,6 +1,7 @@
 import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import { createClient } from 'redis';
+import express from 'express';
 
 const redis = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379'
