@@ -15,43 +15,35 @@ import { uploadFile } from "../../utils/fileUpload.js";
 import notificationService from "../../services/notification.service.js";
 
 // Enums and Constants
-const NGO_STATUS = {
+export const NGO_STATUS = {
     PENDING: "PENDING",
     ACTIVE: "ACTIVE",
     SUSPENDED: "SUSPENDED",
     BLACKLISTED: "BLACKLISTED",
 };
 
-const FACILITY_OPERATIONS = {
+export const FACILITY_OPERATIONS = {
     CREATE: "create",
     UPDATE: "update",
     DELETE: "delete",
     SUSPEND: "suspend",
     ACTIVATE: "activate",
+    LIST: "LIST",
 };
 
-// Auth Controllers
+// Helper: Generate tokens for NGO
 const generateTokens = async (ngoId) => {
-    try {
-        const ngo = await NGO.findById(ngoId);
-        const accessToken = ngo.generateAccessToken();
-        const refreshToken = ngo.generateRefreshToken();
+    const ngo = await NGO.findById(ngoId);
+    const accessToken = ngo.generateAccessToken();
+    const refreshToken = ngo.generateRefreshToken();
 
-        ngo.refreshToken = refreshToken;
-        ngo.lastLogin = new Date();
-        ngo.loginHistory.push({
-            timestamp: new Date(),
-            ipAddress: req.ip,
-            userAgent: req.headers["user-agent"],
-        });
-
-        await ngo.save({ validateBeforeSave: false });
-        return { accessToken, refreshToken };
-    } catch (error) {
-        throw new ApiError(500, "Token generation failed");
-    }
+    ngo.refreshToken = refreshToken;
+    ngo.lastLogin = new Date();
+    await ngo.save({ validateBeforeSave: false });
+    return { accessToken, refreshToken };
 };
 
+// Registration
 const registerNGO = asyncHandler(async (req, res) => {
     const {
         name,
@@ -65,34 +57,18 @@ const registerNGO = asyncHandler(async (req, res) => {
         operatingHours,
     } = req.body;
 
-    // Enhanced validation
-    const validations = [
-        { condition: !name?.trim(), message: "NGO name is required" },
-        { condition: !email?.trim(), message: "Email is required" },
-        {
-            condition: !password?.trim() || password.length < 8,
-            message: "Password must be at least 8 characters",
-        },
-        {
-            condition: !contactPerson?.name || !contactPerson?.phone,
-            message: "Contact person details required",
-        },
-        {
-            condition: !regNumber?.trim(),
-            message: "Registration number required",
-        },
-    ];
-
-    const failedValidation = validations.find((v) => v.condition);
-    if (failedValidation) {
-        throw new ApiError(400, failedValidation.message);
-    }
+    // Validation
+    if (!name?.trim()) throw new ApiError(400, "NGO name is required");
+    if (!email?.trim()) throw new ApiError(400, "Email is required");
+    if (!password?.trim() || password.length < 8)
+        throw new ApiError(400, "Password must be at least 8 characters");
+    if (!contactPerson?.name || !contactPerson?.phone)
+        throw new ApiError(400, "Contact person details required");
+    if (!regNumber?.trim())
+        throw new ApiError(400, "Registration number required");
 
     // Check existing NGO
-    const existingNGO = await NGO.findOne({
-        $or: [{ email }, { regNumber }],
-    });
-
+    const existingNGO = await NGO.findOne({ $or: [{ email }, { regNumber }] });
     if (existingNGO) {
         throw new ApiError(
             409,
@@ -113,7 +89,7 @@ const registerNGO = asyncHandler(async (req, res) => {
         for (const docType of allowedDocs) {
             if (req.files[docType]) {
                 documents[docType] = await uploadFile({
-                    file: req.files[docType],
+                    file: req.files[docType][0],
                     folder: `ngo-documents/${docType}`,
                 });
             }
@@ -139,10 +115,7 @@ const registerNGO = asyncHandler(async (req, res) => {
     // Log activity
     await Activity.create({
         type: "NGO_REGISTERED",
-        performedBy: {
-            userId: ngo._id,
-            userModel: "NGO",
-        },
+        performedBy: { userId: ngo._id, userModel: "NGO" },
         details: {
             ngoId: ngo._id,
             name: ngo.name,
@@ -167,32 +140,101 @@ const registerNGO = asyncHandler(async (req, res) => {
     );
 });
 
+// Login
 const loginNGO = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-
-    // Validate input
-    if (!email || !password) {
+    if (!email || !password)
         throw new ApiError(400, "Email and password are required");
-    }
 
-    // Find NGO by email
     const ngo = await NGO.findOne({ email });
-    if (!ngo) {
-        throw new ApiError(404, "NGO not found");
-    }
+    if (!ngo) throw new ApiError(404, "NGO not found");
 
-    // Check password
     const isMatch = await ngo.comparePassword(password);
-    if (!isMatch) {
-        throw new ApiError(401, "Invalid credentials");
-    }
+    if (!isMatch) throw new ApiError(401, "Invalid credentials");
 
-    // Generate tokens
     const tokens = await generateTokens(ngo._id);
 
-    return res.status(200).json(
-        new ApiResponse(200, { ngo, ...tokens }, "Login successful")
+    return res
+        .status(200)
+        .json(new ApiResponse(200, { ngo, ...tokens }, "Login successful"));
+});
+
+// Logout
+const logoutNGO = asyncHandler(async (req, res) => {
+    const ngoId = req.ngo._id;
+    const ngo = await NGO.findById(ngoId);
+    if (!ngo) throw new ApiError(404, "NGO not found");
+
+    ngo.refreshToken = null;
+    await ngo.save({ validateBeforeSave: false });
+
+    return res.status(200).json(new ApiResponse(200, {}, "Logout successful"));
+});
+
+// Change Password
+const changePassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    const ngoId = req.ngo._id;
+
+    if (!oldPassword || !newPassword)
+        throw new ApiError(400, "Old and new passwords are required");
+
+    const ngo = await NGO.findById(ngoId);
+    if (!ngo) throw new ApiError(404, "NGO not found");
+
+    const isMatch = await ngo.comparePassword(oldPassword);
+    if (!isMatch) throw new ApiError(401, "Old password is incorrect");
+
+    ngo.password = newPassword;
+    await ngo.save();
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Password updated successfully"));
+});
+
+// Profile Management
+const getNGOProfile = asyncHandler(async (req, res) => {
+    const ngo = await NGO.findById(req.ngo._id).select(
+        "-password -refreshToken"
     );
+    if (!ngo) throw new ApiError(404, "NGO not found");
+    return res
+        .status(200)
+        .json(new ApiResponse(200, ngo, "NGO profile fetched successfully"));
+});
+
+const updateNGOProfile = asyncHandler(async (req, res) => {
+    const ngoId = req.ngo._id;
+    const updateFields = { ...req.body };
+
+    // Handle document uploads
+    if (req.files) {
+        const allowedDocs = [
+            "registrationCert",
+            "licenseCert",
+            "taxExemptionCert",
+            "logo",
+        ];
+        for (const docType of allowedDocs) {
+            if (req.files[docType]) {
+                updateFields[`documents.${docType}`] = await uploadFile({
+                    file: req.files[docType][0],
+                    folder: `ngo-documents/${docType}`,
+                });
+            }
+        }
+    }
+
+    const ngo = await NGO.findByIdAndUpdate(ngoId, updateFields, {
+        new: true,
+        runValidators: true,
+    });
+    if (!ngo) throw new ApiError(404, "NGO not found");
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, ngo, "NGO profile updated successfully"));
 });
 
 // Facility Management
@@ -200,7 +242,6 @@ const manageFacility = asyncHandler(async (req, res) => {
     const { action } = req.params;
     const ngoId = req.ngo._id;
 
-    // Validate NGO status
     if (req.ngo.status !== NGO_STATUS.ACTIVE) {
         throw new ApiError(403, "NGO must be active to manage facilities");
     }
@@ -231,24 +272,38 @@ const manageFacility = asyncHandler(async (req, res) => {
             );
     }
 
+    if (action === FACILITY_OPERATIONS.LIST) {
+        const facilities = await Facility.find({ ngoId });
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(
+                    200,
+                    facilities,
+                    "Facilities fetched successfully"
+                )
+            );
+    }
+
     const facility = await Facility.findOne({
         _id: req.params.facilityId,
         ngoId,
     });
-    if (!facility) {
-        throw new ApiError(404, "Facility not found");
-    }
+    if (!facility) throw new ApiError(404, "Facility not found");
 
     switch (action) {
         case FACILITY_OPERATIONS.UPDATE:
-            await updateFacility(facility, req.body);
+            Object.assign(facility, req.body);
+            await facility.save();
             break;
         case FACILITY_OPERATIONS.DELETE:
-            await deleteFacility(facility);
+            await facility.deleteOne();
             break;
         case FACILITY_OPERATIONS.SUSPEND:
         case FACILITY_OPERATIONS.ACTIVATE:
-            await updateFacilityStatus(facility, action);
+            facility.status =
+                action === FACILITY_OPERATIONS.SUSPEND ? "SUSPENDED" : "ACTIVE";
+            await facility.save();
             break;
         default:
             throw new ApiError(400, "Invalid operation");
@@ -271,61 +326,53 @@ const handleBloodRequest = asyncHandler(async (req, res) => {
         "hospitalId",
         "name address contactInfo"
     );
+    if (!request) throw new ApiError(404, "Blood request not found");
 
-    if (!request) {
-        throw new ApiError(404, "Blood request not found");
-    }
-
-    // Update request status
     await request.updateStatus(action, ngoId, notes);
 
     // Handle different actions
-    switch (action) {
-        case "ACCEPTED":
-            await handleAcceptedRequest(request, assignedDonors);
-            break;
-        case "COMPLETED":
-            await handleCompletedRequest(request);
-            break;
-        case "REJECTED":
-            await handleRejectedRequest(request, notes);
-            break;
+    if (action === "ACCEPTED" && assignedDonors) {
+        // Assign donors logic here if needed
     }
+    // Add logic for COMPLETED, REJECTED, etc. as needed
 
     return res
         .status(200)
         .json(new ApiResponse(200, request, "Request handled successfully"));
 });
 
-// Analytics & Reports
-const getNGOAnalytics = asyncHandler(async (req, res) => {
-    const ngoId = req.ngo._id;
-    const { startDate, endDate } = req.query;
-
-    const [facilityStats, donationStats, requestStats, impactMetrics] =
-        await Promise.all([
-            getFacilityStatistics(ngoId, startDate, endDate),
-            getDonationStatistics(ngoId, startDate, endDate),
-            getRequestStatistics(ngoId, startDate, endDate),
-            calculateImpactMetrics(ngoId),
-        ]);
-
-    return res.status(200).json(
-        new ApiResponse(
-            200,
-            {
-                facilityStats,
-                donationStats,
-                requestStats,
-                impactMetrics,
-                timeframe: { startDate, endDate },
-            },
-            "Analytics fetched successfully"
-        )
-    );
+// Blood Inventory Management
+const updateBloodInventory = asyncHandler(async (req, res) => {
+    // Implement inventory update logic here
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Inventory updated (stub)"));
 });
 
-// Helper Functions
+// Hospital Connections
+const getConnectedHospitals = asyncHandler(async (req, res) => {
+    // Implement logic to fetch connected hospitals
+    return res
+        .status(200)
+        .json(new ApiResponse(200, [], "Connected hospitals fetched (stub)"));
+});
+
+const respondToConnectionRequest = asyncHandler(async (req, res) => {
+    // Implement logic to respond to hospital connection requests
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Connection response handled (stub)"));
+});
+
+// Analytics & Reports
+const getNGOAnalytics = asyncHandler(async (req, res) => {
+    // Implement analytics logic here
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Analytics fetched (stub)"));
+});
+
+// Helper: Notify nearby donors for new camp
 const notifyNearbyDonors = async (facility) => {
     const nearbyUsers = await User.find({
         "address.location": {
@@ -356,9 +403,14 @@ const notifyNearbyDonors = async (facility) => {
 export {
     registerNGO,
     loginNGO,
+    logoutNGO,
+    changePassword,
+    getNGOProfile,
+    updateNGOProfile,
     manageFacility,
     handleBloodRequest,
+    updateBloodInventory,
+    getConnectedHospitals,
+    respondToConnectionRequest,
     getNGOAnalytics,
-    NGO_STATUS,
-    FACILITY_OPERATIONS,
 };
