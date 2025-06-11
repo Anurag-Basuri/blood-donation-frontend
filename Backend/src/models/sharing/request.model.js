@@ -4,248 +4,239 @@ import mongoose from "mongoose";
 export const RESOURCE_TYPE = {
     EQUIPMENT: "EQUIPMENT",
     MEDICINE: "MEDICINE",
+    SUPPLIES: "SUPPLIES",
 };
 
-export const RESOURCE_STATUS = {
-    AVAILABLE: "AVAILABLE",
-    IN_USE: "IN_USE",
-    MAINTENANCE: "MAINTENANCE",
-    DISPOSED: "DISPOSED",
+export const REQUEST_STATUS = {
+    PENDING: "PENDING",
+    APPROVED: "APPROVED",
+    REJECTED: "REJECTED",
+    CANCELLED: "CANCELLED",
+    COMPLETED: "COMPLETED",
     EXPIRED: "EXPIRED",
-    RESERVED: "RESERVED",
 };
 
-export const CONDITION_TYPES = {
-    EXCELLENT: "EXCELLENT",
-    GOOD: "GOOD",
-    FAIR: "FAIR",
-    NEEDS_REPAIR: "NEEDS_REPAIR",
+export const REQUEST_PRIORITY = {
+    LOW: "LOW",
+    MEDIUM: "MEDIUM",
+    HIGH: "HIGH",
+    URGENT: "URGENT",
 };
 
-// Base Resource Schema
-const resourceSchema = new mongoose.Schema(
+// Resource Request Schema
+const requestSchema = new mongoose.Schema(
     {
-        name: {
+        requesterId: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+            refPath: "requesterType",
+        },
+        requesterType: {
             type: String,
-            required: [true, "Resource name is required"],
-            trim: true,
+            required: true,
+            enum: ["Hospital", "NGO"],
+        },
+        resourceId: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+            refPath: "resourceType",
         },
         resourceType: {
             type: String,
-            enum: Object.values(RESOURCE_TYPE),
             required: true,
+            enum: Object.values(RESOURCE_TYPE),
         },
-        owner: {
-            entityId: {
-                type: mongoose.Schema.Types.ObjectId,
+        quantity: {
+            requested: {
+                type: Number,
                 required: true,
-                refPath: "owner.entityType",
+                min: 1,
             },
-            entityType: {
-                type: String,
-                required: true,
-                enum: ["Hospital", "NGO", "User"],
-            },
+            approved: Number,
         },
-        location: {
-            type: {
-                type: String,
-                enum: ["Point"],
-                default: "Point",
-            },
-            coordinates: {
-                type: [Number],
+        duration: {
+            startDate: {
+                type: Date,
                 required: true,
             },
-            address: {
-                street: String,
-                city: String,
-                state: String,
-                pinCode: String,
+            endDate: {
+                type: Date,
+                required: true,
+                validate: {
+                    validator: function (endDate) {
+                        return endDate > this.duration.startDate;
+                    },
+                    message: "End date must be after start date",
+                },
             },
         },
         status: {
             current: {
                 type: String,
-                enum: Object.values(RESOURCE_STATUS),
-                default: RESOURCE_STATUS.AVAILABLE,
-            },
-            lastUpdated: {
-                type: Date,
-                default: Date.now,
+                enum: Object.values(REQUEST_STATUS),
+                default: REQUEST_STATUS.PENDING,
             },
             history: [
                 {
                     status: String,
-                    timestamp: Date,
                     updatedBy: {
                         type: mongoose.Schema.Types.ObjectId,
-                        refPath: "owner.entityType",
+                        refPath: "status.history.updaterType",
+                    },
+                    updaterType: {
+                        type: String,
+                        enum: ["Hospital", "NGO", "Admin"],
+                    },
+                    timestamp: {
+                        type: Date,
+                        default: Date.now,
                     },
                     reason: String,
                 },
             ],
         },
-        verification: {
-            isVerified: {
-                type: Boolean,
-                default: false,
-            },
-            verifiedBy: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Admin",
-            },
-            verifiedAt: Date,
-            documents: [
-                {
+        priority: {
+            type: String,
+            enum: Object.values(REQUEST_PRIORITY),
+            default: REQUEST_PRIORITY.MEDIUM,
+        },
+        purpose: {
+            type: String,
+            required: true,
+            minlength: 10,
+            maxlength: 500,
+        },
+        additionalDetails: {
+            requirements: String,
+            preferredLocation: {
+                type: {
                     type: String,
+                    enum: ["Point"],
+                    default: "Point",
+                },
+                coordinates: {
+                    type: [Number],
+                    validate: {
+                        validator: function (coords) {
+                            return coords.length === 2;
+                        },
+                        message: "Coordinates must be [longitude, latitude]",
+                    },
+                },
+            },
+            urgencyJustification: String,
+            attachments: [
+                {
+                    name: String,
                     url: String,
-                    uploadedAt: Date,
+                    type: String,
+                    uploadedAt: {
+                        type: Date,
+                        default: Date.now,
+                    },
                 },
             ],
         },
+        approvalDetails: {
+            approvedBy: {
+                type: mongoose.Schema.Types.ObjectId,
+                refPath: "approvalDetails.approverType",
+            },
+            approverType: {
+                type: String,
+                enum: ["Hospital", "NGO", "Admin"],
+            },
+            approvedAt: Date,
+            conditions: String,
+            notes: String,
+        },
+        communication: [
+            {
+                sender: {
+                    id: {
+                        type: mongoose.Schema.Types.ObjectId,
+                        refPath: "communication.sender.type",
+                    },
+                    type: {
+                        type: String,
+                        enum: ["Hospital", "NGO", "Admin"],
+                    },
+                },
+                message: String,
+                timestamp: {
+                    type: Date,
+                    default: Date.now,
+                },
+                attachments: [
+                    {
+                        name: String,
+                        url: String,
+                        type: String,
+                    },
+                ],
+            },
+        ],
     },
     {
         timestamps: true,
-        discriminatorKey: "resourceType",
     }
 );
 
-// Equipment specific schema
-const equipmentSchema = new mongoose.Schema({
-    details: {
-        model: String,
-        manufacturer: String,
-        serialNumber: String,
-        yearOfManufacture: Number,
-        condition: {
-            type: String,
-            enum: Object.values(CONDITION_TYPES),
-            required: true,
-        },
-        specifications: mongoose.Schema.Types.Mixed,
-    },
-    maintenance: {
-        lastMaintenance: Date,
-        nextMaintenanceDue: Date,
-        maintenanceHistory: [
-            {
-                date: Date,
-                type: String,
-                description: String,
-                cost: Number,
-                performedBy: String,
-            },
-        ],
-    },
-    availability: {
-        isAvailable: {
-            type: Boolean,
-            default: true,
-        },
-        currentUser: {
-            userId: {
-                type: mongoose.Schema.Types.ObjectId,
-                refPath: "availability.currentUser.userType",
-            },
-            userType: String,
-            fromDate: Date,
-            expectedReturnDate: Date,
-        },
-        usageHistory: [
-            {
-                userId: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    refPath: "availability.usageHistory.userType",
-                },
-                userType: String,
-                fromDate: Date,
-                toDate: Date,
-                purpose: String,
-            },
-        ],
-    },
-});
-
-// Medicine specific schema
-const medicineSchema = new mongoose.Schema({
-    details: {
-        category: {
-            type: String,
-            required: true,
-        },
-        composition: String,
-        manufacturer: String,
-        batchNumber: String,
-        prescriptionRequired: {
-            type: Boolean,
-            default: false,
-        },
-    },
-    expiry: {
-        manufacturingDate: Date,
-        expiryDate: {
-            type: Date,
-            required: true,
-        },
-    },
-    storage: {
-        temperature: String,
-        requirements: String,
-        specialInstructions: String,
-    },
-    quantity: {
-        available: {
-            type: Number,
-            required: true,
-            min: 0,
-        },
-        unit: {
-            type: String,
-            required: true,
-        },
-        threshold: {
-            type: Number,
-            default: 10,
-        },
-    },
-});
-
 // Indexes
-resourceSchema.index({ location: "2dsphere" });
-resourceSchema.index({ "status.current": 1 });
-resourceSchema.index({ resourceType: 1, "status.current": 1 });
+requestSchema.index({ requesterId: 1, status: 1 });
+requestSchema.index({ resourceId: 1 });
+requestSchema.index({ "status.current": 1 });
+requestSchema.index({ priority: 1, "status.current": 1 });
+requestSchema.index({ "additionalDetails.preferredLocation": "2dsphere" });
 
 // Methods
-resourceSchema.methods.updateStatus = async function (
+requestSchema.methods.updateStatus = async function (
     newStatus,
     updatedBy,
+    updaterType,
     reason
 ) {
     this.status.history.push({
         status: this.status.current,
-        timestamp: this.status.lastUpdated,
         updatedBy,
+        updaterType,
+        timestamp: new Date(),
         reason,
     });
-
     this.status.current = newStatus;
-    this.status.lastUpdated = new Date();
+
+    if (newStatus === REQUEST_STATUS.APPROVED) {
+        this.approvalDetails = {
+            approvedBy: updatedBy,
+            approverType: updaterType,
+            approvedAt: new Date(),
+        };
+    }
+
     return this.save();
 };
 
-// Create base model
-const Resource = mongoose.model("Resource", resourceSchema);
+requestSchema.methods.addCommunication = async function (
+    sender,
+    message,
+    attachments = []
+) {
+    this.communication.push({
+        sender,
+        message,
+        attachments,
+        timestamp: new Date(),
+    });
+    return this.save();
+};
 
-// Create discriminated models
-export const Equipment = Resource.discriminator(
-    RESOURCE_TYPE.EQUIPMENT,
-    equipmentSchema
-);
+// Statics
+requestSchema.statics.findPendingRequests = function(resourceId) {
+    return this.find({
+        resourceId,
+        "status.current": REQUEST_STATUS.PENDING
+    }).sort({ priority: -1, createdAt: 1 });
+};
 
-export const Medicine = Resource.discriminator(
-    RESOURCE_TYPE.MEDICINE,
-    medicineSchema
-);
-
-export default Resource;
+// Export model
+export const Request = mongoose.model('Request', requestSchema);
