@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from 'bcryptjs';
-import { ApiError } from "../utils/ApiError.js";
+import { ApiError } from "../../utils/ApiError.js";
 
 // Constants
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
