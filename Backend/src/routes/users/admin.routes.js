@@ -7,10 +7,7 @@ import {
     getSystemAnalytics,
     getSystemActivities,
 } from "../../controllers/users/admin.controller.js";
-import {
-    verifyAdmin,
-    verifyRefreshToken,
-} from "../../middleware/auth.middleware.js";
+import { verifyJWT } from "../../middleware/auth.middleware.js";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { adminValidationRules } from "../../validations/admin.validations.js";
 import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
@@ -25,7 +22,7 @@ router.post(
         max: 5, // 5 requests per hour
     }),
     validateRequest(adminValidationRules.register),
-    verifyAdmin,
+    verifyJWT,
     registerAdmin
 );
 
@@ -42,33 +39,33 @@ router.post(
 // Verification routes
 router.patch(
     "/verify/hospital/:hospitalId",
-    verifyAdmin,
+    verifyJWT,
     validateRequest(adminValidationRules.verification),
     verifyHospital
 );
 
 router.patch(
     "/verify/ngo/:ngoId",
-    verifyAdmin,
+    verifyJWT,
     validateRequest(adminValidationRules.verification),
     verifyNGO
 );
 
 // Analytics routes
-router.get("/analytics", verifyAdmin, getSystemAnalytics);
+router.get("/analytics", verifyJWT, getSystemAnalytics);
 
-router.get("/activities", verifyAdmin, getSystemActivities);
+router.get("/activities", verifyJWT, getSystemActivities);
 
 // Optional: Advanced query routes
 router.get(
     "/analytics/custom",
-    verifyAdmin,
+    verifyJWT,
     validateRequest(adminValidationRules.customAnalytics),
     getSystemAnalytics
 );
 
 // Health check route
-router.get("/health", verifyAdmin, (req, res) => {
+router.get("/health", verifyJWT, (req, res) => {
     res.status(200).json({
         status: "healthy",
         timestamp: new Date(),
