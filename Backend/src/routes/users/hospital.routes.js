@@ -1,11 +1,13 @@
 import { Router } from 'express';
-import { upload } from '../../middleware/multer.middleware.js';
+import {
+    uploadFields,
+    handleMulterError,
+} from "../../middleware/multer.middleware.js";
 import { validateRequest } from "../../middleware/validator.middleware.js";
-import { verifyJWT } from '../../middleware/auth.middleware.js';
-import { rateLimiter } from '../../middleware/rateLimit.middleware.js';
+import { verifyJWT } from "../../middleware/auth.middleware.js";
+import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
     registerHospital,
-    verifyHospitalEmail,
     loginHospital,
     logoutHospital,
     refreshAccessToken,
@@ -17,59 +19,56 @@ import {
     getHospitalAnalytics,
     updateEmergencyContact,
     updateHospitalProfile,
-    changePassword
-} from '../../controllers/users/hospital.controller.js';
+    changePassword,
+} from "../../controllers/users/hospital.controller.js";
 
 const router = Router();
 
 // File upload configurations
-const documentUpload = upload.fields([
-    { name: 'license', maxCount: 1 },
-    { name: 'accreditation', maxCount: 1 },
-    { name: 'registration', maxCount: 1 }
+const documentUpload = uploadFields([
+    { name: "license", maxCount: 1 },
+    { name: "accreditation", maxCount: 1 },
+    { name: "registration", maxCount: 1 },
 ]);
 
 // Public routes with rate limiting
 router.post(
-    '/register',
+    "/register",
     rateLimiter({
         windowMs: 60 * 60 * 1000, // 1 hour
-        max: 3 // 3 registration attempts per hour
+        max: 3, // 3 registration attempts per hour
     }),
     documentUpload,
-    validateRequest('hospital.register'),
+    handleMulterError,
+    validateRequest("hospital.register"),
     registerHospital
 );
 
 router.post(
-    '/login',
+    "/login",
     rateLimiter({
         windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 5 // 5 login attempts
+        max: 5, // 5 login attempts
     }),
-    validateRequest('hospital.login'),
+    validateRequest("hospital.login"),
     loginHospital
 );
 
-router.post(
-    '/verify-email',
-    validateRequest('hospital.emailVerification'),
-    verifyHospitalEmail
-);
-
-router.post('/refresh-token', refreshAccessToken);
+router.post("/refresh-token", refreshAccessToken);
 
 // Protected routes
 router.use(verifyJWT);
 
 // Profile Management
-router.get('/logout', logoutHospital);
+router.get("/logout", logoutHospital);
 
-router.route('/profile')
+router
+    .route("/profile")
     .get(getHospitalProfile)
     .patch(
         documentUpload,
-        validateRequest('hospital.profileUpdate'),
+        handleMulterError,
+        validateRequest("hospital.profileUpdate"),
         updateHospitalProfile
     );
 
