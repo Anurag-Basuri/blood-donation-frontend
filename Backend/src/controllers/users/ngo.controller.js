@@ -413,4 +413,5 @@ export {
     getConnectedHospitals,
     respondToConnectionRequest,
     getNGOAnalytics,
+    resendVerificationOtp,
 };

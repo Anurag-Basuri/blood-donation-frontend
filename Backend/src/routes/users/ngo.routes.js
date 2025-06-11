@@ -9,7 +9,6 @@ import {
     logoutNGO,
     verifyNGOEmail,
     resendVerificationOtp,
-    refreshAccessToken,
     getNGOProfile,
     updateNGOProfile,
     manageFacility,
