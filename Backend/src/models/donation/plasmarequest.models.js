@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { ApiError } from "../utils/ApiError.js";
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const STATUS_TYPES = {
