@@ -556,4 +556,6 @@ export {
     changePassword,
     findNearbyNGOs,
     getHospitalProfile,
+    updateEmergencyContact,
+    updateHospitalProfile,
 };

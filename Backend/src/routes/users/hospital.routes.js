@@ -10,13 +10,13 @@ import {
     logoutHospital,
     refreshAccessToken,
     getHospitalProfile,
-    updateHospitalProfile,
     updateBloodInventory,
     createBloodRequest,
     findNearbyNGOs,
     manageNGOConnections,
     getHospitalAnalytics,
     updateEmergencyContact,
+    updateHospitalProfile,
     changePassword
 } from '../../controllers/users/hospital.controller.js';
 
