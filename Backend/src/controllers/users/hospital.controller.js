@@ -506,6 +506,27 @@ const getHospitalAnalytics = asyncHandler(async (req, res) => {
     );
 });
 
+// FIND NEARBY NGOs
+const findNearbyNGOs = asyncHandler(async (req, res) => {
+    const { latitude, longitude, radius = 50000 } = req.query; // Default radius 50km
+
+    if (!latitude || !longitude) {
+        throw new ApiError(400, "Latitude and longitude are required");
+    }
+
+    const nearbyNGOs = await NGO.find({
+        location: {
+            $geoWithin: {
+                $centerSphere: [[longitude, latitude], radius / 6378.1], // Radius in radians
+            },
+        },
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, nearbyNGOs, "Nearby NGOs fetched successfully")
+    );
+});
+
 export {
     registerHospital,
     createBloodRequest,
@@ -515,4 +536,6 @@ export {
     loginHospital,
     logoutHospital,
     refreshAccessToken,
+    changePassword,
+    findNearbyNGOs
 };
