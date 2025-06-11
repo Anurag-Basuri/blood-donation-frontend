@@ -1,17 +1,19 @@
 import OpenAI from "openai";
 import { ApiError } from "../utils/ApiError.js";
-import { Blood } from "../models/blood.models.js";
-import { User } from "../models/user.models.js";
-import { Hospital } from "../models/hospital.models.js";
+import { User } from "../models/users/user.models.js";
 
 class AiService {
     constructor() {
+        if (!process.env.OPENAI_API_KEY) {
+            throw new Error("OpenAI API key is required");
+        }
         this.openai = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY,
         });
+        this.MODEL = "gpt-4-1106-preview";
     }
 
-    // 1. Donor Matching
+    // 1. Donor Matching with Enhanced Features
     async findOptimalDonorMatch(requestData) {
         try {
             const {
@@ -22,204 +24,181 @@ class AiService {
                 specialRequirements,
             } = requestData;
 
+            // Validate inputs
+            if (!bloodType || !location || !quantity) {
+                throw new ApiError(400, "Missing required parameters");
+            }
+
             const compatibleTypes = this.getCompatibleBloodTypes(bloodType);
+            const searchRadius = this.calculateSearchRadius(urgency);
 
             const potentialDonors = await User.find({
-                role: "donor",
+                donorStatus: "Active",
                 bloodType: { $in: compatibleTypes },
-                "location.coordinates": {
+                nextEligibleDate: { $lte: new Date() },
+                "address.location": {
                     $near: {
                         $geometry: {
                             type: "Point",
                             coordinates: location,
                         },
-                        $maxDistance: 50_000, // 50 km
+                        $maxDistance: searchRadius,
                     },
                 },
-            }).lean();
+            })
+                .select(
+                    "bloodType address.location lastDonationDate donationHistory medicalInfo"
+                )
+                .lean();
 
             if (!potentialDonors.length) {
-                return [];
+                return {
+                    donors: [],
+                    message: "No eligible donors found in the specified area",
+                };
             }
 
             const donorScores = await this.calculateDonorScores(
                 potentialDonors,
                 requestData
             );
-            return donorScores;
+            return {
+                donors: donorScores,
+                searchRadius,
+                totalFound: donorScores.length,
+            };
         } catch (error) {
-            console.error("Error in findOptimalDonorMatch:", error);
-            throw new ApiError(500, `Donor match failed: ${error.message}`);
+            throw new ApiError(
+                error.statusCode || 500,
+                `Donor matching failed: ${error.message}`
+            );
         }
     }
 
-    // 2. Blood Supply Prediction
-    async predictBloodSupply(locationId) {
+    // 2. Enhanced Blood Supply Prediction
+    async predictBloodSupply(locationId, timeframe = 30) {
         try {
-            const ninetyDaysAgo = new Date(
-                Date.now() - 90 * 24 * 60 * 60 * 1000
-            );
+            const historicalRange = timeframe * 3; // Analysis period 3x the prediction timeframe
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - historicalRange);
 
-            const historicalData = await Blood.aggregate([
-                {
-                    $match: {
-                        locationId,
-                        createdAt: { $gte: ninetyDaysAgo },
-                    },
-                },
-                {
-                    $group: {
-                        _id: {
-                            bloodType: "$bloodType",
-                            date: {
-                                $dateToString: {
-                                    format: "%Y-%m-%d",
-                                    date: "$createdAt",
-                                },
-                            },
-                        },
-                        quantity: { $sum: "$quantity" },
-                    },
-                },
+            const [donationData, usageData] = await Promise.all([
+                this.getDonationHistory(locationId, startDate),
+                this.getUsageHistory(locationId, startDate),
             ]);
 
-            const prediction = await this.generateSupplyPrediction(
-                historicalData
-            );
-            return prediction;
+            const prompt = this.buildSupplyPredictionPrompt({
+                donationData,
+                usageData,
+                timeframe,
+                seasonality: this.getSeasonalityFactors(),
+            });
+
+            const prediction = await this.generateAIPrediction(prompt);
+            return this.processPredictionResponse(prediction);
         } catch (error) {
-            console.error("Error in predictBloodSupply:", error);
             throw new ApiError(
-                500,
+                error.statusCode || 500,
                 `Supply prediction failed: ${error.message}`
             );
         }
     }
 
-    // 3. Emergency Response
-    async optimizeEmergencyResponse(data) {
+    // 3. Emergency Response Optimization
+    async optimizeEmergencyResponse(emergencyData) {
         try {
-            const { location, bloodType, quantity } = data;
+            const { location, bloodType, quantity, urgencyLevel } =
+                emergencyData;
 
-            const hospitals = await Hospital.find({
-                "inventory.bloodType": bloodType,
-                "inventory.quantity": { $gte: quantity },
-                "location.coordinates": {
-                    $near: {
-                        $geometry: {
-                            type: "Point",
-                            coordinates: location,
-                        },
-                    },
-                },
-            })
-                .limit(5)
-                .lean();
+            // Find both hospitals and NGOs with available blood
+            const [hospitals, ngos] = await Promise.all([
+                this.findNearbyHospitals(location, bloodType, quantity),
+                this.findNearbyNGOs(location, bloodType, quantity),
+            ]);
 
-            if (!hospitals.length) {
-                return {
-                    message: "No nearby hospitals with sufficient supply.",
-                };
-            }
+            const allSources = [...hospitals, ...ngos].map((source) => ({
+                ...source,
+                distance: this.calculateDistance(
+                    location,
+                    source.address.location.coordinates
+                ),
+                estimatedTime: this.calculateTravelTime(
+                    location,
+                    source.address.location.coordinates
+                ),
+            }));
 
-            const strategy = await this.calculateOptimalRoute(hospitals, data);
-            return strategy;
+            // Generate optimal route and strategy
+            const strategy = await this.generateEmergencyStrategy(
+                allSources,
+                emergencyData
+            );
+
+            return {
+                strategy,
+                availableSources: allSources.length,
+                estimatedResponse: strategy.estimatedTime,
+            };
         } catch (error) {
-            console.error("Error in optimizeEmergencyResponse:", error);
             throw new ApiError(
-                500,
+                error.statusCode || 500,
                 `Emergency response optimization failed: ${error.message}`
             );
         }
     }
 
-    // 4. Donor Retention Analysis
-    async analyzeDonorRetention(donorId) {
-        try {
-            const donor = await User.findById(donorId)
-                .select(
-                    "donationHistory feedback communications campaignParticipation"
-                )
-                .lean();
-
-            if (!donor) {
-                throw new ApiError(404, "Donor not found.");
-            }
-
-            const insights = await this.generateRetentionInsights(donor);
-            return insights;
-        } catch (error) {
-            console.error("Error in analyzeDonorRetention:", error);
-            throw new ApiError(
-                500,
-                `Retention analysis failed: ${error.message}`
-            );
-        }
-    }
-
-    // -------------------------
-    //      Helper Methods
-    // -------------------------
-
-    // Generate scores using AI
-    async calculateDonorScores(donors, requirements) {
-        const prompt = this.buildDonorMatchingPrompt(donors, requirements);
-
-        const response = await this.openai.chat.completions.create({
-            model: "gpt-4",
-            messages: [{ role: "user", content: prompt }],
-            temperature: 0.4,
-        });
-
-        return this.parseDonorScores(response.choices[0].message.content);
-    }
-
-    getCompatibleBloodTypes(requestedType) {
-        const table = {
-            "A+": ["A+", "A-", "O+", "O-"],
-            "A-": ["A-", "O-"],
-            "B+": ["B+", "B-", "O+", "O-"],
-            "B-": ["B-", "O-"],
-            "AB+": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
-            "AB-": ["A-", "B-", "AB-", "O-"],
-            "O+": ["O+", "O-"],
-            "O-": ["O-"],
+    // Helper Methods
+    calculateSearchRadius(urgency) {
+        const baseRadius = 10000; // 10km
+        const radiusMultipliers = {
+            CRITICAL: 5, // 50km
+            HIGH: 3, // 30km
+            MEDIUM: 2, // 20km
+            LOW: 1, // 10km
         };
-        return table[requestedType] || [];
+        return baseRadius * (radiusMultipliers[urgency] || 1);
     }
 
-    buildDonorMatchingPrompt(donors, requirements) {
-        const donorList = donors.map((d, i) => ({
-            id: d._id,
-            bloodType: d.bloodType,
-            location: d.location?.coordinates,
-            lastDonation: d.lastDonationDate,
-            distance: "to be calculated by model",
-        }));
-
-        return `
-You are a medical AI assistant. Based on the following requirements:
-- Blood Type: ${requirements.bloodType}
-- Urgency: ${requirements.urgency}
-- Quantity Needed: ${requirements.quantity}
-- Location: ${requirements.location}
-- Special Requirements: ${requirements.specialRequirements || "None"}
-
-Evaluate the list of donors:
-${JSON.stringify(donorList, null, 2)}
-
-Rank them from best to least suitable with a score (0–100), estimated donation time, and reason.
-Output should be a JSON array.
-        `.trim();
+    getSeasonalityFactors() {
+        const currentMonth = new Date().getMonth();
+        return {
+            isHolidaySeason: [11, 0].includes(currentMonth), // December, January
+            isSummerVacation: [5, 6, 7].includes(currentMonth), // June, July, August
+            isRainySeason: [6, 7, 8].includes(currentMonth), // Monsoon months
+        };
     }
 
-    parseDonorScores(content) {
+    async generateAIPrediction(prompt) {
         try {
-            return JSON.parse(content);
-        } catch (err) {
-            console.error("Failed to parse AI response:", err);
-            throw new ApiError(500, "AI response parsing failed.");
+            const response = await this.openai.chat.completions.create({
+                model: this.MODEL,
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.4,
+                max_tokens: 1000,
+                response_format: { type: "json_object" },
+            });
+            return JSON.parse(response.choices[0].message.content);
+        } catch (error) {
+            throw new ApiError(500, "AI prediction generation failed");
         }
+    }
+
+    buildSupplyPredictionPrompt(data) {
+        return `
+            Analyze the following blood donation data and provide a prediction:
+            Historical Donations: ${JSON.stringify(data.donationData)}
+            Usage History: ${JSON.stringify(data.usageData)}
+            Timeframe: ${data.timeframe} days
+            Seasonality Factors: ${JSON.stringify(data.seasonality)}
+            
+            Provide predictions for:
+            1. Expected donation volume
+            2. Expected usage
+            3. Potential shortages
+            4. Recommended actions
+            
+            Format response as JSON.
+        `.trim();
     }
 }
 
