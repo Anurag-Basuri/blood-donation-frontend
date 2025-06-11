@@ -24,10 +24,8 @@ import aiRoutes from "./routes/others/ai.routes.js";
 import mapRoutes from "./routes/others/map.routes.js";
 import notificationRoutes from "./routes/others/notification.routes.js";
 
-const app = express();;
-
-// Set security-related HTTP headers
-app.set('trust proxy', 1);
+const app = express();
+app.set('trust proxy', true);
 
 // Global rate limiter
 const limiter = rateLimit({
