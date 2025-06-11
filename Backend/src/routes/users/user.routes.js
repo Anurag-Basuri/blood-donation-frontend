@@ -15,7 +15,7 @@ import {
     updateEmergencyContact,
     changePassword,
 } from "../../controllers/users/user.controller.js";
-import { verifyUser } from "../../middleware/auth.middleware.js";
+import { verifyJWT } from "../../middleware/auth.middleware.js";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import { userValidationRules } from "../../validations/user.validations.js";
@@ -43,29 +43,29 @@ router.post(
     loginUser
 );
 
-router.post("/logout", verifyUser, logoutUser);
+router.post("/logout", verifyJWT, logoutUser);
 router.post("/refresh-token", refreshAccessToken);
 
 // Profile Management Routes
 router
     .route("/profile")
-    .get(verifyUser, getCurrentUser)
+    .get(verifyJWT, getCurrentUser)
     .patch(
-        verifyUser,
+        verifyJWT,
         validateRequest(userValidationRules.profileUpdate),
         updateProfile
     );
 
 router.patch(
     "/change-password",
-    verifyUser,
+    verifyJWT,
     validateRequest(userValidationRules.passwordChange),
     changePassword
 );
 
 router.patch(
     "/emergency-contact",
-    verifyUser,
+    verifyJWT,
     validateRequest(userValidationRules.emergencyContact),
     updateEmergencyContact
 );
@@ -73,25 +73,25 @@ router.patch(
 // Donation Management Routes
 router.post(
     "/appointments",
-    verifyUser,
+    verifyJWT,
     validateRequest(userValidationRules.appointment),
     bookDonationAppointment
 );
 
-router.get("/donations/history", verifyUser, getDonationHistory);
+router.get("/donations/history", verifyJWT, getDonationHistory);
 
 // Blood Request Routes
 router.post(
     "/blood-requests",
-    verifyUser,
+    verifyJWT,
     validateRequest(userValidationRules.bloodRequest),
     createBloodRequest
 );
 
-router.get("/requests/history", verifyUser, getRequestHistory);
+router.get("/requests/history", verifyJWT, getRequestHistory);
 
 // Notification Routes
-router.get("/notifications", verifyUser, getNotifications);
-router.patch("/notifications/mark-read", verifyUser, markNotificationsRead);
+router.get("/notifications", verifyJWT, getNotifications);
+router.patch("/notifications/mark-read", verifyJWT, markNotificationsRead);
 
 export default router;
