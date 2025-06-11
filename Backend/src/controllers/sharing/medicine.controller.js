@@ -1,7 +1,7 @@
 import { Medicine } from "../../models/sharing/medicine.models.js";
 import { Hospital } from "../../models/users/hospital.models.js";
 import { Activity } from "../../models/others/activity.model.js";
-import { notificationService } from "../../services/notification.service.js";
+import notificationService from "../../services/notification.service.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";

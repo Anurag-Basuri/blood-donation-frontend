@@ -3,7 +3,11 @@ import {
     EQUIPMENT_STATUS,
 } from "../../models/sharing/equipements.models.js";
 import { Medicine } from "../../models/sharing/medicine.models.js";
-import { ResourceRequest } from "../../models/sharing/request.models.js";
+import {
+    Request,
+    RESOURCE_TYPE,
+    REQUEST_STATUS,
+} from "../../models/sharing/request.models.js";
 import { Activity } from "../../models/others/activity.model.js";
 import { Notification } from "../../models/others/notification.model.js";
 import { Hospital } from "../../models/users/hospital.models.js";
@@ -11,20 +15,6 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { notificationService } from "../../services/notification.service.js";
-
-// Resource Types and Status
-const RESOURCE_TYPE = {
-    EQUIPMENT: "EQUIPMENT",
-    MEDICINE: "MEDICINE",
-};
-
-const REQUEST_STATUS = {
-    PENDING: "PENDING",
-    APPROVED: "APPROVED",
-    REJECTED: "REJECTED",
-    CANCELLED: "CANCELLED",
-    COMPLETED: "COMPLETED",
-};
 
 // List available equipment with enhanced filtering
 const listEquipment = asyncHandler(async (req, res) => {
@@ -44,7 +34,7 @@ const listEquipment = asyncHandler(async (req, res) => {
         "status.current": EQUIPMENT_STATUS.AVAILABLE,
     };
 
-    if (location) {
+    if (location && location.longitude && location.latitude) {
         query.location = {
             $near: {
                 $geometry: {
@@ -167,15 +157,16 @@ const shareMedicine = asyncHandler(async (req, res) => {
         .json(new ApiResponse(201, medicine, "Medicine listed for sharing"));
 });
 
-// Request resource with enhanced tracking
+// Request resource with enhanced tracking (aligned with request model)
 const requestResource = asyncHandler(async (req, res) => {
     const {
         resourceId,
         resourceType,
         quantity,
         purpose,
-        requiredDuration,
-        urgencyLevel = "NORMAL",
+        duration, // { startDate, endDate }
+        priority = "MEDIUM",
+        additionalDetails = {},
     } = req.body;
 
     if (!Object.values(RESOURCE_TYPE).includes(resourceType)) {
@@ -201,20 +192,47 @@ const requestResource = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Requested quantity not available");
     }
 
-    const request = await ResourceRequest.create({
+    // Validate duration
+    if (
+        !duration ||
+        !duration.startDate ||
+        !duration.endDate ||
+        new Date(duration.endDate) <= new Date(duration.startDate)
+    ) {
+        throw new ApiError(
+            400,
+            "Invalid duration: endDate must be after startDate"
+        );
+    }
+
+    // Create request using the new model structure
+    const request = await Request.create({
         resourceId,
         resourceType,
         requesterId: req.user._id,
         requesterType: req.user.role,
-        quantity,
-        purpose,
-        requiredDuration,
-        urgencyLevel,
-        status: REQUEST_STATUS.PENDING,
-        requestDetails: {
-            submittedAt: new Date(),
-            location: req.user.address?.location,
+        quantity: {
+            requested: quantity,
         },
+        duration: {
+            startDate: duration.startDate,
+            endDate: duration.endDate,
+        },
+        status: {
+            current: REQUEST_STATUS.PENDING,
+            history: [
+                {
+                    status: REQUEST_STATUS.PENDING,
+                    updatedBy: req.user._id,
+                    updaterType: req.user.role,
+                    timestamp: new Date(),
+                    reason: "Initial request",
+                },
+            ],
+        },
+        priority,
+        purpose,
+        additionalDetails,
     });
 
     // Create notification and activity log
@@ -227,8 +245,7 @@ const requestResource = asyncHandler(async (req, res) => {
                 resourceName: resource.name,
                 requester: req.user.fullName,
                 quantity,
-                urgencyLevel,
-                sendSMS: urgencyLevel === "URGENT",
+                priority,
             }
         ),
         Activity.create({
