@@ -8,7 +8,7 @@ const redis = createClient({
 
 redis.connect().catch(console.error);
 
-export const apiLimiter = rateLimit({
+export const rateLimiter = rateLimit({
   store: new RedisStore({
     client: redis,
     prefix: 'rate-limit:'
