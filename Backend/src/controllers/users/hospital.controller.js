@@ -544,6 +544,66 @@ const getHospitalProfile = asyncHandler(async (req, res) => {
     );
 });
 
+// UPDATE EMERGENCY CONTACT
+const updateEmergencyContact = asyncHandler(async (req, res) => {
+    const { emergencyContact } = req.body;
+
+    if (!emergencyContact || !emergencyContact.name || !emergencyContact.phone) {
+        throw new ApiError(400, "Emergency contact details are required");
+    }
+
+    const hospital = await Hospital.findByIdAndUpdate(
+        req.hospital._id,
+        { emergencyContact },
+        { new: true, runValidators: true }
+    );
+
+    return res.status(200).json(
+        new ApiResponse(200, hospital, "Emergency contact updated successfully")
+    );
+});
+
+// UPDATE HOSPITAL PROFILE
+const updateHospitalProfile = asyncHandler(async (req, res) => {
+    const hospitalId = req.hospital._id;
+    const {
+        name,
+        email,
+        address,
+        contactPerson,
+        type,
+        specialties,
+        emergencyContact,
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !address || !contactPerson) {
+        throw new ApiError(400, "Required fields missing");
+    }
+
+    const hospital = await Hospital.findByIdAndUpdate(
+        hospitalId,
+        {
+            name,
+            email,
+            address,
+            contactPerson,
+            type,
+            specialties,
+            emergencyContact,
+        },
+        { new: true, runValidators: true }
+    );
+
+    if (!hospital) {
+        throw new ApiError(404, "Hospital not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, hospital, "Hospital profile updated successfully")
+    );
+});
+
 export {
     registerHospital,
     createBloodRequest,
