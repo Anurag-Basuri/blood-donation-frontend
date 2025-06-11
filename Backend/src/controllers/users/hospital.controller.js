@@ -204,6 +204,42 @@ const logoutHospital = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "Logged out successfully"));
 });
 
+// Change Password
+const changePassword = asyncHandler(async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+        throw new ApiError(400, "Current and new passwords are required");
+    }
+
+    const hospital = await Hospital.findById(req.hospital._id).select(
+        "+password"
+    );
+
+    // Check current password
+    if (!(await hospital.comparePassword(currentPassword))) {
+        throw new ApiError(401, "Current password is incorrect");
+    }
+
+    // Update password
+    hospital.password = newPassword;
+    await hospital.save();
+
+    // Log activity
+    await Activity.create({
+        type: "HOSPITAL_PASSWORD_CHANGED",
+        performedBy: {
+            userId: hospital._id,
+            userModel: "Hospital",
+        },
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Password changed successfully")
+    );
+});
+
 // Refresh Token
 const refreshAccessToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken =
