@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { ApiError } from "../utils/ApiError.js";
+import { ApiError } from "../../utils/ApiError.js";
 
 const ORGAN_TYPES = [
     "Kidney",
