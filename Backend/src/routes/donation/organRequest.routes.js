@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
-import { upload } from "../../middleware/multer.middleware.js";
+import {
+    uploadFields,
+    handleMulterError,
+} from "../../middleware/multer.middleware.js";
 import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
     createOrganRequest,
@@ -15,7 +18,7 @@ import {
 const router = Router();
 
 // Configure file upload for medical documents
-const documentUpload = upload.fields([
+const documentUpload = uploadFields([
     { name: "medicalReports", maxCount: 3 },
     { name: "consentForms", maxCount: 2 },
     { name: "legalDocuments", maxCount: 2 },
@@ -32,6 +35,7 @@ router.post(
         max: 3, // 3 requests per 15 minutes
     }),
     documentUpload,
+    handleMulterError,
     validateRequest("organRequest.create"),
     createOrganRequest
 );
