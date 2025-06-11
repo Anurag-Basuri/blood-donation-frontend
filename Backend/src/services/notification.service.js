@@ -1,8 +1,7 @@
 import { sendMail } from "./email.service.js";
 import { sendSMS } from "./sms.service.js";
-import { ApiError } from "../../utils/Api
-Error.js";
-import Notification from "../models/notification.models.js";
+import { ApiError } from "../utils/ApiError.js";
+import Notification from "../models/others/notification.model.js";
 import { emailTemplates } from "../templates/email.templates.js";
 
 class NotificationService {
