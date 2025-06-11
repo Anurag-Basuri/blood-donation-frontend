@@ -204,6 +204,7 @@ const getNGOProfile = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, ngo, "NGO profile fetched successfully"));
 });
 
+// Update NGO Profile
 const updateNGOProfile = asyncHandler(async (req, res) => {
     const ngoId = req.ngo._id;
     const updateFields = { ...req.body };
@@ -357,6 +358,7 @@ const getConnectedHospitals = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, [], "Connected hospitals fetched (stub)"));
 });
 
+// Respond to Hospital Connection Request
 const respondToConnectionRequest = asyncHandler(async (req, res) => {
     // Implement logic to respond to hospital connection requests
     return res
@@ -399,6 +401,26 @@ const notifyNearbyDonors = async (facility) => {
         }
     );
 };
+
+// Resend Verification OTP
+const resendVerificationOtp = asyncHandler(async (req, res) => {
+    const ngoId = req.ngo._id;
+    const ngo = await NGO.findById(ngoId);
+    if (!ngo) throw new ApiError(404, "NGO not found");
+
+    if (ngo.verificationStatus !== NGO_STATUS.PENDING) {
+        throw new ApiError(400, "Verification already completed or not pending");
+    }
+
+    // Generate and send OTP
+    const otp = await generateOtp();
+    ngo.verificationOtp = otp;
+    await ngo.save();
+
+    await notificationService.sendNotification(ngo.email, "Verification OTP", `Your OTP is ${otp}`);
+
+    return res.status(200).json(new ApiResponse(200, {}, "Verification OTP resent successfully"));
+});
 
 export {
     registerNGO,
