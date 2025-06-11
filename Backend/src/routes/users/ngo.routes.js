@@ -10,7 +10,6 @@ import {
     registerNGO,
     loginNGO,
     logoutNGO,
-    verifyNGOEmail,
     resendVerificationOtp,
     getNGOProfile,
     updateNGOProfile,
@@ -56,11 +55,6 @@ router.post(
     loginNGO
 );
 
-router.post(
-    "/verify-email",
-    validateRequest("ngo.emailVerification"),
-    verifyNGOEmail
-);
 router.post(
     "/resend-otp",
     validateRequest("ngo.resendOTP"),
