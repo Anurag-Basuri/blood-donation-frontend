@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { ApiError } from "../utils/ApiError.js";
+import { ApiError } from "../../utils/ApiError.js";
 
 // Constants
 const TIME_SLOTS = {

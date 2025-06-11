@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
-import { ApiError } from "../utils/ApiError.js";
+import { ApiError } from "../../utils/ApiError.js";
 
 // Constants
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
