@@ -282,3 +282,4 @@ bloodRequestSchema.statics = {
 };
 
 export const BloodRequest = mongoose.model("BloodRequest", bloodRequestSchema);
+export { BLOOD_TYPES };
