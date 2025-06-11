@@ -5,7 +5,7 @@ import {
     FACILITY_STATUS,
 } from "../../models/donation/facility.models.js";
 import { Activity } from "../../models/others/activity.model.js";
-import { notificationService } from "../../services/notification.service.js";
+import notificationService from "../../services/notification.service.js";
 import aiService from "../../services/ai.service.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
