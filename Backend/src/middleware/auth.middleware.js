@@ -1,10 +1,10 @@
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
-import User from "../models/users/user.models.js";
-import Hospital from "../models/users/hospital.models.js";
-import NGO from "../models/users/ngo.models.js";
-import Admin from "../models/users/admin.models.js";
+import { User } from "../models/users/user.models.js";
+import { Hospital } from "../models/users/hospital.models.js";
+import { NGO } from "../models/users/ngo.models.js";
+import { Admin } from "../models/users/admin.models.js";
 
 // Constants for common values
 const AUTH_HEADER = "Authorization";
