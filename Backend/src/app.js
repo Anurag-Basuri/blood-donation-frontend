@@ -19,7 +19,6 @@ import plasmaRequestRoutes from "./routes/donation/plasmaRequest.routes.js";
 
 import equipmentRoutes from "./routes/sharing/equipment.routes.js";
 import medicineRoutes from "./routes/sharing/medicine.routes.js";
-import resourceRoutes from "./routes/sharing/resources.routes.js";
 
 import aiRoutes from "./routes/others/ai.routes.js";
 import mapRoutes from "./routes/others/map.routes.js";

@@ -2,7 +2,7 @@ import {
     Notification,
     NOTIFICATION_STATUS,
 } from "../../models/others/notification.model.js";
-import { notificationService } from "../../services/notification.service.js";
+import notificationService from "../../services/notification.service.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
