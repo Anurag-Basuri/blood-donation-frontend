@@ -1,4 +1,4 @@
-import { formatDate } from '../utils/dateFormatter.js';
+import { formatDate, formatRelativeTime, formatTimeOnly } from '../utils/dateFormatter.js';
 
 export const emailTemplates = {
     // Urgent Blood Request Template
@@ -106,7 +106,8 @@ export const emailTemplates = {
                     <div class="details">
                         <h2>Dear ${donor.name},</h2>
                         <p>Your blood donation appointment has been confirmed.</p>
-                        <p><strong>Date & Time:</strong> ${formatDate(date)}</p>
+                        <p><strong>Date:</strong> ${formatDate(date)}</p>
+                        <p><strong>Time:</strong> ${formatTimeOnly(date)}</p>
                         <p><strong>Center:</strong> ${center.name}</p>
                         <p><strong>Address:</strong> ${center.address}</p>
                         <p><strong>Appointment ID:</strong> ${appointmentId}</p>
@@ -168,7 +169,7 @@ export const emailTemplates = {
                         <h2>Hello ${donor.name},</h2>
                         <p>You are now eligible to donate blood again.</p>
                         <p><strong>Last Donation:</strong> ${formatDate(lastDonation)}</p>
-                        <p><strong>Next Eligible Date:</strong> ${formatDate(nextDonationDate)}</p>
+                        <p><strong>Next Eligible:</strong> ${formatDate(nextDonationDate)} (${formatRelativeTime(nextDonationDate)})</p>
                         <p><strong>Nearest Center:</strong> ${center.name}</p>
                         <a href="${data.scheduleLink}" class="schedule-button">Schedule Now</a>
                     </div>
