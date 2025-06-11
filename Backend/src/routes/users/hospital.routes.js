@@ -13,7 +13,6 @@ import {
     updateHospitalProfile,
     updateBloodInventory,
     createBloodRequest,
-    getBloodRequestHistory,
     findNearbyNGOs,
     manageNGOConnections,
     getHospitalAnalytics,

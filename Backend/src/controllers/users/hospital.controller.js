@@ -527,6 +527,23 @@ const findNearbyNGOs = asyncHandler(async (req, res) => {
     );
 });
 
+// GET HOSPITAL PROFILE
+const getHospitalProfile = asyncHandler(async (req, res) => {
+    const hospitalId = req.hospital._id;
+
+    const hospital = await Hospital.findById(hospitalId)
+        .select("-password -refreshToken")
+        .populate("connectedNGOs.ngoId", "name email type");
+
+    if (!hospital) {
+        throw new ApiError(404, "Hospital not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, hospital, "Hospital profile fetched successfully")
+    );
+});
+
 export {
     registerHospital,
     createBloodRequest,
@@ -537,5 +554,6 @@ export {
     logoutHospital,
     refreshAccessToken,
     changePassword,
-    findNearbyNGOs
+    findNearbyNGOs,
+    getHospitalProfile,
 };
