@@ -12,7 +12,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { uploadFile } from "../../utils/fileUpload.js";
-import { notificationService } from "../../services/notification.service.js";
+import notificationService from "../../services/notification.service.js";
 
 // Enums and Constants
 const NGO_STATUS = {
