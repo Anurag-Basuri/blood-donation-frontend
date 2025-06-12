@@ -74,6 +74,9 @@ app.use(`${apiVersion}/plasma-requests`, plasmaRequestRoutes);
 // Resource sharing routes
 app.use(`${apiVersion}/equipment`, equipmentRoutes);
 app.use(`${apiVersion}/medicines`, medicineRoutes);
+// If you have a resourceRoutes import, uncomment the next line
+// import resourceRoutes from "./routes/sharing/resource.routes.js";
+// app.use(`${apiVersion}/resources`, resourceRoutes);
 
 // Other utility routes
 app.use(`${apiVersion}/ai`, aiRoutes);
