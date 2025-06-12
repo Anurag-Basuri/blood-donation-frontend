@@ -10,6 +10,7 @@ import {
     trackRequest,
     cancelRequest,
 } from "../../controllers/donation/bloodRequest.controller.js";
+import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
 
@@ -24,19 +25,19 @@ router.post(
         max: 5, // 5 requests per 15 minutes
     }),
     validateRequest("bloodRequest.create"),
-    createBloodRequest
+    asyncHandler(createBloodRequest)
 );
 
 router.patch(
     "/:requestId/status",
     validateRequest("bloodRequest.updateStatus"),
-    updateRequestStatus
+    asyncHandler(updateRequestStatus)
 );
 
 router.get(
     "/:requestId/donors",
     validateRequest("bloodRequest.findDonors"),
-    findDonors
+    asyncHandler(findDonors)
 );
 
 router.get(
@@ -45,19 +46,19 @@ router.get(
         windowMs: 5 * 60 * 1000, // 5 minutes
         max: 10, // 10 requests per 5 minutes
     }),
-    getEmergencyRequests
+    asyncHandler(getEmergencyRequests)
 );
 
 router.get(
     "/:requestId/track",
     validateRequest("bloodRequest.track"),
-    trackRequest
+    asyncHandler(trackRequest)
 );
 
 router.delete(
     "/:requestId",
     validateRequest("bloodRequest.cancel"),
-    cancelRequest
+    asyncHandler(cancelRequest)
 );
 
 // Error handler
