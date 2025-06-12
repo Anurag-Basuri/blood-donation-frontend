@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import compression from "compression";
 import mongoSanitize from "express-mongo-sanitize";
-import { rateLimit } from "express-rate-limit";
+import { rateLimiter } from "./middleware/rateLimit.middleware.js";
 
 // Import routes
 import userRoutes from "./routes/users/user.routes.js";
@@ -26,11 +26,8 @@ import notificationRoutes from "./routes/others/notification.routes.js";
 
 const app = express();
 
-// Global rate limiter
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-});
+// Global rate limiter (use your custom middleware)
+app.use(rateLimiter);
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -39,12 +36,11 @@ app.use(express.json({ limit: "10kb" })); // Body parser with size limit
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
 app.use(mongoSanitize()); // Prevent NoSQL injection
-app.use(limiter);
 
 // CORS configuration
 app.use(
     cors({
-        origin: process.env.CORS_ORIGIN || "http://localhost:000",
+        origin: process.env.CORS_ORIGIN || "http://localhost:3000",
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
         allowedHeaders: ["Content-Type", "Authorization"],
@@ -78,7 +74,6 @@ app.use(`${apiVersion}/plasma-requests`, plasmaRequestRoutes);
 // Resource sharing routes
 app.use(`${apiVersion}/equipment`, equipmentRoutes);
 app.use(`${apiVersion}/medicines`, medicineRoutes);
-app.use(`${apiVersion}/resources`, resourceRoutes);
 
 // Other utility routes
 app.use(`${apiVersion}/ai`, aiRoutes);
