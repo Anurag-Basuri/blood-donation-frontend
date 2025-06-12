@@ -19,6 +19,7 @@ import { verifyJWT } from "../../middleware/auth.middleware.js";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import { userValidationRules } from "../../validations/user.validations.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
 
 const router = express.Router();
 
@@ -30,7 +31,7 @@ router.post(
         max: 5, // 5 registrations per hour
     }),
     validateRequest(userValidationRules.register),
-    registerUser
+    asyncHandler(registerUser)
 );
 
 router.post(
@@ -40,7 +41,7 @@ router.post(
         max: 5, // 5 login attempts
     }),
     validateRequest(userValidationRules.login),
-    loginUser
+    asyncHandler(loginUser)
 );
 
 router.post("/logout", verifyJWT, logoutUser);
