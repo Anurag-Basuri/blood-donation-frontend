@@ -25,7 +25,6 @@ import mapRoutes from "./routes/others/map.routes.js";
 import notificationRoutes from "./routes/others/notification.routes.js";
 
 const app = express();
-app.set('trust proxy', true);
 
 // Global rate limiter
 const limiter = rateLimit({
