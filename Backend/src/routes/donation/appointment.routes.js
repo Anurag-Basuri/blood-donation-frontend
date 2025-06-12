@@ -9,6 +9,8 @@ import {
     APPOINTMENT_STATUS,
 } from "../../controllers/donation/appointment.controller.js";
 
+const router = Router();
+
 // Error handler
 router.use((err, req, res, next) => {
     if (err.name === "ValidationError") {
@@ -19,10 +21,6 @@ router.use((err, req, res, next) => {
     }
     next(err);
 });
-
-export default router;
-
-const router = Router();
 
 // Protect all appointment routes
 router.use(verifyJWT);
