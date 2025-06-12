@@ -9,18 +9,7 @@ import {
     APPOINTMENT_STATUS,
 } from "../../controllers/donation/appointment.controller.js";
 
-const router = Router();
-
-// Error handler
-router.use((err, req, res, next) => {
-    if (err.name === "ValidationError") {
-        return res.status(400).json({
-            success: false,
-            message: err.message,
-        });
-    }
-    next(err);
-});
+const router = Router(); // <-- Move this to the top
 
 // Protect all appointment routes
 router.use(verifyJWT);
@@ -53,3 +42,16 @@ router.post(
     validateRequest("appointment.reminder"),
     sendReminder
 );
+
+// Error handler
+router.use((err, req, res, next) => {
+    if (err.name === "ValidationError") {
+        return res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+    next(err);
+});
+
+export default router;
