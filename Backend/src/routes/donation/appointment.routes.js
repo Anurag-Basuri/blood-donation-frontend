@@ -8,6 +8,7 @@ import {
     sendReminder,
     APPOINTMENT_STATUS,
 } from "../../controllers/donation/appointment.controller.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
 
 const router = Router(); // <-- Move this to the top
 
@@ -22,14 +23,14 @@ router.post(
         max: 3, // 3 appointments per 15 minutes
     }),
     validateRequest("appointment.create"),
-    createAppointment
+    asyncHandler(createAppointment)
 );
 
 // Update appointment
 router.patch(
     "/:appointmentId",
     validateRequest("appointment.update"),
-    updateAppointment
+    asyncHandler(updateAppointment)
 );
 
 // Send reminder
@@ -40,7 +41,7 @@ router.post(
         max: 2, // 2 reminders per hour per appointment
     }),
     validateRequest("appointment.reminder"),
-    sendReminder
+    asyncHandler(sendReminder)
 );
 
 // Error handler
