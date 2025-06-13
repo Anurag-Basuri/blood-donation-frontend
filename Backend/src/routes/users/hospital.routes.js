@@ -8,18 +8,18 @@ import { verifyJWT } from "../../middleware/auth.middleware.js";
 import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
     registerHospital,
+    createBloodRequest,
+    updateBloodInventory,
+    manageNGOConnections,
+    getHospitalAnalytics,
     loginHospital,
     logoutHospital,
     refreshAccessToken,
-    getHospitalProfile,
-    updateBloodInventory,
-    createBloodRequest,
+    changePassword,
     findNearbyNGOs,
-    manageNGOConnections,
-    getHospitalAnalytics,
+    getHospitalProfile,
     updateEmergencyContact,
     updateHospitalProfile,
-    changePassword,
 } from "../../controllers/users/hospital.controller.js";
 
 const router = Router();
