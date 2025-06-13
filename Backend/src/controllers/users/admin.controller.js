@@ -377,9 +377,11 @@ class AnalyticsController {
 }
 
 // Export controllers
-export const { register: registerAdmin, login: loginAdmin } = AuthController;
+export const registerAdmin = AuthController.register;
+export const loginAdmin = AuthController.login;
 
-export const { verifyHospital, verifyNGO } = VerificationController;
+export const verifyHospital = VerificationController.verifyHospital;
+export const verifyNGO = VerificationController.verifyNGO;
 
-export const { getSystemAnalytics, getActivityLogs: getSystemActivities } =
-    AnalyticsController;
+export const getSystemAnalytics = AnalyticsController.getSystemAnalytics;
+export const getSystemActivities = AnalyticsController.getSystemActivities;
