@@ -60,9 +60,6 @@ const adminSchema = new mongoose.Schema(
     }
 );
 
-// Index for optimization
-adminSchema.index({ email: 1 });
-
 // Hash password before saving
 adminSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
