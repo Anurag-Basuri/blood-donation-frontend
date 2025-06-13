@@ -146,7 +146,6 @@ const appointmentSchema = new mongoose.Schema(
 appointmentSchema.index({ date: 1, status: 1 });
 appointmentSchema.index({ centerId: 1, date: 1 });
 appointmentSchema.index({ userId: 1, date: -1 });
-appointmentSchema.index({ appointmentId: 1 }, { unique: true });
 
 // Methods
 appointmentSchema.methods = {
