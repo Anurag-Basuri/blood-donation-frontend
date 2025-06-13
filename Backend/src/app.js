@@ -26,8 +26,8 @@ import notificationRoutes from "./routes/others/notification.routes.js";
 
 const app = express();
 
-// Global rate limiter (use your custom middleware)
-app.use(rateLimiter);
+// Set security-related HTTP headers
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -46,6 +46,9 @@ app.use(
         allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
+
+// Global rate limiter (use your custom middleware)
+app.use(rateLimiter);
 
 // Health check route
 app.get("/health", (req, res) => {
