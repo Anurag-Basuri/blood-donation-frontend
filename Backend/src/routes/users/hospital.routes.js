@@ -99,15 +99,15 @@ router.route('/blood-inventory')
     );
 
 // Blood Request Management
-router.route('/blood-requests')
-    .post(
-        validateRequest('hospital.bloodRequest'),
-        createBloodRequest
-    )
-    .get(
-        validateRequest('hospital.requestHistory'),
-        getBloodRequestHistory
-    );
+// router.route('/blood-requests')
+//     .post(
+//         validateRequest('hospital.bloodRequest'),
+//         createBloodRequest
+//     )
+//     .get(
+//         validateRequest('hospital.requestHistory'),
+//         getBloodRequestHistory
+//     );
 
 // NGO Network Management
 router.get(
