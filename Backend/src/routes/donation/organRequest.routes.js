@@ -14,7 +14,6 @@ import {
     getHighPriorityRequests,
     cancelRequest,
 } from "../../controllers/donation/organRequest.controller.js";
-import { asyncHandler } from "../../utils/asyncHandler.js";
 
 const router = Router();
 
@@ -38,19 +37,19 @@ router.post(
     documentUpload,
     handleMulterError,
     validateRequest("organRequest.create"),
-    asyncHandler(createOrganRequest)
+    createOrganRequest
 );
 
 router.patch(
     "/:requestId/status",
     validateRequest("organRequest.updateStatus"),
-    asyncHandler(updateRequestStatus)
+    updateRequestStatus
 );
 
 router.get(
     "/:requestId/donors",
     validateRequest("organRequest.findDonors"),
-    asyncHandler(findPotentialDonors)
+    findPotentialDonors
 );
 
 router.get(
@@ -59,19 +58,19 @@ router.get(
         windowMs: 5 * 60 * 1000, // 5 minutes
         max: 10, // 10 requests per 5 minutes
     }),
-    asyncHandler(getHighPriorityRequests)
+    getHighPriorityRequests
 );
 
 router.get(
     "/:requestId/track",
     validateRequest("organRequest.track"),
-    asyncHandler(trackRequest)
+    trackRequest
 );
 
 router.delete(
     "/:requestId",
     validateRequest("organRequest.cancel"),
-    asyncHandler(cancelRequest)
+    cancelRequest
 );
 
 // Error handler

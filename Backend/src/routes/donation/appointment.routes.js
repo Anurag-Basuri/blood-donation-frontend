@@ -9,7 +9,7 @@ import {
     APPOINTMENT_STATUS,
 } from "../../controllers/donation/appointment.controller.js";
 
-const router = Router(); // <-- Move this to the top
+const router = Router();
 
 // Protect all appointment routes
 router.use(verifyJWT);
