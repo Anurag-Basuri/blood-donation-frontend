@@ -473,6 +473,7 @@ const getNotifications = asyncHandler(async (req, res) => {
         );
 });
 
+// Mark Notifications as Read
 const markNotificationsRead = asyncHandler(async (req, res) => {
     await Notification.markAllAsRead(req.user._id);
 
