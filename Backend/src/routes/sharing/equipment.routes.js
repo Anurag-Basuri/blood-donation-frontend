@@ -12,7 +12,7 @@ import {
     updateEquipmentStatus,
     bookEquipment,
     getEquipmentHistory,
-    EQUIPMENT_STATUS,
+    EQUIPMENT_STATUS
 } from "../../controllers/sharing/equipment.controller.js";
 
 const router = Router();

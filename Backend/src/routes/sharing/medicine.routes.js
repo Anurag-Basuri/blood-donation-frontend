@@ -7,7 +7,7 @@ import {
     addMedicine,
     updateMedicineStatus,
     getMedicineAnalytics,
-    MEDICINE_STATUS,
+    MEDICINE_STATUS
 } from "../../controllers/sharing/medicine.controller.js";
 
 const router = Router();
