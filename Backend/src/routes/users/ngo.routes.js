@@ -10,7 +10,7 @@ import {
     registerNGO,
     loginNGO,
     logoutNGO,
-    resendVerificationOtp,
+    changePassword,
     getNGOProfile,
     updateNGOProfile,
     manageFacility,
@@ -19,7 +19,7 @@ import {
     getConnectedHospitals,
     respondToConnectionRequest,
     getNGOAnalytics,
-    changePassword,
+    resendVerificationOtp,
 } from "../../controllers/users/ngo.controller.js";
 
 const router = Router();
