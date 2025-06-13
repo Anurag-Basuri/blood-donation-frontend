@@ -5,7 +5,6 @@ import {
     verifyHospital,
     verifyNGO,
     getSystemAnalytics,
-    getSystemActivities,
 } from "../../controllers/users/admin.controller.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
 import { validateRequest } from "../../middleware/validator.middleware.js";
@@ -22,7 +21,6 @@ router.post(
         max: 5, // 5 requests per hour
     }),
     validateRequest(adminValidationRules.register),
-    verifyJWT,
     registerAdmin
 );
 
@@ -54,7 +52,7 @@ router.patch(
 // Analytics routes
 router.get("/analytics", verifyJWT, getSystemAnalytics);
 
-router.get("/activities", verifyJWT, getSystemActivities);
+// router.get("/activities", verifyJWT, getSystemActivities);
 
 // Optional: Advanced query routes
 router.get(

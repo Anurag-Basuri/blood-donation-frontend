@@ -384,4 +384,4 @@ export const verifyHospital = VerificationController.verifyHospital;
 export const verifyNGO = VerificationController.verifyNGO;
 
 export const getSystemAnalytics = AnalyticsController.getSystemAnalytics;
-export const getSystemActivities = AnalyticsController.getSystemActivities;
+// export const getSystemActivities = AnalyticsController.getSystemActivities;
