@@ -42,7 +42,7 @@ const setupRateLimiter = async () => {
 };
 
 // This is the actual exported middleware function
-export const rateLimitter = async (req, res, next) => {
+export const rateLimiter = async (req, res, next) => {
     if (!rateLimiterInstance) {
         rateLimiterInstance = await setupRateLimiter();
     }
