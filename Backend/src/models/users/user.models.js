@@ -255,7 +255,6 @@ const userSchema = new Schema(
 );
 
 // Indexes
-userSchema.index({ email: 1 });
 userSchema.index({ bloodType: 1, donorStatus: 1 });
 userSchema.index({ "address.location": "2dsphere" });
 userSchema.index({ "address.city": 1, "address.pinCode": 1 });
