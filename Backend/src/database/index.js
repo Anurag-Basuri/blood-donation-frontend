@@ -20,44 +20,41 @@ const connectDB = async () => {
   }
 
   try {
-    const uri = process.env.MONGODB_URI;
-    
-    // Log connection attempt without exposing the full URI for security
-    console.log("Connecting to MongoDB...");
-    
-    if (!uri) {
-      throw new Error("MongoDB URI is not defined. Check your .env file.");
-    }
-    
-    // Add connection options optimized for serverless environments
-    const options = {
-      // Serverless environment optimizations
-      bufferCommands: false, // Disable mongoose buffering
-      maxPoolSize: 10, // Limit number of sockets
-      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-      family: 4 // Use IPv4, skip trying IPv6
-    };
+      const uri = process.env.MONGODB_URI;
+      
+      // Log connection attempt without exposing the full URI for security
+      console.log("Connecting to MongoDB...");
+      if (!uri) {
+        throw new Error("MongoDB URI is not defined. Check your .env file.");
+      }
+      // Add connection options optimized for serverless environments
+      const options = {
+        // Serverless environment optimizations
+        bufferCommands: false, // Disable mongoose buffering
+        maxPoolSize: 10, // Limit number of sockets
+        serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+        socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+        family: 4 // Use IPv4, skip trying IPv6
+      };
 
-    // Connect to MongoDB
-    const conn = await mongoose.connect(uri, options);
-    
-    // Store the connection in our cache
-    cachedConnection = conn;
-    
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    
-    // Handle connection errors after initial connection
-    mongoose.connection.on('error', err => {
-      console.error('MongoDB connection error:', err);
-      cachedConnection = null;
-    });
-    
+      // Connect to MongoDB
+      const conn = await mongoose.connect(uri, options);
+
+      // Store the connection in our cache
+      cachedConnection = conn;
+
+      console.log(`MongoDB Connected: ${conn.connection.host}`);
+
+      // Handle connection errors after initial connection
+      mongoose.connection.on('error', err => {
+        console.error('MongoDB connection error:', err);
+        cachedConnection = null;
+      });
     return conn;
   } catch (error) {
-    console.error(`MongoDB connection error: ${error.message}`);
-    
-    throw error;
+      console.error(`MongoDB connection error: ${error.message}`);
+      
+      throw error;
   }
 };
 
