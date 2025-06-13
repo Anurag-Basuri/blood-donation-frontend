@@ -13,7 +13,6 @@ const requiredEnvVars = [
     "MONGODB_URI",
     "NODE_ENV",
     "JWT_SECRET",
-    "JWT_EXPIRES_IN"
 ];
 
 for (const envVar of requiredEnvVars) {
