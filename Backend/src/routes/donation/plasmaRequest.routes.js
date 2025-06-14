@@ -19,10 +19,6 @@ router.use(verifyJWT);
 // Plasma Request Routes with validation and rate limiting
 router.post(
     "/",
-    rateLimiter({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 3, // 3 requests per 15 minutes
-    }),
     validateRequest("plasmaRequest.create"),
     createPlasmaRequest
 );
@@ -41,10 +37,6 @@ router.get(
 
 router.get(
     "/emergency",
-    rateLimiter({
-        windowMs: 5 * 60 * 1000, // 5 minutes
-        max: 10,
-    }),
     getEmergencyRequests
 );
 

@@ -5,7 +5,6 @@ import {
     uploadFields,
     handleMulterError,
 } from "../../middleware/multer.middleware.js";
-import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
     createOrganRequest,
     updateRequestStatus,
@@ -30,10 +29,6 @@ router.use(verifyJWT);
 // Routes with validation and rate limiting
 router.post(
     "/",
-    rateLimiter({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 3, // 3 requests per 15 minutes
-    }),
     documentUpload,
     handleMulterError,
     validateRequest("organRequest.create"),
@@ -54,10 +49,6 @@ router.get(
 
 router.get(
     "/high-priority",
-    rateLimiter({
-        windowMs: 5 * 60 * 1000, // 5 minutes
-        max: 10, // 10 requests per 5 minutes
-    }),
     getHighPriorityRequests
 );
 
