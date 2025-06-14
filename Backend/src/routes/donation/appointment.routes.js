@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
-import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
     createAppointment,
     updateAppointment,
@@ -17,10 +16,6 @@ router.use(verifyJWT);
 // Create appointment with rate limiting
 router.post(
     "/",
-    rateLimiter({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 3, // 3 appointments per 15 minutes
-    }),
     validateRequest("appointment.create"),
     createAppointment
 );
@@ -35,10 +30,6 @@ router.patch(
 // Send reminder
 router.post(
     "/:appointmentId/remind",
-    rateLimiter({
-        windowMs: 60 * 60 * 1000, // 1 hour
-        max: 2, // 2 reminders per hour per appointment
-    }),
     validateRequest("appointment.reminder"),
     sendReminder
 );

@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
-import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
     createBloodRequest,
     updateRequestStatus,
@@ -19,10 +18,6 @@ router.use(verifyJWT);
 // Blood Request Routes with rate limiting and validation
 router.post(
     "/",
-    rateLimiter({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 5, // 5 requests per 15 minutes
-    }),
     validateRequest("bloodRequest.create"),
     createBloodRequest
 );
@@ -41,10 +36,6 @@ router.get(
 
 router.get(
     "/emergency",
-    rateLimiter({
-        windowMs: 5 * 60 * 1000, // 5 minutes
-        max: 10, // 10 requests per 5 minutes
-    }),
     getEmergencyRequests
 );
 
