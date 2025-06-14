@@ -22,13 +22,15 @@ const ALLOWED_PROFILE_UPDATES = [
 // AUTH CONTROLLERS
 const registerUser = asyncHandler(async (req, res) => {
     const {
+        userName,
         fullName,
         email,
-        password,
         phone,
-        bloodType,
-        address,
         dateOfBirth,
+        gender,
+        bloodType,
+        password,
+        address,
         medicalInfo,
     } = req.body;
 
