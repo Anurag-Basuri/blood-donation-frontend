@@ -20,6 +20,14 @@ const MEDICAL_CONDITIONS = [
 
 const userSchema = new Schema(
     {
+        userName: {
+            type: String,
+            required: [true, "Username is required"],
+            unique: true,
+            trim: true,
+            minlength: [3, "Username must be at least 3 characters"],
+            maxlength: [20, "Username must be at most 20 characters"],
+        },
         fullName: {
             type: String,
             required: [true, "Full name is required"],
