@@ -5,7 +5,6 @@ import {
 } from "../../middleware/multer.middleware.js";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
-import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
     registerNGO,
     loginNGO,

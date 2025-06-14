@@ -17,7 +17,6 @@ import {
 } from "../../controllers/users/user.controller.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
 import { validateRequest } from "../../middleware/validator.middleware.js";
-import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import { userValidationRules } from "../../validations/user.validations.js";
 
 const router = express.Router();

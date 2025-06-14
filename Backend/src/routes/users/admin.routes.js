@@ -9,7 +9,6 @@ import {
 import { verifyJWT } from "../../middleware/auth.middleware.js";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { adminValidationRules } from "../../validations/admin.validations.js";
-import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 
 const router = express.Router();
 
