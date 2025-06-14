@@ -437,6 +437,7 @@ const getDonationHistory = asyncHandler(async (req, res) => {
         );
 });
 
+// Get Request History
 const getRequestHistory = asyncHandler(async (req, res) => {
     const requests = await BloodRequest.find({
         requesterId: req.user._id,
