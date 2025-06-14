@@ -48,7 +48,7 @@ app.use(
 );
 
 // Global rate limiter (use your custom middleware)
-// app.use(rateLimiter);
+app.use(rateLimiter);
 
 // Health check route
 app.get("/health", (req, res) => {

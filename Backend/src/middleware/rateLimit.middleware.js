@@ -1,63 +1,62 @@
 import rateLimit from "express-rate-limit";
 
-// Helper to get client's IP safely
+let RedisStore = null;
+let redisClient = null;
+
+/**
+ * 🧠 Get client IP safely from various sources
+ */
 const getClientIp = (req) =>
-    req.ip || req.headers["x-forwarded-for"] || req.connection?.remoteAddress || "unknown";
+    req.ip ||
+    req.headers["x-forwarded-for"] ||
+    req.connection?.remoteAddress ||
+    "unknown";
 
-// This function creates a rate limiter with options
-export const rateLimiter = (options = {}) => {
-    let limiterPromise = null;
-
-    // Immediately start setting up limiter on first function call
-    const setupRateLimiter = async () => {
-        if (process.env.NODE_ENV === "production") {
-            const { default: RedisStore } = await import("rate-limit-redis");
-            const { createClient } = await import("redis");
-
-            const redisClient = createClient({
-                url: process.env.REDIS_URL || "redis://localhost:6379",
-            });
-
-            await redisClient.connect();
-
-            return rateLimit({
-                store: new RedisStore({
-                    client: redisClient,
-                    prefix: "rate-limit:",
-                }),
-                standardHeaders: true,
-                legacyHeaders: false,
-                keyGenerator: getClientIp,
-                ...options,
-            });
-        } else {
-            return rateLimit({
-                standardHeaders: true,
-                legacyHeaders: false,
-                keyGenerator: getClientIp,
-                ...options,
-            });
-        }
-    };
-
-    // Start initializing immediately
-    limiterPromise = setupRateLimiter();
-
-    // Return actual middleware function
-    return async (req, res, next) => {
+/**
+ * ✅ Call this ONCE during app startup to initialize Redis
+ */
+export const initRateLimiter = async () => {
+    if (process.env.NODE_ENV === "production") {
         try {
-            const limiter = await limiterPromise;
-            return limiter(req, res, next);
+        const redis = await import("redis");
+        const redisStore = await import("rate-limit-redis");
+
+        redisClient = redis.createClient({
+            url: process.env.REDIS_URL || "redis://localhost:6379",
+        });
+
+        await redisClient.connect();
+        RedisStore = redisStore.default;
+
+        console.log("✅ Redis connected for rate limiting");
         } catch (err) {
-            console.error("Rate limiter setup failed:", err);
-            return next(); // fail open
+        console.error("❌ Redis setup failed:", err);
         }
-    };
+    }
 };
 
-// Dummy cache middleware (unchanged)
-export const cacheMiddleware = (duration) => {
-    return async (req, res, next) => {
-        next();
+/**
+ * ✅ Create rate limiter middleware
+ */
+export const rateLimiter = (options = {}) => {
+    const baseOptions = {
+        windowMs: 15 * 60 * 1000,
+        max: 100,
+        standardHeaders: true,
+        legacyHeaders: false,
+        keyGenerator: getClientIp,
+        ...options,
     };
+
+    if (RedisStore && redisClient) {
+        return rateLimit({
+        ...baseOptions,
+        store: new RedisStore({
+            client: redisClient,
+            prefix: "rate-limit:",
+        }),
+        });
+    }
+
+  return rateLimit(baseOptions); // fallback to memory in dev
 };
