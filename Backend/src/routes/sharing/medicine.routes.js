@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
-import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
     listMedicines,
     addMedicine,
@@ -15,10 +14,6 @@ const router = Router();
 // Public routes with rate limiting
 router.get(
     "/",
-    rateLimiter({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 30, // 30 requests per minute
-    }),
     validateRequest("medicine.list"),
     listMedicines
 );
@@ -28,10 +23,6 @@ router.use(verifyJWT);
 
 router.post(
     "/",
-    rateLimiter({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 10, // 10 new medicines per 15 minutes
-    }),
     validateRequest("medicine.add"),
     addMedicine
 );

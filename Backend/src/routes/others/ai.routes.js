@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
-import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
     findDonorMatches,
     predictSupply,
@@ -19,10 +18,6 @@ router.use(verifyJWT);
 // Donor matching routes
 router.post(
     "/donors/match",
-    rateLimiter({
-        windowMs: 5 * 60 * 1000, // 5 minutes
-        max: 10, // 10 requests per 5 minutes
-    }),
     validateRequest("ai.donorMatch"),
     findDonorMatches
 );
@@ -37,10 +32,6 @@ router.get(
 // Emergency optimization routes
 router.post(
     "/emergency/optimize",
-    rateLimiter({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 5, // 5 requests per minute for emergencies
-    }),
     validateRequest("ai.emergency"),
     optimizeEmergencyResponse
 );

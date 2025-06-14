@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
-import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
     uploadFields,
     handleMulterError,
@@ -26,10 +25,6 @@ const equipmentUpload = uploadFields([
 // Public routes
 router.get(
     "/",
-    rateLimiter({
-        windowMs: 1 * 60 * 1000,
-        max: 30,
-    }),
     validateRequest("equipment.list"),
     listEquipment
 );
