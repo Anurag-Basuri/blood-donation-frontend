@@ -6,8 +6,9 @@ const getClientIp = (req) =>
 
 // This function creates a rate limiter with options
 export const rateLimiter = (options = {}) => {
-    let limiterPromise;
+    let limiterPromise = null;
 
+    // Immediately start setting up limiter on first function call
     const setupRateLimiter = async () => {
         if (process.env.NODE_ENV === "production") {
             const { default: RedisStore } = await import("rate-limit-redis");
@@ -17,7 +18,7 @@ export const rateLimiter = (options = {}) => {
                 url: process.env.REDIS_URL || "redis://localhost:6379",
             });
 
-            await redisClient.connect().catch(console.error);
+            await redisClient.connect();
 
             return rateLimit({
                 store: new RedisStore({
@@ -39,18 +40,18 @@ export const rateLimiter = (options = {}) => {
         }
     };
 
-    // Return actual middleware function
-    return (req, res, next) => {
-        if (!limiterPromise) {
-            limiterPromise = setupRateLimiter();
-        }
+    // Start initializing immediately
+    limiterPromise = setupRateLimiter();
 
-        limiterPromise
-            .then((limiter) => limiter(req, res, next))
-            .catch((err) => {
-                console.error("Rate limiter setup failed:", err);
-                next(); // Continue even if limiter fails
-            });
+    // Return actual middleware function
+    return async (req, res, next) => {
+        try {
+            const limiter = await limiterPromise;
+            return limiter(req, res, next);
+        } catch (err) {
+            console.error("Rate limiter setup failed:", err);
+            return next(); // fail open
+        }
     };
 };
 
