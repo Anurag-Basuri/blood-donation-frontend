@@ -6,12 +6,16 @@ import { ApiError } from "../../utils/ApiError.js";
 // Constants
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const MEDICAL_CONDITIONS = [
-    "Diabetes",
-    "Hypertension",
-    "Heart Disease",
-    "HIV",
-    "Hepatitis",
-    "None",
+    "Infectious Diseases (HIV, Hepatitis B/C, Syphilis, Malaria, Tuberculosis)",
+    "Chronic Illnesses (Diabetes, Hypertension, Heart/Kidney/Liver Disease)",
+    "Blood Disorders (Anemia, Hemophilia, Clotting Disorders)",
+    "Cancer (Leukemia, Lymphoma, Other Cancers)",
+    "Autoimmune Diseases (Lupus, Rheumatoid Arthritis)",
+    "Neurological Conditions (Epilepsy, Recent Stroke)",
+    "Recent Surgery or Transplant",
+    "Recent Infection (COVID-19, Sepsis, etc.)",
+    "Pregnancy or Recent Childbirth",
+    "None"
 ];
 
 const userSchema = new Schema(
