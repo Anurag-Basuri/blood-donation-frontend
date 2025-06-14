@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
-import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
     findNearestCenters,
     getDirections,
@@ -16,40 +15,24 @@ const router = Router();
 // Public routes with rate limiting
 router.get(
     "/centers",
-    rateLimiter({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 15, // 15 requests per minute
-    }),
     validateRequest("map.findCenters"),
     findNearestCenters
 );
 
 router.get(
     "/directions",
-    rateLimiter({
-        windowMs: 1 * 60 * 1000,
-        max: 20,
-    }),
     validateRequest("map.directions"),
     getDirections
 );
 
 router.post(
     "/geocode",
-    rateLimiter({
-        windowMs: 1 * 60 * 1000,
-        max: 10,
-    }),
     validateRequest("map.geocode"),
     geocodeAddresses
 );
 
 router.get(
     "/places/:placeId",
-    rateLimiter({
-        windowMs: 1 * 60 * 1000,
-        max: 30,
-    }),
     validateRequest("map.placeDetails"),
     getPlaceDetails
 );

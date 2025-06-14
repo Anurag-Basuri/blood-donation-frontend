@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "../../middleware/validator.middleware.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
-import { rateLimiter } from "../../middleware/rateLimit.middleware.js";
 import {
     getNotifications,
     markAsRead,
@@ -20,10 +19,6 @@ router.use(verifyJWT);
 // Get notifications with pagination and filtering
 router.get(
     "/",
-    rateLimiter({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 30, // 30 requests per minute
-    }),
     validateRequest("notification.list"),
     getNotifications
 );
@@ -54,10 +49,6 @@ router
 // Get notification statistics
 router.get(
     "/stats",
-    rateLimiter({
-        windowMs: 5 * 60 * 1000, // 5 minutes
-        max: 10, // 10 requests per 5 minutes
-    }),
     getNotificationStats
 );
 
