@@ -35,10 +35,6 @@ const documentUpload = uploadFields([
 // Auth Routes (Public)
 router.post(
     "/register",
-    rateLimiter({
-        windowMs: 60 * 60 * 1000, // 1 hour
-        max: 3, // 3 registration attempts per hour
-    }),
     documentUpload,
     handleMulterError,
     validateRequest("ngo.register"),
@@ -47,10 +43,6 @@ router.post(
 
 router.post(
     "/login",
-    rateLimiter({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 5, // 5 login attempts
-    }),
     validateRequest("ngo.login"),
     loginNGO
 );

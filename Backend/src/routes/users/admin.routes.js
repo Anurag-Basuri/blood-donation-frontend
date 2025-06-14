@@ -16,20 +16,12 @@ const router = express.Router();
 // Auth routes with rate limiting
 router.post(
     "/register",
-    rateLimiter({
-        windowMs: 60 * 60 * 1000, // 1 hour
-        max: 5, // 5 requests per hour
-    }),
     validateRequest(adminValidationRules.register),
     registerAdmin
 );
 
 router.post(
     "/login",
-    rateLimiter({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 5, // 5 attempts per 15 minutes
-    }),
     validateRequest(adminValidationRules.login),
     loginAdmin
 );
