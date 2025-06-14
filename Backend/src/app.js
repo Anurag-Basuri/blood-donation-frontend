@@ -4,7 +4,6 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import compression from "compression";
 import mongoSanitize from "express-mongo-sanitize";
-import { rateLimiter } from "./middleware/rateLimit.middleware.js";
 
 // Import routes
 import userRoutes from "./routes/users/user.routes.js";
@@ -23,6 +22,9 @@ import medicineRoutes from "./routes/sharing/medicine.routes.js";
 import aiRoutes from "./routes/others/ai.routes.js";
 import mapRoutes from "./routes/others/map.routes.js";
 import notificationRoutes from "./routes/others/notification.routes.js";
+
+import { initRateLimiter } from "./middleware/rateLimit.middleware.js";
+await initRateLimiter(); // Initialize rate limiter if using Redis
 
 const app = express();
 
@@ -48,6 +50,7 @@ app.use(
 );
 
 // Global rate limiter (use your custom middleware)
+import { rateLimiter } from "./middleware/rateLimit.middleware.js";
 app.use(rateLimiter);
 
 // Health check route
