@@ -379,9 +379,28 @@ const markNotificationsRead = asyncHandler(async (req, res) => {
 
 // Get user profile and details
 const getUserProfile = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id)
-        .select("-password -refreshToken")
-    
+    const userId = req.user?._id;
+
+    if (!userId) {
+        throw new ApiError(401, "Unauthorized access. Please login");
+    }
+
+    const user = await User.findById(userId)
+            .select(
+                "-password -refreshToken -emailVerificationOTP -__v -loginAttempts"
+            )
+            .populate({
+                path: "donationPreferences.preferredCenter",
+                select: "name location contact", // optional if center has extra details
+            })
+            .populate({
+                path: "bloodDonationHistory.center",
+                select: "name location",
+            })
+            .populate({
+                path: "bloodDonationHistory.donationId",
+                select: "date units",
+            });
 
     return res
         .status(200)
