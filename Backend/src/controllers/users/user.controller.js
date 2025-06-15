@@ -331,25 +331,6 @@ const getDonationHistory = asyncHandler(async (req, res) => {
         );
 });
 
-// Get Request History
-const getRequestHistory = asyncHandler(async (req, res) => {
-    const requests = await BloodRequest.find({
-        requesterId: req.user._id,
-    })
-        .sort({ createdAt: -1 })
-        .populate("hospitalId", "name address");
-
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                requests,
-                "Request history fetched successfully"
-            )
-        );
-});
-
 // NOTIFICATIONS
 const getNotifications = asyncHandler(async (req, res) => {
     const notifications = await Notification.find({
@@ -432,7 +413,6 @@ export {
     refreshAccessToken,
     updateProfile,
     getDonationHistory,
-    getRequestHistory,
     getNotifications,
     markNotificationsRead,
     getCurrentUser,
