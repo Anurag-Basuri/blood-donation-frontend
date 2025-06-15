@@ -383,19 +383,11 @@ const getUserProfile = asyncHandler(async (req, res) => {
 
     const user = await User.findById(id)
             .select(
-                "-password -refreshToken -emailVerificationOTP -__v -loginAttempts"
+                "-password -refreshToken -emailVerificationOTP -__v -loginAttempts -lastLogin -bloodDonationHistory -phone -isEmailVerified"
             )
             .populate({
                 path: "donationPreferences.preferredCenter",
                 select: "name location contact", // optional if center has extra details
-            })
-            .populate({
-                path: "bloodDonationHistory.center",
-                select: "name location",
-            })
-            .populate({
-                path: "bloodDonationHistory.donationId",
-                select: "date units",
             });
 
     if (!user) {
