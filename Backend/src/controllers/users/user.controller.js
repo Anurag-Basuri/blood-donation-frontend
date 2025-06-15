@@ -379,13 +379,9 @@ const markNotificationsRead = asyncHandler(async (req, res) => {
 
 // Get user profile and details
 const getUserProfile = asyncHandler(async (req, res) => {
-    const userId = req.params?._id;
+    const { id } = req.params;
 
-    if (!userId) {
-        throw new ApiError(401, "Unauthorized access. Please login");
-    }
-
-    const user = await User.findById(userId)
+    const user = await User.findById(id)
             .select(
                 "-password -refreshToken -emailVerificationOTP -__v -loginAttempts"
             )
@@ -401,6 +397,10 @@ const getUserProfile = asyncHandler(async (req, res) => {
                 path: "bloodDonationHistory.donationId",
                 select: "date units",
             });
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
 
     return res
         .status(200)
