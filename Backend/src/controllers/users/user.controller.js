@@ -377,6 +377,18 @@ const markNotificationsRead = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "All notifications marked as read"));
 });
 
+// Get user profile and details
+const getUserProfile = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id)
+        .select("-password -refreshToken")
+        .populate("donations", "date status")
+        .populate("requests", "bloodGroups status createdAt");
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "User profile fetched successfully"));
+});
+
 // Get Current User
 const getCurrentUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id)
@@ -395,11 +407,11 @@ export {
     logoutUser,
     refreshAccessToken,
     updateProfile,
-    bookDonationAppointment,
     getDonationHistory,
     getRequestHistory,
     getNotifications,
     markNotificationsRead,
     getCurrentUser,
     changePassword,
+    getUserProfile,
 };
