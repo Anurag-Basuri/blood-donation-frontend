@@ -160,13 +160,26 @@ const generateTokens = async (userId) => {
 
 // Login Controller
 const loginUser = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
+    const { userName, email, phone, password } = req.body;
 
-    if (!email || !password) {
-        throw new ApiError(400, "Email and password are required");
+    if (!password) {
+        throw new ApiError(400, "Password is required");
     }
 
-    const user = await User.findOne({ email }).select("+password");
+    // Validate login credentials
+    if (!userName && !email && !phone) {
+        throw new ApiError(400, "Username, email, or phone is required");
+    }
+
+    // Find user by username, email, or phone
+    const user = await User.findOne({
+        $or: [
+            { userName: userName?.trim() },
+            { email: email?.trim() },
+            { phone: phone?.trim() },
+        ],
+    }).select("+password +refreshToken");
+
     if (!user || !(await user.isPasswordCorrect(password))) {
         throw new ApiError(401, "Invalid credentials");
     }
