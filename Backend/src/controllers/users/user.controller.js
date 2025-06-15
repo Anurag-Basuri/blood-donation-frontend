@@ -62,10 +62,11 @@ const registerUser = asyncHandler(async (req, res) => {
         },
     ];
 
-
-    const failedValidation = validations.find((v) => v.condition);
-    if (failedValidation) {
-        throw new ApiError(400, failedValidation.message);
+    // Run validations
+    for (const {condition, message} of validations) {
+        if (condition) {
+            return res.status(400).json(new ApiResponse(400, {}, message));
+        }
     }
 
     // Check existing user
