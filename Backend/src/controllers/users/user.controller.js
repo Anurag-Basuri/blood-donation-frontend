@@ -29,28 +29,39 @@ const registerUser = asyncHandler(async (req, res) => {
         dateOfBirth,
         gender,
         bloodType,
-        password,
+        lastDonationDate,
         address,
-        medicalInfo,
+        password,
     } = req.body;
 
-    // Enhanced validation
+    const isInvalidDate = (date) => date && isNaN(new Date(date).getTime());
+    const isInvalidEmail = (email) =>
+        email && !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/.test(email);
+    const isInvalidPhone = (phone) =>
+        phone && !/^\+?[\d\s-]{10,}$/.test(phone);
+    const isInvalidBloodType = (type) =>
+        type && !["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].includes(type);
+
     const validations = [
+        { condition: !userName?.trim(), message: "Username is required" },
         { condition: !fullName?.trim(), message: "Full name is required" },
         { condition: !email?.trim(), message: "Email is required" },
         { condition: !password?.trim(), message: "Password is required" },
         { condition: !phone?.trim(), message: "Phone number is required" },
+        { condition: isInvalidPhone(phone), message: "Invalid phone number format" },
+        { condition: isInvalidEmail(email), message: "Invalid email format" },
+        { condition: isInvalidDate(dateOfBirth), message: "Invalid date of birth" },
+        { condition: isInvalidBloodType(bloodType), message: "Invalid blood type" },
         {
-            condition: phone && !/^\+?[\d\s-]{10,}$/.test(phone),
-            message: "Invalid phone number format",
+            condition: isInvalidDate(lastDonationDate),
+            message: "Invalid last donation date",
         },
         {
-            condition:
-                email &&
-                !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/.test(email),
-            message: "Invalid email format",
+            condition: address && typeof address !== "object",
+            message: "Address must be an object with valid fields",
         },
     ];
+
 
     const failedValidation = validations.find((v) => v.condition);
     if (failedValidation) {
