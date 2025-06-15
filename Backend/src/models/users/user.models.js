@@ -182,12 +182,7 @@ const userSchema = new Schema(
             preferredTimeSlot: {
                 type: String,
                 enum: ["Morning", "Afternoon", "Evening"],
-            },
-            notificationPreferences: {
-                email: { type: Boolean, default: true },
-                sms: { type: Boolean, default: true },
-                emergencyAlerts: { type: Boolean, default: true },
-            },
+            }
         },
         bloodDonationHistory: [
             {
