@@ -93,6 +93,7 @@ const registerUser = asyncHandler(async (req, res) => {
         lastDonationDate,
         address,
         password,
+        lastLogin: new Date(),
     });
 
     // Log activity with detailed tracking
@@ -185,6 +186,10 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     const { accessToken, refreshToken } = await generateTokens(user._id);
+
+    // Update last login time
+    user.lastLogin = new Date();
+    await user.save({ validateBeforeSave: false });
 
     // Log activity
     await Activity.create({
