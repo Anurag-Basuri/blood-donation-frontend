@@ -311,144 +311,6 @@ const changePassword = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
-// DONATION MANAGEMENT
-const bookDonationAppointment = asyncHandler(async (req, res) => {
-    const { facilityId, date, slotTime, donationType } = req.body;
-
-    // Enhanced eligibility check
-    const eligibility = await req.user.checkDonationEligibility();
-    if (!eligibility.isEligible) {
-        throw new ApiError(
-            400,
-            `Not eligible to donate: ${eligibility.reason}`
-        );
-    }
-
-    // Verify facility and slot
-    const facility = await Facility.findById(facilityId);
-    if (!facility) {
-        throw new ApiError(404, "Donation facility not found");
-    }
-
-    // Check facility schedule
-    if (facility.facilityType === "CAMP") {
-        const campDate = new Date(date).setHours(0, 0, 0, 0);
-        const startDate = new Date(facility.schedule.startDate).setHours(
-            0,
-            0,
-            0,
-            0
-        );
-        const endDate = new Date(facility.schedule.endDate).setHours(
-            23,
-            59,
-            59,
-            999
-        );
-
-        if (campDate < startDate || campDate > endDate) {
-            throw new ApiError(400, "Selected date is outside camp schedule");
-        }
-    }
-
-    // Verify slot availability
-    const isSlotAvailable = await facility.checkSlotAvailability(
-        date,
-        slotTime
-    );
-    if (!isSlotAvailable) {
-        throw new ApiError(400, "Selected time slot is not available");
-    }
-
-    // Create appointment with enhanced tracking
-    const appointment = await DonationAppointment.create({
-        userId: req.user._id,
-        facilityId,
-        date,
-        slotTime,
-        donationType,
-        status: "SCHEDULED",
-        healthInfo: req.user.medicalInfo,
-        previousDonations: await req.user.getDonationCount(),
-        specialNotes: req.user.medicalConditions,
-    });
-
-    // Reserve slot
-    await facility.reserveSlot(date, slotTime);
-
-    // Send confirmation notification with reminders
-    await Notification.create({
-        type: "APPOINTMENT_CONFIRMATION",
-        recipient: req.user._id,
-        recipientModel: "User",
-        data: {
-            appointmentId: appointment._id,
-            facility: facility.name,
-            date,
-            slotTime,
-            preparationSteps: [
-                "Get adequate sleep",
-                "Eat within 3 hours",
-                "Bring valid ID",
-                "Wear comfortable clothing",
-            ],
-            directions: await facility.getDirections(
-                req.user.address?.location
-            ),
-        },
-    });
-
-    return res.status(201).json(
-        new ApiResponse(
-            201,
-            {
-                appointment,
-                facility: {
-                    name: facility.name,
-                    address: facility.contactInfo.address,
-                    contact: facility.contactInfo.person,
-                },
-            },
-            "Appointment scheduled successfully"
-        )
-    );
-});
-
-// REQUEST MANAGEMENT
-const createBloodRequest = asyncHandler(async (req, res) => {
-    const { bloodGroups, hospitalId, urgencyLevel, patientInfo, requiredBy } =
-        req.body;
-
-    const request = await BloodRequest.create({
-        bloodGroups,
-        hospitalId,
-        urgencyLevel,
-        patientInfo,
-        requiredBy,
-        requesterId: req.user._id,
-    });
-
-    // Log activity
-    await Activity.create({
-        type: "BLOOD_REQUEST_CREATED",
-        performedBy: {
-            userId: req.user._id,
-            userModel: "User",
-        },
-        details: {
-            requestId: request._id,
-            bloodGroups,
-            urgencyLevel,
-        },
-    });
-
-    return res
-        .status(201)
-        .json(
-            new ApiResponse(201, request, "Blood request created successfully")
-        );
-});
-
 // HISTORY & TRACKING
 const getDonationHistory = asyncHandler(async (req, res) => {
     const donations = await DonationAppointment.find({
@@ -527,25 +389,6 @@ const getCurrentUser = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "User details fetched"));
 });
 
-// Update Emergency Contact
-const updateEmergencyContact = asyncHandler(async (req, res) => {
-    const { name, relationship, phone, address } = req.body;
-
-    const user = await User.findByIdAndUpdate(
-        req.user._id,
-        {
-            $set: {
-                emergencyContact: { name, relationship, phone, address },
-            },
-        },
-        { new: true }
-    );
-
-    return res
-        .status(200)
-        .json(new ApiResponse(200, user, "Emergency contact updated"));
-});
-
 export {
     registerUser,
     loginUser,
@@ -553,12 +396,10 @@ export {
     refreshAccessToken,
     updateProfile,
     bookDonationAppointment,
-    createBloodRequest,
     getDonationHistory,
     getRequestHistory,
     getNotifications,
     markNotificationsRead,
     getCurrentUser,
-    updateEmergencyContact,
     changePassword,
 };
