@@ -1,8 +1,6 @@
 import { User } from "../../models/users/user.models.js";
 import { Activity } from "../../models/others/activity.model.js";
 import { DonationAppointment } from "../../models/donation/appointment.models.js";
-import { BloodRequest } from "../../models/donation/bloodrequest.models.js";
-import { Facility } from "../../models/donation/facility.models.js";
 import { Notification } from "../../models/others/notification.model.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
