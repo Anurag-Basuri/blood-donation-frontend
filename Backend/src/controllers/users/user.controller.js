@@ -381,8 +381,7 @@ const markNotificationsRead = asyncHandler(async (req, res) => {
 const getUserProfile = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id)
         .select("-password -refreshToken")
-        .populate("donations", "date status")
-        .populate("requests", "bloodGroups status createdAt");
+    
 
     return res
         .status(200)
@@ -393,8 +392,6 @@ const getUserProfile = asyncHandler(async (req, res) => {
 const getCurrentUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id)
         .select("-password -refreshToken")
-        .populate("donations", "date status")
-        .populate("requests", "bloodGroups status createdAt");
 
     return res
         .status(200)
