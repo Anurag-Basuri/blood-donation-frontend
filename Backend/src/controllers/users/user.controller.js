@@ -379,7 +379,7 @@ const markNotificationsRead = asyncHandler(async (req, res) => {
 
 // Get user profile and details
 const getUserProfile = asyncHandler(async (req, res) => {
-    const userId = req.user?._id;
+    const userId = req.params?._id;
 
     if (!userId) {
         throw new ApiError(401, "Unauthorized access. Please login");
@@ -408,13 +408,29 @@ const getUserProfile = asyncHandler(async (req, res) => {
 });
 
 // Get Current User
-const getCurrentUser = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id)
-        .select("-password -refreshToken")
+export const getCurrentUser = asyncHandler(async (req, res) => {
+    const userId = req.user?._id;
 
-    return res
-        .status(200)
-        .json(new ApiResponse(200, user, "User details fetched"));
+    if (!userId) {
+        throw new ApiError(401, "Unauthorized access");
+    }
+
+    const user = await User.findById(userId)
+        .select("-password -refreshToken -emailVerificationOTP -__v")
+        .populate("donationPreferences.preferredCenter", "name location contact")
+        .populate("bloodDonationHistory.center", "name location")
+        .populate("bloodDonationHistory.donationId", "date units");
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    res.status(200).json({
+        statusCode: 200,
+        success: true,
+        message: "Current user fetched successfully",
+        data: user,
+    });
 });
 
 export {
