@@ -11,12 +11,17 @@ import jwt from "jsonwebtoken";
 
 // Constants
 const ALLOWED_PROFILE_UPDATES = [
+    "userName",
     "fullName",
+    "email",
     "phone",
+    "dateOfBirth",
+    "gender",
+    "bloodType",
+    "donorStatus",
+    "medicalHistory",
+    "donationPreferences",
     "address",
-    "preferences",
-    "emergencyContact",
-    "medicalInfo",
 ];
 
 // AUTH CONTROLLERS
