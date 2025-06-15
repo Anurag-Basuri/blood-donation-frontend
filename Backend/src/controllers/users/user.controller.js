@@ -71,33 +71,28 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Check existing user
     const existingUser = await User.findOne({
-        $or: [{ email }, { phone }],
+        $or: [{userName},{ email }, { phone }],
     });
 
     if (existingUser) {
         throw new ApiError(
             409,
-            existingUser.email === email
-                ? "Email already registered"
-                : "Phone number already registered"
+            "User with this username, email, or phone already exists"
         );
     }
 
     // Create user with enhanced details
     const user = await User.create({
+        userName,
         fullName,
         email,
-        password,
         phone,
-        bloodType,
-        address,
         dateOfBirth,
-        medicalInfo,
-        donorStatus: "PENDING",
-        verificationStatus: "UNVERIFIED",
-        lastHealthCheck: medicalInfo?.lastCheckup || null,
-        registrationIP: req.ip,
-        deviceInfo: req.headers["user-agent"],
+        gender,
+        bloodType,
+        lastDonationDate,
+        address,
+        password,
     });
 
     // Log activity with detailed tracking
