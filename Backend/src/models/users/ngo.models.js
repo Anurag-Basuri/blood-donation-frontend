@@ -48,10 +48,21 @@ const ngoSchema = new mongoose.Schema(
             code: String,
             expiresAt: Date
         },
-        adminApproved: { type: Boolean, default: false },
-        refreshToken: { type: String, select: false },
-        lastLogin: { type: Date },
-        loginAttempts: { type: Number, default: 0 },
+        adminApproved: {
+            type: Boolean,
+            default: false
+        },
+        refreshToken: {
+            type: String,
+            select: false
+        },
+        lastLogin: {
+            type: Date
+        },
+        loginAttempts: {
+            type: Number,
+            default: 0
+        },
         lockedUntil: Date,
 
         // Contact
