@@ -67,7 +67,10 @@ const ngoSchema = new mongoose.Schema(
 
         // Contact
         contactPerson: {
-            name: { type: String, required: true },
+            name: {
+                type: String,
+                required: true
+            },
             phone: {
                 type: String,
                 required: true,
