@@ -63,11 +63,13 @@ const registerNGO = asyncHandler(async (req, res) => {
     if (!password?.trim() || password.length < 8)
         throw new ApiError(400, "Password must be at least 8 characters");
     if (!contactPerson?.name || !contactPerson?.phone)
-        throw new ApiError(400, "Contact person details required");
+        throw new ApiError(400, "Contact person details are required");
     if (!regNumber?.trim())
-        throw new ApiError(400, "Registration number required");
+        throw new ApiError(400, "Registration number is required");
+    if (!address?.city || !address?.state || !address?.pinCode || !address?.coordinates)
+        throw new ApiError(400, "Complete address including coordinates is required");
 
-    // Check existing NGO
+    // Check for existing NGO
     const existingNGO = await NGO.findOne({ $or: [{ email }, { regNumber }] });
     if (existingNGO) {
         throw new ApiError(
@@ -78,38 +80,23 @@ const registerNGO = asyncHandler(async (req, res) => {
         );
     }
 
-    // Upload and validate documents
-    let documents = {};
-    if (req.files) {
-        const allowedDocs = [
-            "registrationCert",
-            "licenseCert",
-            "taxExemptionCert",
-        ];
-        for (const docType of allowedDocs) {
-            if (req.files[docType]) {
-                documents[docType] = await uploadFile({
-                    file: req.files[docType][0],
-                    folder: `ngo-documents/${docType}`,
-                });
-            }
-        }
-    }
-
+    // Create NGO
     const ngo = await NGO.create({
         name,
         email,
         password,
         contactPerson,
-        address,
+        address: {
+            ...address,
+            location: {
+                type: "Point",
+                coordinates: address.coordinates,
+            },
+        },
         regNumber,
-        facilities,
-        organizationType,
-        operatingHours,
-        documents,
-        verificationStatus: "PENDING",
-        registrationIP: req.ip,
-        deviceInfo: req.headers["user-agent"],
+        affiliation,
+        establishedYear,
+        license,
     });
 
     // Log activity
@@ -132,7 +119,7 @@ const registerNGO = asyncHandler(async (req, res) => {
                     _id: ngo._id,
                     name: ngo.name,
                     email: ngo.email,
-                    status: ngo.verificationStatus,
+                    status: ngo.isVerified ? "Verified" : "Pending Verification",
                 },
             },
             "NGO registration submitted for verification"
