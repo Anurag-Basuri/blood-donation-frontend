@@ -40,6 +40,16 @@ const ngoSchema = new mongoose.Schema(
             ],
             index: true,
         },
+        phone: {
+            type: String,
+            required: [true, "Phone number is required"],
+            validate: {
+                validator: function (v) {
+                    return /^\+?[\d\s-]{10,}$/.test(v);
+                },
+                message: "Invalid phone number format",
+            },
+        },
         password: {
             type: String,
             required: [true, "Password is required"],
