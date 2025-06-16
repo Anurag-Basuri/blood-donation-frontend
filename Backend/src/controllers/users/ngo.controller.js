@@ -48,12 +48,12 @@ const registerNGO = asyncHandler(async (req, res) => {
     const {
         name,
         email,
-        address,
         contactPerson,
+        address,
         regNumber,
-        facilities,
-        organizationType,
-        operatingHours,
+        affiliation,
+        establishedYear,
+        license,
         password,
     } = req.body;
 
