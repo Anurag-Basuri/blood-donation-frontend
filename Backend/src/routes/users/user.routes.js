@@ -5,15 +5,12 @@ import {
     logoutUser,
     refreshAccessToken,
     updateProfile,
-    bookDonationAppointment,
-    createBloodRequest,
     getDonationHistory,
-    getRequestHistory,
     getNotifications,
     markNotificationsRead,
     getCurrentUser,
-    updateEmergencyContact,
     changePassword,
+    getUserProfile,
 } from "../../controllers/users/user.controller.js";
 import { verifyJWT } from "../../middleware/auth.middleware.js";
 import { validateRequest } from "../../middleware/validator.middleware.js";
@@ -37,7 +34,7 @@ router.post(
 router.post("/logout", verifyJWT, logoutUser);
 router.post("/refresh-token", refreshAccessToken);
 
-// Profile Management Routes
+// Profile Management
 router
     .route("/profile")
     .get(verifyJWT, getCurrentUser)
@@ -54,34 +51,23 @@ router.patch(
     changePassword
 );
 
-router.patch(
-    "/emergency-contact",
-    verifyJWT,
-    validateRequest(userValidationRules.emergencyContact),
-    updateEmergencyContact
-);
-
-// Donation Management Routes
-router.post(
-    "/appointments",
-    verifyJWT,
-    validateRequest(userValidationRules.appointment),
-    bookDonationAppointment
-);
-
+// Donation History
 router.get("/donations/history", verifyJWT, getDonationHistory);
 
-// Blood Request Routes
-router.post(
-    "/blood-requests",
+// Other Users' Profile
+router.get(
+    "/profile/:userId",
     verifyJWT,
-    validateRequest(userValidationRules.bloodRequest),
-    createBloodRequest
+    (req, res, next) => {
+        // Convert `params` to match Joi validation input
+        req.body = { userId: req.params.userId };
+        next();
+    },
+    validateRequest(userValidationRules.getUserProfile),
+    getUserProfile
 );
 
-router.get("/requests/history", verifyJWT, getRequestHistory);
-
-// Notification Routes
+// Notifications
 router.get("/notifications", verifyJWT, getNotifications);
 router.patch("/notifications/mark-read", verifyJWT, markNotificationsRead);
 
