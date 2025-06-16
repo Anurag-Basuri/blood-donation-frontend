@@ -271,9 +271,9 @@ const ngoSchema = new mongoose.Schema(
                 },
                 priority: {
                     type: Number,
-                    default: 3,
+                    default: 1,
                     min: 1,
-                    max: 5,
+                    max: 3,
                 },
                 lastTransaction: {
                     date: Date,
