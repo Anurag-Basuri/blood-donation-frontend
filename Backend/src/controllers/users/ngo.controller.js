@@ -48,13 +48,13 @@ const registerNGO = asyncHandler(async (req, res) => {
     const {
         name,
         email,
-        password,
-        contactPerson,
         address,
+        contactPerson,
         regNumber,
         facilities,
         organizationType,
         operatingHours,
+        password,
     } = req.body;
 
     // Validation
