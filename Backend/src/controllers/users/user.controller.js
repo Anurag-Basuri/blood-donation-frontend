@@ -475,7 +475,7 @@ const verifyPhoneOTP = asyncHandler(async (req, res) => {
 });
 
 // Send Verification Email
-export const sendVerificationEmail = asyncHandler(async (req, res) => {
+const sendVerificationEmail = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user?._id);
 
     if (!user) throw new ApiError(404, "User not found");
@@ -507,7 +507,7 @@ export const sendVerificationEmail = asyncHandler(async (req, res) => {
 });
 
 // Verify Email Controller
-export const verifyEmail = asyncHandler(async (req, res) => {
+const verifyEmail = asyncHandler(async (req, res) => {
     const { token } = req.query;
 
     if (!token) throw new ApiError(400, "Verification token missing");
@@ -543,5 +543,7 @@ export {
     getUserProfile,
     getCurrentUser,
     verifyPhoneNumber,
-    verifyPhoneOTP
+    verifyPhoneOTP,
+    sendVerificationEmail,
+    verifyEmail,
 };
