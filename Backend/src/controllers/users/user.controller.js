@@ -5,6 +5,7 @@ import { Notification } from "../../models/others/notification.model.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
+import { sendSMS } from "../../services/sms.service.js";
 import jwt from "jsonwebtoken";
 
 // Constants
@@ -404,6 +405,42 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
     });
 });
 
+// verify phone number
+const verifyPhoneNumber = asyncHandler(async (req, res) => {
+    let phone = req.user?.phone || req.body.phone;
+
+    if (!phone) {
+        throw new ApiError(400, "Phone number is required");
+    }
+
+    let user = await User.findOne({ phone });
+
+    if (!user && req.user?.phone && req.body.phone !== req.user.phone) {
+        phone = req.body.phone;
+        user = await User.findOne({ phone });
+    }
+
+    if (!user) {
+        throw new ApiError(404, "User not found with this phone number");
+    }
+    // Generate 6-digit OTP and expiry (10 mins)
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.phoneVerificationOTP = otp;
+    user.phoneVerificationOTPExpiry = otpExpiry;
+    await user.save();
+
+    await sendSMS({
+        to: phone,
+        body: `Your verification code is ${otp}. It is valid for 10 minutes.`,
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, `OTP sent to ${phone.slice(-4).padStart(phone.length, "*")}`)
+    );
+});
+
 export {
     registerUser,
     loginUser,
@@ -413,6 +450,7 @@ export {
     getDonationHistory,
     getNotifications,
     markNotificationsRead,
+    verifyPhoneNumber,
     getCurrentUser,
     changePassword,
     getUserProfile,
