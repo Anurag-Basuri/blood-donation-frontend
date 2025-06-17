@@ -190,9 +190,11 @@ const changePassword = asyncHandler(async (req, res) => {
 const uploadDocuments = asyncHandler(async (req, res) => {
     const ngoId = req.ngo._id;
     const allowedDocs = [
-        "registrationCert",
-        "licenseCert",
-        "taxExemptionCert",
+        "registrationCertificate",
+        "panCard",
+        "licenseCertificate",
+        "gstCertificate",
+        "licenseDocument",
         "logo",
     ];
     const updateFields = {};
@@ -457,6 +459,7 @@ export {
     loginNGO,
     logoutNGO,
     changePassword,
+    uploadDocuments,
     getNGOProfile,
     updateNGOProfile,
     manageFacility,
