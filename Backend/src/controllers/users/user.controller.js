@@ -442,7 +442,7 @@ const verifyPhoneNumber = asyncHandler(async (req, res) => {
 });
 
 // Verify Phone OTP
-export const verifyPhoneOTP = asyncHandler(async (req, res) => {
+const verifyPhoneOTP = asyncHandler(async (req, res) => {
     const { phone, otp } = req.body;
 
     if (!phone || !otp) {
@@ -472,18 +472,19 @@ export const verifyPhoneOTP = asyncHandler(async (req, res) => {
     );
 });
 
-
+// Export all controllers
 export {
     registerUser,
     loginUser,
     logoutUser,
     refreshAccessToken,
     updateProfile,
+    changePassword,
     getDonationHistory,
     getNotifications,
     markNotificationsRead,
-    verifyPhoneNumber,
-    getCurrentUser,
-    changePassword,
     getUserProfile,
+    getCurrentUser,
+    verifyPhoneNumber,
+    verifyPhoneOTP
 };
