@@ -405,7 +405,7 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
     });
 });
 
-// verify phone number
+// send OTP to verify phone number
 const verifyPhoneNumber = asyncHandler(async (req, res) => {
     let phone = req.user?.phone || req.body.phone;
 
@@ -440,6 +440,38 @@ const verifyPhoneNumber = asyncHandler(async (req, res) => {
         new ApiResponse(200, {}, `OTP sent to ${phone.slice(-4).padStart(phone.length, "*")}`)
     );
 });
+
+// Verify Phone OTP
+export const verifyPhoneOTP = asyncHandler(async (req, res) => {
+    const { phone, otp } = req.body;
+
+    if (!phone || !otp) {
+        throw new ApiError(400, "Phone and OTP are required");
+    }
+
+    const user = await User.findOne({ phone });
+
+    if (!user) throw new ApiError(404, "User not found");
+
+    if (
+        !user.phoneVerificationOTP ||
+        user.phoneVerificationOTP !== otp ||
+        new Date() > user.phoneVerificationOTPExpiry
+    ) {
+        throw new ApiError(400, "Invalid or expired OTP");
+    }
+
+    user.phoneVerified = true;
+    user.phoneVerificationOTP = undefined;
+    user.phoneVerificationOTPExpiry = undefined;
+
+    await user.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, { phoneVerified: true }, "Phone number verified successfully")
+    );
+});
+
 
 export {
     registerUser,
