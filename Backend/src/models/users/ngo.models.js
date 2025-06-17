@@ -42,6 +42,22 @@ const ngoSchema = new mongoose.Schema(
             }
         },
 
+        // logo
+        logo: {
+            url: {
+                type: String,
+                required: true
+            },
+            publicId: {
+                type: String,
+                required: true
+            },
+            uploadedAt: {
+                type: Date,
+                default: Date.now
+            }
+        },
+
         // Verification & Auth
         isVerified: { type: Boolean, default: false },
         verificationOTP: {
