@@ -97,6 +97,7 @@ const registerNGO = asyncHandler(async (req, res) => {
         affiliation,
         establishedYear,
         license,
+        lastLogin: new Date(),
     });
 
     // Log activity
@@ -129,11 +130,16 @@ const registerNGO = asyncHandler(async (req, res) => {
 
 // Login
 const loginNGO = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password)
-        throw new ApiError(400, "Email and password are required");
+    const { regNumber, email, password } = req.body;
+    if (!regNumber && !email) {
+        throw new ApiError(400, "Email or Registration Number is required");
+    }
 
-    const ngo = await NGO.findOne({ email });
+    if (!password || password.length < 8) {
+        throw new ApiError(400, "Password must be at least 8 characters");
+    }
+
+    const ngo = await NGO.findOne({ $or: [{ email }, { regNumber }] });
     if (!ngo) throw new ApiError(404, "NGO not found");
 
     const isMatch = await ngo.comparePassword(password);
