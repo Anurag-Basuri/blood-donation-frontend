@@ -186,15 +186,41 @@ const changePassword = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "Password updated successfully"));
 });
 
-// Profile Management
-const getNGOProfile = asyncHandler(async (req, res) => {
-    const ngo = await NGO.findById(req.ngo._id).select(
-        "-password -refreshToken"
-    );
+// Upload documents
+const uploadDocuments = asyncHandler(async (req, res) => {
+    const ngoId = req.ngo._id;
+    const allowedDocs = [
+        "registrationCert",
+        "licenseCert",
+        "taxExemptionCert",
+        "logo",
+    ];
+    const updateFields = {};
+
+    // Validate and upload each document
+    for (const docType of allowedDocs) {
+        if (req.files[docType]) {
+            const file = req.files[docType][0];
+            if (!file) {
+                throw new ApiError(400, `${docType} is required`);
+            }
+            updateFields[`documents.${docType}`] = await uploadFile({
+                file,
+                folder: `ngo-documents/${docType}`,
+            });
+        }
+    }
+
+    // Update NGO documents
+    const ngo = await NGO.findByIdAndUpdate(ngoId, updateFields, {
+        new: true,
+        runValidators: true,
+    });
     if (!ngo) throw new ApiError(404, "NGO not found");
+
     return res
         .status(200)
-        .json(new ApiResponse(200, ngo, "NGO profile fetched successfully"));
+        .json(new ApiResponse(200, ngo, "Documents uploaded successfully"));
 });
 
 // Update NGO Profile
@@ -229,6 +255,17 @@ const updateNGOProfile = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(new ApiResponse(200, ngo, "NGO profile updated successfully"));
+});
+
+// Profile Management
+const getNGOProfile = asyncHandler(async (req, res) => {
+    const ngo = await NGO.findById(req.ngo._id).select(
+        "-password -refreshToken"
+    );
+    if (!ngo) throw new ApiError(404, "NGO not found");
+    return res
+        .status(200)
+        .json(new ApiResponse(200, ngo, "NGO profile fetched successfully"));
 });
 
 // Facility Management
