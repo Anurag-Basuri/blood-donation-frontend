@@ -75,6 +75,14 @@ const userSchema = new Schema(
             code: String,
             expiresAt: Date,
         },
+        isPhoneVerified: {
+            type: Boolean,
+            default: false,
+        },
+        phoneVerificationOTP: {
+            code: String,
+            expiresAt: Date,
+        },
         refreshToken: {
             type: String,
             select: false,
