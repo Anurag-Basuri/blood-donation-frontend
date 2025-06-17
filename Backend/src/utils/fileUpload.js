@@ -9,6 +9,7 @@ const ALLOWED_FILE_TYPES = {
     "image/jpg": "jpg",
     "image/png": "png",
     "application/pdf": "pdf",
+    "application/msword": "doc",
 };
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
