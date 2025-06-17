@@ -6,8 +6,8 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { sendSMS } from "../../services/sms.service.js";
-import { sendEmail } from "../../services/email.service.js";
-import { generateEmailVerificationToken } from "../../utils/generateEmailToken.js";
+import { generateEmailVerificationToken } from "../utils/generateEmailToken.js";
+import { sendMail } from "../utils/sendMail.js";
 import jwt from "jsonwebtoken";
 
 // Constants
@@ -471,6 +471,38 @@ const verifyPhoneOTP = asyncHandler(async (req, res) => {
 
     return res.status(200).json(
         new ApiResponse(200, { phoneVerified: true }, "Phone number verified successfully")
+    );
+});
+
+
+export const sendVerificationEmail = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user?._id);
+
+    if (!user) throw new ApiError(404, "User not found");
+
+    const { token, tokenExpiry } = generateEmailVerificationToken();
+
+    user.emailVerificationOTP = token;
+    user.emailVerificationOTPExpiry = tokenExpiry;
+    await user.save();
+
+    const verificationURL = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
+
+    const html = `
+        <h2>Email Verification</h2>
+        <p>Click the button below to verify your email:</p>
+        <a href="${verificationURL}" style="padding:10px 20px; background-color:#e63946; color:white; text-decoration:none;">Verify Email</a>
+        <p>This link expires in 15 minutes.</p>
+    `;
+
+    await sendMail({
+        to: user.email,
+        subject: "Verify your email for BloodConnect 🩸",
+        html,
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Verification email sent successfully")
     );
 });
 
