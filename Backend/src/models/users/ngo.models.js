@@ -154,27 +154,52 @@ const ngoSchema = new mongoose.Schema(
             registrationCertificate: {
                 url: String,
                 publicId: String,
-                uploadedAt: { type: Date, default: Date.now }
+                uploadedAt: { type: Date, default: Date.now },
+                status: {
+                    type: String,
+                    enum: ["PENDING", "APPROVED", "REJECTED"],
+                    default: "PENDING"
+                }
             },
             panCard: {
                 url: String,
                 publicId: String,
-                uploadedAt: { type: Date, default: Date.now }
+                uploadedAt: { type: Date, default: Date.now },
+                status: {
+                    type: String,
+                    enum: ["PENDING", "APPROVED", "REJECTED"],
+                    default: "PENDING"
+                }
             },
             taxCertificate: {
                 url: String,
                 publicId: String,
-                uploadedAt: { type: Date, default: Date.now }
+                uploadedAt: { type: Date, default: Date.now },
+                status: {
+                    type: String,
+                    enum: ["PENDING", "APPROVED", "REJECTED"],
+                    default: "PENDING"
+                }
             },
             gstCertificate: {
                 url: String,
                 publicId: String,
-                uploadedAt: { type: Date, default: Date.now }
+                uploadedAt: { type: Date, default: Date.now },
+                status: {
+                    type: String,
+                    enum: ["PENDING", "APPROVED", "REJECTED"],
+                    default: "PENDING"
+                }
             },
             licenseDocument: {
                 url: String,
                 publicId: String,
-                uploadedAt: { type: Date, default: Date.now }
+                uploadedAt: { type: Date, default: Date.now },
+                status: {
+                    type: String,
+                    enum: ["PENDING", "APPROVED", "REJECTED"],
+                    default: "PENDING"
+                }
             }
         },
 
