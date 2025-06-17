@@ -11,7 +11,7 @@ import { User } from "../../models/users/user.models.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
-import { uploadFile } from "../../utils/fileUpload.js";
+import { uploadFile, deleteFile } from "../../utils/fileUpload.js";
 import notificationService from "../../services/notification.service.js";
 
 // Enums and Constants
@@ -199,6 +199,10 @@ const uploadDocuments = asyncHandler(async (req, res) => {
     ];
     const updateFields = {};
 
+    // Fetch current NGO to get existing document publicIds
+    const ngo = await NGO.findById(ngoId);
+    if (!ngo) throw new ApiError(404, "NGO not found");
+
     // Validate and upload each document
     for (const docType of allowedDocs) {
         if (req.files[docType]) {
@@ -206,6 +210,18 @@ const uploadDocuments = asyncHandler(async (req, res) => {
             if (!file) {
                 throw new ApiError(400, `${docType} is required`);
             }
+
+            // Delete existing file from Cloudinary if present
+            const existingDoc = ngo.documents?.[docType];
+            if (existingDoc && existingDoc.publicId) {
+                try {
+                    await deleteFile(existingDoc.publicId);
+                } catch (err) {
+                    // Log error but continue
+                    console.error(`Failed to delete old ${docType}:`, err.message);
+                }
+            }
+
             updateFields[`documents.${docType}`] = await uploadFile({
                 file,
                 folder: `ngo-documents/${docType}`,
@@ -214,15 +230,15 @@ const uploadDocuments = asyncHandler(async (req, res) => {
     }
 
     // Update NGO documents
-    const ngo = await NGO.findByIdAndUpdate(ngoId, updateFields, {
+    const updatedNGO = await NGO.findByIdAndUpdate(ngoId, updateFields, {
         new: true,
         runValidators: true,
     });
-    if (!ngo) throw new ApiError(404, "NGO not found");
+    if (!updatedNGO) throw new ApiError(404, "NGO not found");
 
     return res
         .status(200)
-        .json(new ApiResponse(200, ngo, "Documents uploaded successfully"));
+        .json(new ApiResponse(200, updatedNGO, "Documents uploaded successfully"));
 });
 
 // Update NGO Profile
