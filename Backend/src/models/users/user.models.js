@@ -75,6 +75,10 @@ const userSchema = new Schema(
             code: String,
             expiresAt: Date,
         },
+        emailVerificationOTPExpiry: {
+            type: Date,
+            default: () => new Date(Date.now() + 10 * 60 * 1000),
+        },
         isPhoneVerified: {
             type: Boolean,
             default: false,
@@ -82,6 +86,10 @@ const userSchema = new Schema(
         phoneVerificationOTP: {
             code: String,
             expiresAt: Date,
+        },
+        phoneVerificationOTPExpiry: {
+            type: Date,
+            default: () => new Date(Date.now() + 10 * 60 * 1000),
         },
         refreshToken: {
             type: String,
