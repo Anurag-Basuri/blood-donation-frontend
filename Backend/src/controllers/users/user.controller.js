@@ -474,7 +474,7 @@ const verifyPhoneOTP = asyncHandler(async (req, res) => {
     );
 });
 
-
+// Send Verification Email
 export const sendVerificationEmail = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user?._id);
 
@@ -503,6 +503,29 @@ export const sendVerificationEmail = asyncHandler(async (req, res) => {
 
     return res.status(200).json(
         new ApiResponse(200, {}, "Verification email sent successfully")
+    );
+});
+
+// Verify Email Controller
+export const verifyEmail = asyncHandler(async (req, res) => {
+    const { token } = req.query;
+
+    if (!token) throw new ApiError(400, "Verification token missing");
+
+    const user = await User.findOne({
+        emailVerificationOTP: token,
+        emailVerificationOTPExpiry: { $gt: Date.now() },
+    });
+
+    if (!user) throw new ApiError(400, "Invalid or expired token");
+
+    user.isEmailVerified = true;
+    user.emailVerificationOTP = undefined;
+    user.emailVerificationOTPExpiry = undefined;
+    await user.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, { emailVerified: true }, "Email verified successfully")
     );
 });
 
