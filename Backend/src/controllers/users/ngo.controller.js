@@ -283,12 +283,59 @@ const updateNGOProfile = asyncHandler(async (req, res) => {
 
     // Validation
     if (!name?.trim()) throw new ApiError(400, "NGO name is required");
+    if (!email?.trim()) throw new ApiError(400, "Email is required");
     if (!contactPerson?.name || !contactPerson?.phone)
         throw new ApiError(400, "Contact person details are required");
     if (!address?.city || !address?.state || !address?.pinCode || !address?.coordinates)
         throw new ApiError(400, "Complete address including coordinates is required");
 
     const ngo = await NGO.findById(ngoId);
+
+    if (!ngo) throw new ApiError(404, "NGO not found");
+    if (ngo.status === NGO_STATUS.BLACKLISTED) {
+        throw new ApiError(403, "Blacklisted NGOs cannot update profile");
+    }
+
+    // Check for existing NGO with same email or regNumber
+    const existingNGO = await NGO.findOne({
+        $or: [{ email }, { regNumber }],
+        _id: { $ne: ngoId },
+    });
+
+    if (existingNGO) {
+        throw new ApiError(
+            409,
+            existingNGO.email === email
+                ? "Email already registered"
+                : "Registration number already exists"
+        );
+    }
+
+    // Update NGO details
+    if (name !== undefined && name !== null)
+        ngo.name = name;
+    if (email !== undefined && email !== null)
+        ngo.email = email;
+    if (contactPerson !== undefined && contactPerson !== null)
+        ngo.contactPerson = contactPerson;
+    if (address !== undefined && address !== null)
+        ngo.address = address;
+    if (regNumber !== undefined && regNumber !== null)
+        ngo.regNumber = regNumber;
+    if (affiliation !== undefined && affiliation !== null)
+        ngo.affiliation = affiliation;
+    if (establishedYear !== undefined && establishedYear !== null)
+        ngo.establishedYear = establishedYear;
+    if (license !== undefined && license !== null)
+        ngo.license = license;
+
+    await ngo.save();
+    return res
+        .status(200)
+        .json(
+            new ApiResponse
+                (200, ngo, "NGO profile updated successfully")
+        );
 });
 
 // Profile Management
@@ -492,8 +539,9 @@ export {
     logoutNGO,
     changePassword,
     uploadDocuments,
-    getNGOProfile,
+    uploadLogo,
     updateNGOProfile,
+    getNGOProfile,
     manageFacility,
     handleBloodRequest,
     updateBloodInventory,
