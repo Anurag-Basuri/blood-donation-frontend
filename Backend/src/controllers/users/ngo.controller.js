@@ -389,6 +389,21 @@ const getStatistics = asyncHandler(async (req, res) => {
         );
 });
 
+// Recalculate Statistics
+const recalculateStatistics = asyncHandler(async (req, res) => {
+    const ngo = await NGO.findById(req.user._id);
+    if (!ngo) throw new ApiError(404, "NGO not found");
+
+    await ngo.calculateStatistics();
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200, ngo.statistics, "Statistics recalculated."
+            )
+        );
+});
+
 // Profile Management
 const getNGOProfile = asyncHandler(async (req, res) => {
     const ngo = await NGO.findById(req.ngo._id).select(
