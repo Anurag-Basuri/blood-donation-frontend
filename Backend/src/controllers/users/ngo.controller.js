@@ -232,35 +232,25 @@ const uploadDocuments = asyncHandler(async (req, res) => {
 // Update NGO Profile
 const updateNGOProfile = asyncHandler(async (req, res) => {
     const ngoId = req.ngo._id;
-    const updateFields = { ...req.body };
+    const {
+        name,
+        email,
+        contactPerson,
+        address,
+        regNumber,
+        affiliation,
+        establishedYear,
+        license,
+    } = req.body;
 
-    // Handle document uploads
-    if (req.files) {
-        const allowedDocs = [
-            "registrationCert",
-            "licenseCert",
-            "taxExemptionCert",
-            "logo",
-        ];
-        for (const docType of allowedDocs) {
-            if (req.files[docType]) {
-                updateFields[`documents.${docType}`] = await uploadFile({
-                    file: req.files[docType][0],
-                    folder: `ngo-documents/${docType}`,
-                });
-            }
-        }
-    }
+    // Validation
+    if (!name?.trim()) throw new ApiError(400, "NGO name is required");
+    if (!contactPerson?.name || !contactPerson?.phone)
+        throw new ApiError(400, "Contact person details are required");
+    if (!address?.city || !address?.state || !address?.pinCode || !address?.coordinates)
+        throw new ApiError(400, "Complete address including coordinates is required");
 
-    const ngo = await NGO.findByIdAndUpdate(ngoId, updateFields, {
-        new: true,
-        runValidators: true,
-    });
-    if (!ngo) throw new ApiError(404, "NGO not found");
-
-    return res
-        .status(200)
-        .json(new ApiResponse(200, ngo, "NGO profile updated successfully"));
+    const ngo = await NGO.findById(ngoId);
 });
 
 // Profile Management

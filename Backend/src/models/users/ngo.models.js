@@ -192,16 +192,6 @@ const ngoSchema = new mongoose.Schema(
                     default: "PENDING"
                 }
             },
-            logo: {
-                url: String,
-                publicId: String,
-                uploadedAt: { type: Date, default: Date.now },
-                status: {
-                    type: String,
-                    enum: ["PENDING", "APPROVED", "REJECTED"],
-                    default: "PENDING"
-                }
-            }
         },
 
         // Services
