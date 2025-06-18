@@ -215,20 +215,6 @@ const ngoSchema = new mongoose.Schema(
             }
         }],
 
-        // Hospitals
-        connectedHospitals: [{
-            hospitalId: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital" },
-            status: { type: String, enum: ["Pending", "Approved", "Rejected", "Blocked"], default: "Pending" },
-            connectedDate: { type: Date, default: Date.now },
-            priority: { type: Number, default: 1, min: 1, max: 3 },
-            lastTransaction: {
-                date: Date,
-                type: String,
-                bloodGroup: String,
-                units: Number
-            }
-        }],
-
         // Stats
         statistics: {
             totalCampsOrganized: { type: Number, default: 0 },
