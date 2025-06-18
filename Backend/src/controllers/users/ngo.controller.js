@@ -375,6 +375,20 @@ const manageBloodInventory = asyncHandler(async (req, res) => {
     );
 });
 
+// Statistics
+const getStatistics = asyncHandler(async (req, res) => {
+    const ngo = await NGO.findById(req.user._id).select("statistics");
+    if (!ngo) throw new ApiError(404, "NGO not found");
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200, ngo.statistics, "NGO statistics fetched."
+            )
+        );
+});
+
 // Profile Management
 const getNGOProfile = asyncHandler(async (req, res) => {
     const ngo = await NGO.findById(req.ngo._id).select(
