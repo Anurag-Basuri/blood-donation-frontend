@@ -196,7 +196,6 @@ const uploadDocuments = asyncHandler(async (req, res) => {
         "panCard",
         "gstCertificate",
         "licenseDocument",
-        "logo",
     ];
     if (!allowedTypes.includes(documentType)) {
         throw new ApiError(400, "Invalid document type");
@@ -227,6 +226,45 @@ const uploadDocuments = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(200, ngo.documents[documentType], `${documentType} uploaded successfully`)
     );
+});
+
+// Upload logo
+const uploadLogo = asyncHandler(async (req, res) => {
+    const ngoId = req.ngo._id;
+
+    // Fetch current NGO to get existing logo publicId
+    const ngo = await NGO.findById(ngoId);
+    if (!ngo) throw new ApiError(404, "NGO not found");
+
+    // Check if file is present
+    const file = req.files?.logo?.[0];
+    if (!file) {
+        throw new ApiError(400, "Logo file is required");
+    }
+
+    // Delete existing logo from Cloudinary if present
+    const existingLogo = ngo.logo;
+    if (existingLogo && existingLogo.publicId) {
+        try {
+            await deleteFile(existingLogo.publicId);
+        } catch (err) {
+            console.error("Failed to delete old logo:", err.message);
+        }
+    }
+
+    // Upload new logo
+    const uploadedLogo = await uploadFile({
+        file,
+        folder: `ngo-logos`,
+    });
+
+    // Update NGO with new logo
+    ngo.logo = uploadedLogo;
+    await ngo.save();
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, ngo, "Logo uploaded successfully"));
 });
 
 // Update NGO Profile
