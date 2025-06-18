@@ -438,16 +438,24 @@ const updateSettings = asyncHandler(async (req, res) => {
         );
 });
 
+// get
 
-// Profile Management
-const getNGOProfile = asyncHandler(async (req, res) => {
-    const ngo = await NGO.findById(req.ngo._id).select(
-        "-password -refreshToken"
-    );
-    if (!ngo) throw new ApiError(404, "NGO not found");
+
+// Get current NGO
+const getCurrentNGO = asyncHandler(async (req, res) => {
+    const ngo = await NGO.findById(req.user._id).select("-password -refreshToken");
+
+    if (!ngo) {
+        throw new ApiError(404, "NGO not found");
+    }
+
     return res
         .status(200)
-        .json(new ApiResponse(200, ngo, "NGO profile fetched successfully"));
+        .json(
+            new ApiResponse(
+                200, ngo, "Current NGO fetched successfully"
+            )
+        );
 });
 
 // Facility Management
@@ -619,6 +627,7 @@ export {
     recalculateStatistics,
     getSettings,
     updateSettings,
+    getCurrentNGO,
     getNGOProfile,
     manageFacility,
     handleBloodRequest,
