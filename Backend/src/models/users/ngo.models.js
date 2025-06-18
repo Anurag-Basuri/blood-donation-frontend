@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
 import { ApiError } from "../../utils/ApiError.js";
+import { log } from 'console';
 
 // Constants
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
@@ -161,7 +162,7 @@ const ngoSchema = new mongoose.Schema(
                     default: "PENDING"
                 }
             },
-            panCard: {
+            aadhaarCard: {
                 url: String,
                 publicId: String,
                 uploadedAt: { type: Date, default: Date.now },
@@ -171,7 +172,7 @@ const ngoSchema = new mongoose.Schema(
                     default: "PENDING"
                 }
             },
-            taxCertificate: {
+            panCard: {
                 url: String,
                 publicId: String,
                 uploadedAt: { type: Date, default: Date.now },
@@ -192,6 +193,16 @@ const ngoSchema = new mongoose.Schema(
                 }
             },
             licenseDocument: {
+                url: String,
+                publicId: String,
+                uploadedAt: { type: Date, default: Date.now },
+                status: {
+                    type: String,
+                    enum: ["PENDING", "APPROVED", "REJECTED"],
+                    default: "PENDING"
+                }
+            },
+            logo: {
                 url: String,
                 publicId: String,
                 uploadedAt: { type: Date, default: Date.now },
