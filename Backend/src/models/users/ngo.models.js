@@ -152,16 +152,6 @@ const ngoSchema = new mongoose.Schema(
 
         // Document Uploads (Cloudinary URLs)
         documents: {
-            registrationCertificate: {
-                url: String,
-                publicId: String,
-                uploadedAt: { type: Date, default: Date.now },
-                status: {
-                    type: String,
-                    enum: ["PENDING", "APPROVED", "REJECTED"],
-                    default: "PENDING"
-                }
-            },
             aadhaarCard: {
                 url: String,
                 publicId: String,

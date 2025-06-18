@@ -188,57 +188,45 @@ const changePassword = asyncHandler(async (req, res) => {
 
 // Upload documents
 const uploadDocuments = asyncHandler(async (req, res) => {
-    const ngoId = req.ngo._id;
-    const allowedDocs = [
-        "registrationCertificate",
+    const { documentType } = req.params;
+    const ngoId = req.user._id;
+
+    const allowedTypes = [
+        "aadhaarCard",
         "panCard",
-        "licenseCertificate",
         "gstCertificate",
         "licenseDocument",
         "logo",
     ];
-    const updateFields = {};
+    if (!allowedTypes.includes(documentType)) {
+        throw new ApiError(400, "Invalid document type");
+    }
 
-    // Fetch current NGO to get existing document publicIds
     const ngo = await NGO.findById(ngoId);
     if (!ngo) throw new ApiError(404, "NGO not found");
 
-    // Validate and upload each document
-    for (const docType of allowedDocs) {
-        if (req.files[docType]) {
-            const file = req.files[docType][0];
-            if (!file) {
-                throw new ApiError(400, `${docType} is required`);
-            }
+    const currentDoc = ngo.documents[documentType];
 
-            // Delete existing file from Cloudinary if present
-            const existingDoc = ngo.documents?.[docType];
-            if (existingDoc && existingDoc.publicId) {
-                try {
-                    await deleteFile(existingDoc.publicId);
-                } catch (err) {
-                    // Log error but continue
-                    console.error(`Failed to delete old ${docType}:`, err.message);
-                }
-            }
-
-            updateFields[`documents.${docType}`] = await uploadFile({
-                file,
-                folder: `ngo-documents/${docType}`,
-            });
-        }
+    // Prevent re-upload unless REJECTED or not uploaded yet
+    if (currentDoc?.url && currentDoc.status !== "REJECTED") {
+        throw new ApiError(403, `Cannot re-upload ${documentType}. It is not rejected.`);
     }
 
-    // Update NGO documents
-    const updatedNGO = await NGO.findByIdAndUpdate(ngoId, updateFields, {
-        new: true,
-        runValidators: true,
-    });
-    if (!updatedNGO) throw new ApiError(404, "NGO not found");
+    // Proceed with upload (you must already have req.file if using multer)
+    const uploaded = await uploadToCloudinary(req.file.path, "documents");
 
-    return res
-        .status(200)
-        .json(new ApiResponse(200, updatedNGO, "Documents uploaded successfully"));
+    // Update document with new info
+    ngo.documents[documentType] = {
+        url: uploaded.secure_url,
+        publicId: uploaded.public_id,
+        uploadedAt: new Date(),
+        status: "PENDING", // Reset to pending on re-upload
+    };
+
+    await ngo.save();
+    return res.status(200).json(
+        new ApiResponse(200, ngo.documents[documentType], `${documentType} uploaded successfully`)
+    );
 });
 
 // Update NGO Profile
