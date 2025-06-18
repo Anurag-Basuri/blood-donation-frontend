@@ -352,6 +352,29 @@ const updateNGOProfile = asyncHandler(async (req, res) => {
         );
 });
 
+// Blood Inventory Management
+const manageBloodInventory = asyncHandler(async (req, res) => {
+    const ngoId = req.user._id;
+    const { bloodGroup, units, operation } = req.body;
+
+    if (!bloodGroup || typeof units !== "number" || !["add", "subtract", "set"].includes(operation)) {
+        throw new ApiError(400, "Invalid input. Must include bloodGroup, units (number), and a valid operation.");
+    }
+
+    const ngo = await NGO.findById(ngoId);
+    if (!ngo) throw new ApiError(404, "NGO not found");
+
+    await ngo.updateBloodStock(bloodGroup, units, operation);
+
+    return res
+        .status(200)
+        .json(
+        new ApiResponse(
+            200, ngo.bloodInventory, `Blood inventory updated: ${operation} ${units} unit(s) of ${bloodGroup}`
+        )
+    );
+});
+
 // Profile Management
 const getNGOProfile = asyncHandler(async (req, res) => {
     const ngo = await NGO.findById(req.ngo._id).select(
@@ -467,14 +490,6 @@ const handleBloodRequest = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, request, "Request handled successfully"));
 });
 
-// Blood Inventory Management
-const updateBloodInventory = asyncHandler(async (req, res) => {
-    // Implement inventory update logic here
-    return res
-        .status(200)
-        .json(new ApiResponse(200, {}, "Inventory updated (stub)"));
-});
-
 // Hospital Connections
 const getConnectedHospitals = asyncHandler(async (req, res) => {
     // Implement logic to fetch connected hospitals
@@ -555,10 +570,10 @@ export {
     uploadDocuments,
     uploadLogo,
     updateNGOProfile,
+    manageBloodInventory,
     getNGOProfile,
     manageFacility,
     handleBloodRequest,
-    updateBloodInventory,
     getConnectedHospitals,
     respondToConnectionRequest,
     getNGOAnalytics,
