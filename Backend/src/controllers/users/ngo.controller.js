@@ -475,85 +475,6 @@ const getCurrentNGO = asyncHandler(async (req, res) => {
         );
 });
 
-// Facility Management
-const manageFacility = asyncHandler(async (req, res) => {
-    const { action } = req.params;
-    const ngoId = req.ngo._id;
-
-    if (req.ngo.status !== NGO_STATUS.ACTIVE) {
-        throw new ApiError(403, "NGO must be active to manage facilities");
-    }
-
-    if (action === FACILITY_OPERATIONS.CREATE) {
-        const facility = await Facility.create({
-            ...req.body,
-            ngoId,
-            facilityType:
-                req.body.type === "CAMP"
-                    ? FACILITY_TYPE.CAMP
-                    : FACILITY_TYPE.CENTER,
-            status: req.body.type === "CAMP" ? "PLANNED" : "INACTIVE",
-            location: {
-                type: "Point",
-                coordinates: [req.body.longitude, req.body.latitude],
-            },
-        });
-
-        if (facility.facilityType === FACILITY_TYPE.CAMP) {
-            await notifyNearbyDonors(facility);
-        }
-
-        return res
-            .status(201)
-            .json(
-                new ApiResponse(201, facility, "Facility created successfully")
-            );
-    }
-
-    if (action === FACILITY_OPERATIONS.LIST) {
-        const facilities = await Facility.find({ ngoId });
-        return res
-            .status(200)
-            .json(
-                new ApiResponse(
-                    200,
-                    facilities,
-                    "Facilities fetched successfully"
-                )
-            );
-    }
-
-    const facility = await Facility.findOne({
-        _id: req.params.facilityId,
-        ngoId,
-    });
-    if (!facility) throw new ApiError(404, "Facility not found");
-
-    switch (action) {
-        case FACILITY_OPERATIONS.UPDATE:
-            Object.assign(facility, req.body);
-            await facility.save();
-            break;
-        case FACILITY_OPERATIONS.DELETE:
-            await facility.deleteOne();
-            break;
-        case FACILITY_OPERATIONS.SUSPEND:
-        case FACILITY_OPERATIONS.ACTIVATE:
-            facility.status =
-                action === FACILITY_OPERATIONS.SUSPEND ? "SUSPENDED" : "ACTIVE";
-            await facility.save();
-            break;
-        default:
-            throw new ApiError(400, "Invalid operation");
-    }
-
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(200, facility, `Facility ${action}d successfully`)
-        );
-});
-
 // Blood Request Management
 const handleBloodRequest = asyncHandler(async (req, res) => {
     const { requestId } = req.params;
@@ -646,7 +567,6 @@ export {
     updateSettings,
     getCurrentNGO,
     getNGOProfile,
-    manageFacility,
     handleBloodRequest,
     getConnectedHospitals,
     respondToConnectionRequest,
