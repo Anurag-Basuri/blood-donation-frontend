@@ -404,6 +404,41 @@ const recalculateStatistics = asyncHandler(async (req, res) => {
         );
 });
 
+// Settings Management
+const getSettings = asyncHandler(async (req, res) => {
+    const ngo = await NGO.findById(req.user._id).select("settings");
+    if (!ngo) throw new ApiError(404, "NGO not found");
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200, ngo.settings, "Settings retrieved."
+            )
+        );
+});
+
+// Update Settings
+const updateSettings = asyncHandler(async (req, res) => {
+    const { settings } = req.body;
+    const ngo = await NGO.findById(req.user._id);
+
+    if (!ngo) throw new ApiError(404, "NGO not found");
+    if (typeof settings !== "object") throw new ApiError(400, "Invalid settings format");
+
+    ngo.settings = { ...ngo.settings.toObject(), ...settings };
+    await ngo.save();
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200, ngo.settings, "Settings updated."
+            )
+        );
+});
+
+
 // Profile Management
 const getNGOProfile = asyncHandler(async (req, res) => {
     const ngo = await NGO.findById(req.ngo._id).select(
@@ -580,6 +615,10 @@ export {
     uploadLogo,
     updateNGOProfile,
     manageBloodInventory,
+    getStatistics,
+    recalculateStatistics,
+    getSettings,
+    updateSettings,
     getNGOProfile,
     manageFacility,
     handleBloodRequest,
