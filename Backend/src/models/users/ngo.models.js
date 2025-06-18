@@ -347,4 +347,4 @@ ngoSchema.pre("save", async function (next) {
 });
 
 export const NGO = mongoose.model('NGO', ngoSchema);
-export {FACILITIES}
+export { FACILITIES }

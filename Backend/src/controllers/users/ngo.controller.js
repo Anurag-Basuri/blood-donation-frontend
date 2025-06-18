@@ -338,6 +338,10 @@ const updateNGOProfile = asyncHandler(async (req, res) => {
         ngo.establishedYear = establishedYear;
     if (license !== undefined && license !== null)
         ngo.license = license;
+    if (operatingHours !== undefined && operatingHours !== null)
+        ngo.operatingHours = operatingHours;
+    if (facilities !== undefined && facilities !== null)
+        ngo.facilities = facilities;
 
     await ngo.save();
     return res
