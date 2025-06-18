@@ -438,8 +438,25 @@ const updateSettings = asyncHandler(async (req, res) => {
         );
 });
 
-// get
+// get NGO Profile
+const getNGOProfile = asyncHandler(async (req, res) => {
+    const { id } = req.params;
 
+    const ngo = await NGO.findById(id)
+        .select("name email logo address contactPerson facilities bloodInventory statistics connectedHospitals");
+
+    if (!ngo) {
+        throw new ApiError(404, "NGO not found");
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200, ngo, "NGO profile fetched successfully"
+            )
+        );
+});
 
 // Get current NGO
 const getCurrentNGO = asyncHandler(async (req, res) => {
