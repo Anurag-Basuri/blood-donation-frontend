@@ -279,6 +279,8 @@ const updateNGOProfile = asyncHandler(async (req, res) => {
         affiliation,
         establishedYear,
         license,
+        operatingHours,
+        facilities,
     } = req.body;
 
     // Validation
@@ -288,6 +290,14 @@ const updateNGOProfile = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Contact person details are required");
     if (!address?.city || !address?.state || !address?.pinCode || !address?.coordinates)
         throw new ApiError(400, "Complete address including coordinates is required");
+    if (!regNumber?.trim())
+        throw new ApiError(400, "Registration number is required");
+    if (!affiliation?.trim())
+        throw new ApiError(400, "Affiliation is required");
+    if (!operatingHours?.trim())
+        throw new ApiError(400, "Operating hours are required");
+    if (!facilities?.length)
+        throw new ApiError(400, "At least one facility is required");
 
     const ngo = await NGO.findById(ngoId);
 
