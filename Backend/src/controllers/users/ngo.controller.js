@@ -13,6 +13,8 @@ import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { uploadFile, deleteFile } from "../../utils/fileUpload.js";
 import notificationService from "../../services/notification.service.js";
+import { generateEmailVerificationToken } from "../utils/generateEmailToken.js";
+import { sendMail } from "../utils/sendMail.js";
 
 // Enums and Constants
 export const NGO_STATUS = {
@@ -570,6 +572,76 @@ const getNGOAnalytics = asyncHandler(async (req, res) => {
                 }
             }, "NGO analytics fetched successfully")
         );
+});
+
+// Send Verification Email
+const sendNGOVerificationEmail = asyncHandler(async (req, res) => {
+    const ngoId = req.user?._id;
+
+    if (!ngoId) throw new ApiError(401, "Unauthorized");
+
+    const ngo = await NGO.findById(ngoId);
+
+    if (!ngo) throw new ApiError(404, "NGO not found");
+    if (ngo.isVerified) throw new ApiError(400, "Email already verified");
+
+    const { token, tokenExpiry } = generateEmailVerificationToken();
+
+    ngo.verificationOTP = {
+        code: token,
+        expiresAt: tokenExpiry
+    };
+
+    await ngo.save();
+
+    const verificationURL = `${process.env.CORS_ORIGIN}/verify-ngo-email?token=${token}`;
+
+    const html = `
+        <div style="font-family: sans-serif; color: #333;">
+            <h2>Email Verification</h2>
+            <p>Hello ${ngo.name},</p>
+            <p>Please click the button below to verify your email for <strong>BloodConnect 🩸</strong>.</p>
+            <a href="${verificationURL}" style="display: inline-block; padding: 12px 20px; background-color: #d90429; color: white; border-radius: 5px; text-decoration: none;">Verify Email</a>
+            <p style="margin-top: 20px;">This link will expire in 15 minutes.</p>
+        </div>
+    `;
+
+    await sendMail({
+        to: ngo.email,
+        subject: "Verify your email for BloodConnect 🩸",
+        html,
+    });
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200, {}, "Verification email sent successfully"
+            )
+        );
+});
+
+// Verify Email Controller
+const verifyEmail = asyncHandler(async (req, res) => {
+    const { token } = req.query;
+
+    if (!token) throw new ApiError(400, "Verification token missing");
+
+    const user = await User.findOne({
+        emailVerificationOTP: token,
+        emailVerificationOTPExpiry: { $gt: Date.now() },
+    });
+
+    if (!user) throw new ApiError(400, "Invalid or expired token");
+
+    user.isEmailVerified = true;
+    user.emailVerificationOTP = undefined;
+    user.emailVerificationOTPExpiry = undefined;
+    await user.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, { emailVerified: true }, "Email verified successfully")
+    );
 });
 
 export {
