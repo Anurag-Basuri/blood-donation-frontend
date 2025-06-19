@@ -1,9 +1,10 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { ApiError } from "../../utils/ApiError.js";
+import { ApiError } from '../../utils/ApiError.js';
 
 // Constants
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
 const HOSPITAL_TYPES = [
     "General Hospital",
     "Multi-Specialty Hospital",
@@ -27,192 +28,165 @@ const HOSPITAL_TYPES = [
     "Charitable Hospital",
     "Telemedicine Center",
     "Other"
-];
+    ];
 
-const URGENCY_LEVELS = ["Emergency", "High", "Regular", "Future Need"];
+    const URGENCY_LEVELS = ["Emergency", "High", "Regular", "Future Need"];
 
-const hospitalSchema = new mongoose.Schema(
+    // Rules: Required documents per specialty
+    const SPECIALTY_DOCUMENT_RULES = {
+    "Blood Bank": ["bloodBankLicense", "bioWaste", "drugLicense"],
+    "Trauma Center": ["ambulanceRegistration", "fireSafety", "accreditation"],
+    "Multi-Specialty Hospital": ["registrationCertificate", "tradeLicense", "accreditation"],
+    "Clinic": ["registrationCertificate", "identityProof"],
+    "Telemedicine Center": ["registrationCertificate", "panCard"],
+    "General Hospital": ["registrationCertificate", "gstCertificate"],
+    "Teaching Hospital": ["registrationCertificate", "accreditation"]
+    };
+
+    // Schema
+    const hospitalSchema = new mongoose.Schema(
     {
         name: {
-            type: String,
-            required: true,
-            trim: true,
-            minlength: [3, "Name must be at least 3 characters"],
-            maxlength: [100, "Name must be at most 100 characters"],
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 3,
+        maxlength: 100
         },
         email: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-            match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/, "Please enter a valid email"]
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true,
+        match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/, "Invalid email"]
         },
         password: {
-            type: String,
-            required: true,
-            minlength: [8, "Password must be at least 8 characters"],
-            select: false,
-            validate: {
-                validator: function (password) {
-                    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
-                },
-                message: "Password must contain uppercase, lowercase, number and special character"
-            }
+        type: String,
+        required: true,
+        minlength: 8,
+        select: false,
+        validate: {
+            validator: (v) =>
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(v),
+            message: "Password must include uppercase, lowercase, number, and special character"
+        }
         },
         logo: {
-            url: String,
-            publicId: String,
-            uploadedAt: { type: Date, default: Date.now }
+        url: String,
+        publicId: String,
+        uploadedAt: { type: Date, default: Date.now }
         },
-        isVerified: {
-            type: Boolean,
-            default: false
-        },
-        verificationOTP: {
-            code: String,
-            expiresAt: Date
-        },
-        adminApproved: {
-            type: Boolean,
-            default: false
-        },
-        refreshToken: {
-            type: String,
-            select: false
-        },
+        isVerified: { type: Boolean, default: false },
+        verificationOTP: { code: String, expiresAt: Date },
+        adminApproved: { type: Boolean, default: false },
+        refreshToken: { type: String, select: false },
         lastLogin: Date,
         loginAttempts: { type: Number, default: 0 },
         lockedUntil: Date,
+
         contactPerson: {
-            name: { type: String, required: true },
-            phone: {
-                type: String,
-                required: true,
-                validate: {
-                    validator: (v) => /^\+?[\d\s-]{10,}$/.test(v),
-                    message: "Invalid phone number format"
-                }
-            },
-            position: String,
-            alternatePhone: String,
-            email: String
-        },
-        emergencyContact: {
-            name: { type: String, required: true },
-            phone: {
-                type: String,
-                required: true,
-                validate: {
-                    validator: (v) => /^\+?[\d\s-]{10,}$/.test(v),
-                    message: "Invalid emergency phone number"
-                }
-            },
-            available24x7: { type: Boolean, default: true }
-        },
-        address: {
-            street: { type: String, required: true },
-            city: { type: String, required: true, index: true },
-            state: { type: String, required: true },
-            pinCode: {
-                type: String,
-                required: true,
-                validate: {
-                    validator: (v) => /^\d{6}$/.test(v),
-                    message: "Invalid PIN code"
-                }
-            },
-            country: { type: String, default: "India" },
-            location: {
-                type: { type: String, enum: ["Point"], default: "Point" },
-                coordinates: {
-                    type: [Number],
-                    required: true,
-                    validate: {
-                        validator: (coords) => coords.length === 2 && coords[0] >= -180 && coords[0] <= 180 && coords[1] >= -90 && coords[1] <= 90,
-                        message: "Invalid coordinates"
-                    }
-                }
+        name: { type: String, required: true },
+        phone: {
+            type: String,
+            required: true,
+            validate: {
+            validator: (v) => /^\+?[\d\s-]{10,}$/.test(v),
+            message: "Invalid phone number"
             }
         },
+        position: String,
+        alternatePhone: String,
+        email: String
+        },
+
+        emergencyContact: {
+        name: { type: String, required: true },
+        phone: {
+            type: String,
+            required: true,
+            validate: {
+            validator: (v) => /^\+?[\d\s-]{10,}$/.test(v),
+            message: "Invalid emergency contact"
+            }
+        },
+        available24x7: { type: Boolean, default: true }
+        },
+
+        address: {
+        street: { type: String, required: true },
+        city: { type: String, required: true, index: true },
+        state: { type: String, required: true },
+        pinCode: {
+            type: String,
+            required: true,
+            validate: {
+            validator: (v) => /^\d{6}$/.test(v),
+            message: "Invalid PIN code"
+            }
+        },
+        country: { type: String, default: "India" },
+        location: {
+            type: { type: String, enum: ["Point"], default: "Point" },
+            coordinates: {
+            type: [Number],
+            required: true,
+            validate: {
+                validator: (coords) =>
+                coords.length === 2 &&
+                coords[0] >= -180 && coords[0] <= 180 &&
+                coords[1] >= -90 && coords[1] <= 90,
+                message: "Invalid coordinates"
+            }
+            }
+        }
+        },
+
         specialties: [{ type: String, enum: HOSPITAL_TYPES }],
         registrationNumber: {
-            type: String,
-            unique: true,
-            sparse: true,
-            validate: {
-                validator: (v) => /^[A-Z0-9-]{5,}$/i.test(v),
-                message: "Invalid registration number format"
-            }
+        type: String,
+        unique: true,
+        sparse: true,
+        validate: {
+            validator: (v) => /^[A-Z0-9-]{5,}$/i.test(v),
+            message: "Invalid registration number format"
+        }
         },
+
         documents: {
-            registrationCertificate: { url, publicId, uploadedAt },
-            tradeLicense: { url, publicId, uploadedAt },
-            panCard: { url, publicId, uploadedAt },
-            gstCertificate: { url, publicId, uploadedAt },
-            fireSafetyCertificate: { url, publicId, uploadedAt },
-            bioWasteCertificate: { url, publicId, uploadedAt },
-            drugLicense: { url, publicId, uploadedAt },
-            bloodBankLicense: { url, publicId, uploadedAt },
-            radiologyLicense: { url, publicId, uploadedAt },
-            ambulanceRegistration: { url, publicId, uploadedAt },
-            accreditationCertificate: { url, publicId, uploadedAt }, // NABH/NABL
-            identityProof: { url, publicId, uploadedAt },
+        registrationCertificate: { url: String, publicId: String, uploadedAt: Date },
+        tradeLicense: { url: String, publicId: String, uploadedAt: Date },
+        panCard: { url: String, publicId: String, uploadedAt: Date },
+        gstCertificate: { url: String, publicId: String, uploadedAt: Date },
+        fireSafety: { url: String, publicId: String, uploadedAt: Date },
+        bioWaste: { url: String, publicId: String, uploadedAt: Date },
+        drugLicense: { url: String, publicId: String, uploadedAt: Date },
+        bloodBankLicense: { url: String, publicId: String, uploadedAt: Date },
+        radiologyLicense: { url: String, publicId: String, uploadedAt: Date },
+        ambulanceRegistration: { url: String, publicId: String, uploadedAt: Date },
+        accreditation: { url: String, publicId: String, uploadedAt: Date },
+        identityProof: { url: String, publicId: String, uploadedAt: Date }
         },
+
         bloodInventory: [{
-            bloodGroup: {
-                type: String,
-                enum: BLOOD_GROUPS
-            },
-            available: {
-                type: Number,
-                default: 0,
-                min: 0
-            },
-            reserved: {
-                type: Number,
-                default: 0,
-                min: 0
-            },
-            lastUpdated: {
-                type: Date,
-                default: Date.now
-            }
+        bloodGroup: { type: String, enum: BLOOD_GROUPS },
+        available: { type: Number, default: 0, min: 0 },
+        reserved: { type: Number, default: 0, min: 0 },
+        lastUpdated: { type: Date, default: Date.now }
         }],
+
         statistics: {
-            totalRequestsMade: {
-                type: Number,
-                default: 0
-            },
-            successfulRequests: {
-                type: Number,
-                default: 0
-            },
-            emergencyRequests: {
-                type: Number,
-                default: 0
-            },
-            lastRequestDate: {
-                type: Date
-            }
+        totalRequestsMade: { type: Number, default: 0 },
+        successfulRequests: { type: Number, default: 0 },
+        emergencyRequests: { type: Number, default: 0 },
+        lastRequestDate: Date
         },
+
         settings: {
-            autoApproveRequests: {
-                type: Boolean,
-                default: false
-            },
-            preferredBloodGroups: [{
-                type: String,
-                enum: BLOOD_GROUPS
-            }],
-            notificationEnabled: {
-                type: Boolean,
-                default: true
-            },
-            responseRadius: {
-                type: Number,
-                default: 50
-            }
+        autoApproveRequests: { type: Boolean, default: false },
+        preferredBloodGroups: [{ type: String, enum: BLOOD_GROUPS }],
+        notificationEnabled: { type: Boolean, default: true },
+        responseRadius: { type: Number, default: 50 }
         }
     },
     {
@@ -220,71 +194,96 @@ const hospitalSchema = new mongoose.Schema(
         toJSON: { virtuals: true },
         toObject: { virtuals: true }
     }
-);
+    );
 
-hospitalSchema.index({ "address.city": 1, "address.pinCode": 1 });
-hospitalSchema.index({ "address.location": "2dsphere" });
-hospitalSchema.index({ "bloodRequirements.bloodGroup": 1, "bloodRequirements.urgencyLevel": 1 });
-hospitalSchema.index({ "connectedNGOs.ngoId": 1, "connectedNGOs.status": 1 });
+    // Indexes
+    hospitalSchema.index({ "address.city": 1, "address.pinCode": 1 });
+    hospitalSchema.index({ "address.location": "2dsphere" });
 
-hospitalSchema.virtual("pendingRequests", {
+    // Virtuals
+    hospitalSchema.virtual("pendingRequests", {
     ref: "BloodRequest",
     localField: "_id",
     foreignField: "hospitalId",
     match: { status: { $in: ["Pending", "Processing"] } }
-});
+    });
 
-hospitalSchema.methods = {
+    // Methods
+    hospitalSchema.methods = {
     async comparePassword(candidatePassword) {
         return await bcrypt.compare(candidatePassword, this.password);
     },
+
     async findNearbyNGOs(maxDistance = 10000) {
         return mongoose.model("NGO").find({
-            "address.location": {
-                $near: {
-                    $geometry: this.address.location,
-                    $maxDistance: maxDistance
-                }
-            },
-            isVerified: true
+        "address.location": {
+            $near: {
+            $geometry: this.address.location,
+            $maxDistance: maxDistance
+            }
+        },
+        isVerified: true
         });
     },
+
     async updateBloodInventory(bloodGroup, change) {
         const inventory = this.bloodInventory.find(i => i.bloodGroup === bloodGroup);
         if (!inventory) {
-            this.bloodInventory.push({
-                bloodGroup,
-                available: Math.max(0, change),
-                lastUpdated: new Date()
-            });
+        this.bloodInventory.push({
+            bloodGroup,
+            available: Math.max(0, change),
+            lastUpdated: new Date()
+        });
         } else {
-            inventory.available = Math.max(0, inventory.available + change);
-            inventory.lastUpdated = new Date();
+        inventory.available = Math.max(0, inventory.available + change);
+        inventory.lastUpdated = new Date();
         }
         return this.save();
     },
+
     async requestBlood(bloodGroup, units, urgencyLevel = "Regular") {
         if (!BLOOD_GROUPS.includes(bloodGroup)) {
-            throw new ApiError(400, "Invalid blood group");
+        throw new ApiError(400, "Invalid blood group");
         }
-        this.bloodRequirements.push({
-            bloodGroup,
-            unitsNeeded: units,
-            urgencyLevel,
-            requiredBy: new Date()
-        });
+
         this.statistics.totalRequestsMade += 1;
         if (urgencyLevel === "Emergency") {
-            this.statistics.emergencyRequests += 1;
+        this.statistics.emergencyRequests += 1;
         }
         this.statistics.lastRequestDate = new Date();
         return this.save();
     }
-};
+    };
 
-hospitalSchema.pre("save", async function (next) {
+    // Middleware: Password hashing
+    hospitalSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
     this.password = await bcrypt.hash(this.password, 12);
+    next();
+    });
+
+    // Middleware: Validate required documents by specialty
+    hospitalSchema.pre("save", function (next) {
+    if (!this.isModified("specialties") && !this.isModified("documents")) return next();
+
+    const missingDocs = new Set();
+
+    this.specialties?.forEach(type => {
+        const requiredDocs = SPECIALTY_DOCUMENT_RULES[type] || [];
+        requiredDocs.forEach(docKey => {
+        const doc = this.documents?.[docKey];
+        if (!doc || !doc.url || !doc.publicId) {
+            missingDocs.add(docKey);
+        }
+        });
+    });
+
+    if (missingDocs.size > 0) {
+        return next(
+        new ApiError(400, `Missing required documents: ${[...missingDocs].join(", ")}`)
+        );
+    }
+
     next();
 });
 
