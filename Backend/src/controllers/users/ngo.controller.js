@@ -508,34 +508,6 @@ const getNGOAnalytics = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "Analytics fetched (stub)"));
 });
 
-// Helper: Notify nearby donors for new camp
-const notifyNearbyDonors = async (facility) => {
-    const nearbyUsers = await User.find({
-        "address.location": {
-            $near: {
-                $geometry: facility.location,
-                $maxDistance: 10000, // 10km radius
-            },
-        },
-        donorStatus: "Active",
-        notificationPreferences: {
-            $elemMatch: { type: "CAMP_ANNOUNCEMENTS", enabled: true },
-        },
-    }).select("_id email phone");
-
-    await notificationService.sendBulkNotifications(
-        nearbyUsers,
-        "NEW_FACILITY_ANNOUNCEMENT",
-        {
-            facilityId: facility._id,
-            facilityName: facility.name,
-            facilityType: facility.facilityType,
-            startDate: facility.schedule?.startDate,
-            location: facility.address,
-        }
-    );
-};
-
 export {
     registerNGO,
     loginNGO,
