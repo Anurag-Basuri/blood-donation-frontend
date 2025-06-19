@@ -500,22 +500,6 @@ const handleBloodRequest = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, request, "Request handled successfully"));
 });
 
-// Hospital Connections
-const getConnectedHospitals = asyncHandler(async (req, res) => {
-    // Implement logic to fetch connected hospitals
-    return res
-        .status(200)
-        .json(new ApiResponse(200, [], "Connected hospitals fetched (stub)"));
-});
-
-// Respond to Hospital Connection Request
-const respondToConnectionRequest = asyncHandler(async (req, res) => {
-    // Implement logic to respond to hospital connection requests
-    return res
-        .status(200)
-        .json(new ApiResponse(200, {}, "Connection response handled (stub)"));
-});
-
 // Analytics & Reports
 const getNGOAnalytics = asyncHandler(async (req, res) => {
     // Implement analytics logic here
@@ -568,7 +552,5 @@ export {
     getCurrentNGO,
     getNGOProfile,
     handleBloodRequest,
-    getConnectedHospitals,
-    respondToConnectionRequest,
     getNGOAnalytics
 };
