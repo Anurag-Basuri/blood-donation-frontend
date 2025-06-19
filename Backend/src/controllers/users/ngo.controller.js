@@ -539,10 +539,37 @@ const searchNGOs = asyncHandler(async (req, res) => {
 
 // Analytics & Reports
 const getNGOAnalytics = asyncHandler(async (req, res) => {
-    // Implement analytics logic here
+    const ngoId = req.user?._id;
+
+    if (!ngoId) {
+        throw new ApiError(401, "Unauthorized");
+    }
+
+    const ngo = await NGO.findById(ngoId).select("statistics bloodInventory connectedHospitals");
+
+    if (!ngo) {
+        throw new ApiError(404, "NGO not found");
+    }
+
+    const { statistics, bloodInventory, connectedHospitals } = ngo;
+
+    const totalBloodUnits = bloodInventory.reduce((sum, item) => sum + item.units, 0);
+
     return res
         .status(200)
-        .json(new ApiResponse(200, {}, "Analytics fetched (stub)"));
+        .json(
+            new ApiResponse(200, {
+                stats: {
+                    totalCamps: statistics.totalCampsOrganized,
+                    totalDonations: statistics.totalDonationsCollected,
+                    hospitalsConnected: connectedHospitals.length,
+                    lastCamp: statistics.lastCampDate,
+                    totalBloodUnits,
+                    successRate: statistics.successRate,
+                    monthlyStats: statistics.monthlyStats,
+                }
+            }, "NGO analytics fetched successfully")
+        );
 });
 
 export {
