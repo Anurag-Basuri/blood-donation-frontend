@@ -28,12 +28,14 @@ const HOSPITAL_TYPES = [
     "Charitable Hospital",
     "Telemedicine Center",
     "Other"
-    ];
+];
 
-    const URGENCY_LEVELS = ["Emergency", "High", "Regular", "Future Need"];
+const URGENCY_LEVELS = [
+    "Emergency", "High", "Regular", "Future Need"
+];
 
-    // Rules: Required documents per specialty
-    const SPECIALTY_DOCUMENT_RULES = {
+// Rules: Required documents per specialty
+const SPECIALTY_DOCUMENT_RULES = {
     "Blood Bank": ["bloodBankLicense", "bioWaste", "drugLicense"],
     "Trauma Center": ["ambulanceRegistration", "fireSafety", "accreditation"],
     "Multi-Specialty Hospital": ["registrationCertificate", "tradeLicense", "accreditation"],
@@ -41,51 +43,68 @@ const HOSPITAL_TYPES = [
     "Telemedicine Center": ["registrationCertificate", "panCard"],
     "General Hospital": ["registrationCertificate", "gstCertificate"],
     "Teaching Hospital": ["registrationCertificate", "accreditation"]
-    };
+};
 
-    // Schema
-    const hospitalSchema = new mongoose.Schema(
-    {
-        name: {
+// Schema
+const hospitalSchema = new mongoose.Schema({
+    name: {
         type: String,
         required: true,
         trim: true,
         minlength: 3,
         maxlength: 100
-        },
-        email: {
+    },
+    email: {
         type: String,
         required: true,
         unique: true,
         lowercase: true,
         trim: true,
         match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/, "Invalid email"]
-        },
-        password: {
+    },
+    password: {
         type: String,
         required: true,
         minlength: 8,
         select: false,
         validate: {
             validator: (v) =>
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(v),
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(v),
             message: "Password must include uppercase, lowercase, number, and special character"
         }
-        },
-        logo: {
+    },
+    logo: {
         url: String,
         publicId: String,
-        uploadedAt: { type: Date, default: Date.now }
-        },
-        isVerified: { type: Boolean, default: false },
-        verificationOTP: { code: String, expiresAt: Date },
-        adminApproved: { type: Boolean, default: false },
-        refreshToken: { type: String, select: false },
-        lastLogin: Date,
-        loginAttempts: { type: Number, default: 0 },
-        lockedUntil: Date,
+        uploadedAt: {
+            type: Date,
+            default: Date.now
+        }
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    verificationOTP: {
+        code: String,
+        expiresAt: Date
+    },
+    adminApproved: {
+        type: Boolean,
+        default: false
+    },
+    refreshToken: {
+        type: String,
+        select: false
+    },
+    lastLogin: Date,
+    loginAttempts: {
+        type: Number,
+        default: 0
+    },
+    lockedUntil: Date,
 
-        contactPerson: {
+    contactPerson: {
         name: { type: String, required: true },
         phone: {
             type: String,
@@ -98,10 +117,13 @@ const HOSPITAL_TYPES = [
         position: String,
         alternatePhone: String,
         email: String
-        },
+    },
 
-        emergencyContact: {
-        name: { type: String, required: true },
+    emergencyContact: {
+        name: {
+            type: String,
+            required: true
+        },
         phone: {
             type: String,
             required: true,
@@ -110,10 +132,13 @@ const HOSPITAL_TYPES = [
             message: "Invalid emergency contact"
             }
         },
-        available24x7: { type: Boolean, default: true }
-        },
+        available24x7: {
+            type: Boolean,
+            default: true
+        }
+    },
 
-        address: {
+    address: {
         street: { type: String, required: true },
         city: { type: String, required: true, index: true },
         state: { type: String, required: true },
@@ -129,21 +154,24 @@ const HOSPITAL_TYPES = [
         location: {
             type: { type: String, enum: ["Point"], default: "Point" },
             coordinates: {
-            type: [Number],
-            required: true,
-            validate: {
-                validator: (coords) =>
-                coords.length === 2 &&
-                coords[0] >= -180 && coords[0] <= 180 &&
-                coords[1] >= -90 && coords[1] <= 90,
-                message: "Invalid coordinates"
-            }
+                type: [Number],
+                required: true,
+                validate: {
+                    validator: (coords) =>
+                    coords.length === 2 &&
+                    coords[0] >= -180 && coords[0] <= 180 &&
+                    coords[1] >= -90 && coords[1] <= 90,
+                    message: "Invalid coordinates"
+                }
             }
         }
-        },
+    },
 
-        specialties: [{ type: String, enum: HOSPITAL_TYPES }],
-        registrationNumber: {
+    specialties: [{
+        type: String,
+        enum: HOSPITAL_TYPES
+    }],
+    registrationNumber: {
         type: String,
         unique: true,
         sparse: true,
@@ -151,22 +179,70 @@ const HOSPITAL_TYPES = [
             validator: (v) => /^[A-Z0-9-]{5,}$/i.test(v),
             message: "Invalid registration number format"
         }
-        },
+    },
 
-        documents: {
-        registrationCertificate: { url: String, publicId: String, uploadedAt: Date },
-        tradeLicense: { url: String, publicId: String, uploadedAt: Date },
-        panCard: { url: String, publicId: String, uploadedAt: Date },
-        gstCertificate: { url: String, publicId: String, uploadedAt: Date },
-        fireSafety: { url: String, publicId: String, uploadedAt: Date },
-        bioWaste: { url: String, publicId: String, uploadedAt: Date },
-        drugLicense: { url: String, publicId: String, uploadedAt: Date },
-        bloodBankLicense: { url: String, publicId: String, uploadedAt: Date },
-        radiologyLicense: { url: String, publicId: String, uploadedAt: Date },
-        ambulanceRegistration: { url: String, publicId: String, uploadedAt: Date },
-        accreditation: { url: String, publicId: String, uploadedAt: Date },
-        identityProof: { url: String, publicId: String, uploadedAt: Date }
+    documents: {
+        registrationCertificate: {
+            url: String,
+            publicId: String,
+            uploadedAt: Date
         },
+        tradeLicense: {
+            url: String,
+            publicId: String,
+            uploadedAt: Date
+        },
+        panCard: {
+            url: String,
+            publicId: String,
+            uploadedAt: Date
+        },
+        gstCertificate: {
+            url: String,
+            publicId: String,
+            uploadedAt: Date
+        },
+        fireSafety: {
+            url: String,
+            publicId: String,
+            uploadedAt: Date
+        },
+        bioWaste: {
+            url: String,
+            publicId: String,
+            uploadedAt: Date
+        },
+        drugLicense: {
+            url: String,
+            publicId: String,
+            uploadedAt: Date
+        },
+        bloodBankLicense: {
+            url: String,
+            publicId: String,
+            uploadedAt: Date
+        },
+        radiologyLicense: {
+            url: String,
+            publicId: String,
+            uploadedAt: Date
+        },
+        ambulanceRegistration: {
+            url: String,
+            publicId: String,
+            uploadedAt: Date
+        },
+        accreditation: {
+            url: String,
+            publicId: String,
+            uploadedAt: Date
+        },
+        identityProof: {
+            url: String,
+            publicId: String,
+            uploadedAt: Date
+        }
+    },
 
         bloodInventory: [{
         bloodGroup: { type: String, enum: BLOOD_GROUPS },
