@@ -5,13 +5,30 @@ import { ApiError } from "../../utils/ApiError.js";
 // Constants
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const HOSPITAL_TYPES = [
+    "General Hospital",
+    "Multi-Specialty Hospital",
     "Blood Bank",
     "Trauma Center",
-    "General Hospital",
-    "Specialty Hospital",
+    "Maternity Hospital",
+    "Children's Hospital",
+    "Cancer Center",
+    "Eye Hospital",
+    "Dental Hospital",
+    "Cardiac Hospital",
+    "Orthopedic Hospital",
+    "Psychiatric Hospital",
     "Clinic",
-    "Other",
+    "Primary Health Center",
+    "Community Health Center",
+    "Rehabilitation Center",
+    "Teaching Hospital",
+    "Government Hospital",
+    "Private Hospital",
+    "Charitable Hospital",
+    "Telemedicine Center",
+    "Other"
 ];
+
 const URGENCY_LEVELS = ["Emergency", "High", "Regular", "Future Need"];
 
 const hospitalSchema = new mongoose.Schema(
@@ -48,10 +65,17 @@ const hospitalSchema = new mongoose.Schema(
             publicId: String,
             uploadedAt: { type: Date, default: Date.now }
         },
-        isVerified: { type: Boolean, default: false },
+        isVerified: {
+            type: Boolean,
+            default: false
+        },
         verificationOTP: {
             code: String,
             expiresAt: Date
+        },
+        adminApproved: {
+            type: Boolean,
+            default: false
         },
         refreshToken: {
             type: String,
