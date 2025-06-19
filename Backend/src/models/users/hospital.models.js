@@ -265,7 +265,7 @@ const hospitalSchema = new mongoose.Schema({
         }
     }],
 
-        statistics: {
+    statistics: {
         totalRequestsMade: {
             type: Number,
             default: 0
@@ -297,14 +297,14 @@ const hospitalSchema = new mongoose.Schema({
                 type: Number,
                 default: 50
             }
-        }
+    }
     },
     {
         timestamps: true,
         toJSON: { virtuals: true },
         toObject: { virtuals: true }
     }
-    );
+);
 
     // Indexes
     hospitalSchema.index({ "address.city": 1, "address.pinCode": 1 });
@@ -336,7 +336,7 @@ const hospitalSchema = new mongoose.Schema({
         });
     },
 
-    async updateBloodInventory(bloodGroup, change) {
+async updateBloodInventory(bloodGroup, change) {
         const inventory = this.bloodInventory.find(i => i.bloodGroup === bloodGroup);
         if (!inventory) {
         this.bloodInventory.push({
