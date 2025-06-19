@@ -1,10 +1,10 @@
 import { formatDate, formatRelativeTime, formatTimeOnly } from '../utils/dateFormatter.js';
 
 export const emailTemplates = {
-    // Urgent Blood Request Template
-    urgentRequest: (data) => {
-        const { bloodType, hospital, location, urgencyLevel, contact } = data;
-        return `
+	// Urgent Blood Request Template
+	urgentRequest: data => {
+		const { bloodType, hospital, location, urgencyLevel, contact } = data;
+		return `
             <!DOCTYPE html>
             <html>
             <head>
@@ -60,12 +60,12 @@ export const emailTemplates = {
             </body>
             </html>
         `;
-    },
+	},
 
-    // Appointment Confirmation Template
-    appointmentConfirmation: (data) => {
-        const { date, center, donor, appointmentId } = data;
-        return `
+	// Appointment Confirmation Template
+	appointmentConfirmation: data => {
+		const { date, center, donor, appointmentId } = data;
+		return `
             <!DOCTYPE html>
             <html>
             <head>
@@ -123,12 +123,12 @@ export const emailTemplates = {
             </body>
             </html>
         `;
-    },
+	},
 
-    // Donation Reminder Template
-    donationReminder: (data) => {
-        const { nextDonationDate, center, donor, lastDonation } = data;
-        return `
+	// Donation Reminder Template
+	donationReminder: data => {
+		const { nextDonationDate, center, donor, lastDonation } = data;
+		return `
             <!DOCTYPE html>
             <html>
             <head>
@@ -177,12 +177,12 @@ export const emailTemplates = {
             </body>
             </html>
         `;
-    },
+	},
 
-    // Blood Availability Update Template
-    bloodAvailability: (data) => {
-        const { bloodType, inventory, hospital } = data;
-        return `
+	// Blood Availability Update Template
+	bloodAvailability: data => {
+		const { bloodType, inventory, hospital } = data;
+		return `
             <!DOCTYPE html>
             <html>
             <head>
@@ -240,5 +240,5 @@ export const emailTemplates = {
             </body>
             </html>
         `;
-    }
+	},
 };

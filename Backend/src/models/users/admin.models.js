@@ -1,108 +1,103 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { ApiError } from "../../utils/ApiError.js";
+import { ApiError } from '../../utils/ApiError.js';
 
 const adminSchema = new mongoose.Schema(
-    {
-        fullName: {
-            type: String,
-            required: [true, "Full name is required"],
-            trim: true,
-            minlength: [3, "Name must be at least 3 characters"],
-        },
-        email: {
-            type: String,
-            required: [true, "Email is required"],
-            unique: true,
-            lowercase: true,
-            trim: true,
-            match: [
-                /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/,
-                "Please enter a valid email",
-            ],
-        },
-        password: {
-            type: String,
-            required: [true, "Password is required"],
-            minlength: [8, "Password must be at least 8 characters"],
-            select: false,
-        },
-        role: {
-            type: String,
-            enum: ["admin"],
-            default: "admin",
-        },
-        permissions: [
-            {
-                type: String,
-                enum: [
-                    "manage_users",
-                    "manage_donations",
-                    "manage_hospitals",
-                    "manage_ngos",
-                    "view_analytics",
-                    "manage_admins",
-                ],
-            },
-        ],
-        refreshToken: {
-            type: String,
-            select: false,
-        },
-        isActive: {
-            type: Boolean,
-            default: true,
-        },
-    },
-    {
-        timestamps: true,
-    }
+	{
+		fullName: {
+			type: String,
+			required: [true, 'Full name is required'],
+			trim: true,
+			minlength: [3, 'Name must be at least 3 characters'],
+		},
+		email: {
+			type: String,
+			required: [true, 'Email is required'],
+			unique: true,
+			lowercase: true,
+			trim: true,
+			match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/, 'Please enter a valid email'],
+		},
+		password: {
+			type: String,
+			required: [true, 'Password is required'],
+			minlength: [8, 'Password must be at least 8 characters'],
+			select: false,
+		},
+		role: {
+			type: String,
+			enum: ['admin'],
+			default: 'admin',
+		},
+		permissions: [
+			{
+				type: String,
+				enum: [
+					'manage_users',
+					'manage_donations',
+					'manage_hospitals',
+					'manage_ngos',
+					'view_analytics',
+					'manage_admins',
+				],
+			},
+		],
+		refreshToken: {
+			type: String,
+			select: false,
+		},
+		isActive: {
+			type: Boolean,
+			default: true,
+		},
+	},
+	{
+		timestamps: true,
+	},
 );
 
 // Hash password before saving
-adminSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
-    this.password = await bcrypt.hash(this.password, 12);
-    next();
+adminSchema.pre('save', async function (next) {
+	if (!this.isModified('password')) return next();
+	this.password = await bcrypt.hash(this.password, 12);
+	next();
 });
 
 // Instance methods
 adminSchema.methods = {
-    isPasswordCorrect: async function (password) {
-        try {
-            return await bcrypt.compare(password, this.password);
-        } catch (error) {
-            throw new ApiError(500, "Password verification failed");
-        }
-    },
+	isPasswordCorrect: async function (password) {
+		try {
+			return await bcrypt.compare(password, this.password);
+		} catch (error) {
+			throw new ApiError(500, 'Password verification failed');
+		}
+	},
 
-    generateAccessToken: function () {
-        return jwt.sign(
-            {
-                _id: this._id,
-                role: this.role,
-                email: this.email,
-                permissions: this.permissions,
-            },
-            process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
-        );
-    },
+	generateAccessToken: function () {
+		return jwt.sign(
+			{
+				_id: this._id,
+				role: this.role,
+				email: this.email,
+				permissions: this.permissions,
+			},
+			process.env.ACCESS_TOKEN_SECRET,
+			{ expiresIn: process.env.ACCESS_TOKEN_EXPIRY },
+		);
+	},
 
-    hasPermission: function (permission) {
-        return (
-            this.role === "superadmin" || this.permissions.includes(permission)
-        );
-    },
+	hasPermission: function (permission) {
+		return this.role === 'superadmin' || this.permissions.includes(permission);
+	},
 };
 
 // Static methods
 adminSchema.statics = {
-    findByEmailWithPassword: function (email) {
-        return this.findOne({ email }).select("+password");
-    },
+	findByEmailWithPassword: function (email) {
+		return this.findOne({ email }).select('+password');
+	},
 };
 
-const Admin = mongoose.model("Admin", adminSchema);
+const Admin = mongoose.model('Admin', adminSchema);
 export { Admin };

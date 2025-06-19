@@ -1,90 +1,90 @@
 [
-  {
-    "name": "LifeCare Blood Services",
-    "email": "contact@lifecare.org",
-    "contactPerson": {
-      "name": "Dr. Amit Shah",
-      "phone": "+91-9876543220",
-      "position": "Director"
-    },
-    "address": {
-      "street": "15 Healthcare Avenue",
-      "city": "Mumbai",
-      "state": "Maharashtra",
-      "pinCode": "400001",
-      "country": "India",
-      "location": {
-        "type": "Point",
-        "coordinates": [72.8777, 19.0760]
-      }
-    },
-    "isVerified": true,
-    "facilities": ["Blood Collection", "Blood Storage", "Blood Testing", "Mobile Camps"],
-    "statistics": {
-      "totalDonationsCollected": 1500,
-      "totalHospitalsServed": 25,
-      "totalCenters": 3
-    },
-    "bloodInventory": [
-      {
-        "bloodGroup": "A+",
-        "units": 50,
-        "lastUpdated": "2025-03-25T10:00:00Z"
-      },
-      {
-        "bloodGroup": "O-",
-        "units": 30,
-        "lastUpdated": "2025-03-25T10:00:00Z"
-      },
-      {
-        "bloodGroup": "B+",
-        "units": 45,
-        "lastUpdated": "2025-03-25T10:00:00Z"
-      }
-    ]
-  },
-  {
-    "name": "BloodConnect Foundation",
-    "email": "info@bloodconnect.org",
-    "contactPerson": {
-      "name": "Ms. Priya Verma",
-      "phone": "+91-9876543221",
-      "position": "CEO"
-    },
-    "address": {
-      "street": "45 Social Welfare Road",
-      "city": "Delhi",
-      "state": "Delhi",
-      "pinCode": "110001",
-      "country": "India",
-      "location": {
-        "type": "Point",
-        "coordinates": [77.2090, 28.6139]
-      }
-    },
-    "isVerified": true,
-    "facilities": ["Blood Collection", "Blood Testing", "Mobile Camps", "Donor Support"],
-    "statistics": {
-      "totalDonationsCollected": 2000,
-      "totalHospitalsServed": 35,
-      "totalCenters": 5
-    },
-    "bloodInventory": [
-      {
-        "bloodGroup": "A+",
-        "units": 60,
-        "lastUpdated": "2025-03-25T10:00:00Z"
-      },
-      {
-        "bloodGroup": "O+",
-        "units": 75,
-        "lastUpdated": "2025-03-25T10:00:00Z"
-      },
-      {
-        "bloodGroup": "AB+",
-        "units": 25,
-        "lastUpdated": "2025-03-25T10:00:00Z"
-      }
-    ]
-  }
+	{
+		"name": "LifeCare Blood Services",
+		"email": "contact@lifecare.org",
+		"contactPerson": {
+			"name": "Dr. Amit Shah",
+			"phone": "+91-9876543220",
+			"position": "Director"
+		},
+		"address": {
+			"street": "15 Healthcare Avenue",
+			"city": "Mumbai",
+			"state": "Maharashtra",
+			"pinCode": "400001",
+			"country": "India",
+			"location": {
+				"type": "Point",
+				"coordinates": [72.8777, 19.076]
+			}
+		},
+		"isVerified": true,
+		"facilities": ["Blood Collection", "Blood Storage", "Blood Testing", "Mobile Camps"],
+		"statistics": {
+			"totalDonationsCollected": 1500,
+			"totalHospitalsServed": 25,
+			"totalCenters": 3
+		},
+		"bloodInventory": [
+			{
+				"bloodGroup": "A+",
+				"units": 50,
+				"lastUpdated": "2025-03-25T10:00:00Z"
+			},
+			{
+				"bloodGroup": "O-",
+				"units": 30,
+				"lastUpdated": "2025-03-25T10:00:00Z"
+			},
+			{
+				"bloodGroup": "B+",
+				"units": 45,
+				"lastUpdated": "2025-03-25T10:00:00Z"
+			}
+		]
+	},
+	{
+		"name": "BloodConnect Foundation",
+		"email": "info@bloodconnect.org",
+		"contactPerson": {
+			"name": "Ms. Priya Verma",
+			"phone": "+91-9876543221",
+			"position": "CEO"
+		},
+		"address": {
+			"street": "45 Social Welfare Road",
+			"city": "Delhi",
+			"state": "Delhi",
+			"pinCode": "110001",
+			"country": "India",
+			"location": {
+				"type": "Point",
+				"coordinates": [77.209, 28.6139]
+			}
+		},
+		"isVerified": true,
+		"facilities": ["Blood Collection", "Blood Testing", "Mobile Camps", "Donor Support"],
+		"statistics": {
+			"totalDonationsCollected": 2000,
+			"totalHospitalsServed": 35,
+			"totalCenters": 5
+		},
+		"bloodInventory": [
+			{
+				"bloodGroup": "A+",
+				"units": 60,
+				"lastUpdated": "2025-03-25T10:00:00Z"
+			},
+			{
+				"bloodGroup": "O+",
+				"units": 75,
+				"lastUpdated": "2025-03-25T10:00:00Z"
+			},
+			{
+				"bloodGroup": "AB+",
+				"units": 25,
+				"lastUpdated": "2025-03-25T10:00:00Z"
+			}
+		]
+	}
 ]

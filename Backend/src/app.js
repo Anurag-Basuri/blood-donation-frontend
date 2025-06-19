@@ -1,29 +1,29 @@
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import helmet from "helmet";
-import compression from "compression";
-import mongoSanitize from "express-mongo-sanitize";
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import compression from 'compression';
+import mongoSanitize from 'express-mongo-sanitize';
 
 // Import routes
-import userRoutes from "./routes/users/user.routes.js";
-import adminRoutes from "./routes/users/admin.routes.js";
-import hospitalRoutes from "./routes/users/hospital.routes.js";
-import ngoRoutes from "./routes/users/ngo.routes.js";
+import userRoutes from './routes/users/user.routes.js';
+import adminRoutes from './routes/users/admin.routes.js';
+import hospitalRoutes from './routes/users/hospital.routes.js';
+import ngoRoutes from './routes/users/ngo.routes.js';
 
-import appointmentRoutes from "./routes/donation/appointment.routes.js";
-import bloodRequestRoutes from "./routes/donation/bloodRequest.routes.js";
-import organRequestRoutes from "./routes/donation/organRequest.routes.js";
-import plasmaRequestRoutes from "./routes/donation/plasmaRequest.routes.js";
+import appointmentRoutes from './routes/donation/appointment.routes.js';
+import bloodRequestRoutes from './routes/donation/bloodRequest.routes.js';
+import organRequestRoutes from './routes/donation/organRequest.routes.js';
+import plasmaRequestRoutes from './routes/donation/plasmaRequest.routes.js';
 
-import equipmentRoutes from "./routes/sharing/equipment.routes.js";
-import medicineRoutes from "./routes/sharing/medicine.routes.js";
+import equipmentRoutes from './routes/sharing/equipment.routes.js';
+import medicineRoutes from './routes/sharing/medicine.routes.js';
 
-import aiRoutes from "./routes/others/ai.routes.js";
-import mapRoutes from "./routes/others/map.routes.js";
-import notificationRoutes from "./routes/others/notification.routes.js";
+import aiRoutes from './routes/others/ai.routes.js';
+import mapRoutes from './routes/others/map.routes.js';
+import notificationRoutes from './routes/others/notification.routes.js';
 
-import { initRateLimiter } from "./middleware/rateLimit.middleware.js";
+import { initRateLimiter } from './middleware/rateLimit.middleware.js';
 await initRateLimiter(); // Initialize rate limiter if using Redis
 
 const app = express();
@@ -34,36 +34,36 @@ app.set('trust proxy', 1);
 // Middleware
 app.use(helmet()); // Security headers
 app.use(compression()); // Compress responses
-app.use(express.json({ limit: "10kb" })); // Body parser with size limit
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(express.json({ limit: '10kb' })); // Body parser with size limit
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 app.use(mongoSanitize()); // Prevent NoSQL injection
 
 // CORS configuration
 app.use(
-    cors({
-        origin: process.env.CORS_ORIGIN || "http://localhost:3000",
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-    })
+	cors({
+		origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+		credentials: true,
+		methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+		allowedHeaders: ['Content-Type', 'Authorization'],
+	}),
 );
 
 // Global rate limiter (use your custom middleware)
-import { rateLimiter } from "./middleware/rateLimit.middleware.js";
+import { rateLimiter } from './middleware/rateLimit.middleware.js';
 app.use(rateLimiter);
 
 // Health check route
-app.get("/health", (req, res) => {
-    res.status(200).json({
-        status: "healthy",
-        timestamp: new Date(),
-        uptime: process.uptime(),
-    });
+app.get('/health', (req, res) => {
+	res.status(200).json({
+		status: 'healthy',
+		timestamp: new Date(),
+		uptime: process.uptime(),
+	});
 });
 
 // API Routes
-const apiVersion = "/api/v1";
+const apiVersion = '/api/v1';
 
 // User management routes
 app.use(`${apiVersion}/users`, userRoutes);
@@ -90,25 +90,25 @@ app.use(`${apiVersion}/maps`, mapRoutes);
 app.use(`${apiVersion}/notifications`, notificationRoutes);
 
 // 404 Handler
-app.use("*", (req, res) => {
-    res.status(404).json({
-        success: false,
-        message: `Cannot ${req.method} ${req.originalUrl}`,
-    });
+app.use('*', (req, res) => {
+	res.status(404).json({
+		success: false,
+		message: `Cannot ${req.method} ${req.originalUrl}`,
+	});
 });
 
 // Global error handler
 app.use((err, req, res, next) => {
-    console.error("Global Error:", err);
+	console.error('Global Error:', err);
 
-    const statusCode = err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+	const statusCode = err.statusCode || 500;
+	const message = err.message || 'Internal Server Error';
 
-    res.status(statusCode).json({
-        success: false,
-        message,
-        ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-    });
+	res.status(statusCode).json({
+		success: false,
+		message,
+		...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+	});
 });
 
 export default app;

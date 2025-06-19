@@ -1,135 +1,116 @@
 import { Router } from 'express';
+import { uploadFields, handleMulterError } from '../../middleware/multer.middleware.js';
+import { validateRequest } from '../../middleware/validator.middleware.js';
+import { verifyJWT } from '../../middleware/auth.middleware.js';
 import {
-    uploadFields,
-    handleMulterError,
-} from "../../middleware/multer.middleware.js";
-import { validateRequest } from "../../middleware/validator.middleware.js";
-import { verifyJWT } from "../../middleware/auth.middleware.js";
-import {
-    registerNGO,
-    loginNGO,
-    logoutNGO,
-    changePassword,
-    getNGOProfile,
-    updateNGOProfile,
-    manageFacility,
-    handleBloodRequest,
-    updateBloodInventory,
-    getConnectedHospitals,
-    respondToConnectionRequest,
-    getNGOAnalytics,
-    resendVerificationOtp,
-} from "../../controllers/users/ngo.controller.js";
+	registerNGO,
+	loginNGO,
+	logoutNGO,
+	changePassword,
+	getNGOProfile,
+	updateNGOProfile,
+	manageFacility,
+	handleBloodRequest,
+	updateBloodInventory,
+	getConnectedHospitals,
+	respondToConnectionRequest,
+	getNGOAnalytics,
+	resendVerificationOtp,
+} from '../../controllers/users/ngo.controller.js';
 
 const router = Router();
 
 // File upload configurations
 const documentUpload = uploadFields([
-    { name: "logo", maxCount: 1 },
-    { name: "registrationCert", maxCount: 1 },
-    { name: "licenseCert", maxCount: 1 },
-    { name: "taxExemptionCert", maxCount: 1 },
+	{ name: 'logo', maxCount: 1 },
+	{ name: 'registrationCert', maxCount: 1 },
+	{ name: 'licenseCert', maxCount: 1 },
+	{ name: 'taxExemptionCert', maxCount: 1 },
 ]);
 
 // Auth Routes (Public)
 router.post(
-    "/register",
-    documentUpload,
-    handleMulterError,
-    validateRequest("ngo.register"),
-    registerNGO
+	'/register',
+	documentUpload,
+	handleMulterError,
+	validateRequest('ngo.register'),
+	registerNGO,
 );
 
-router.post(
-    "/login",
-    validateRequest("ngo.login"),
-    loginNGO
-);
+router.post('/login', validateRequest('ngo.login'), loginNGO);
 
-router.post(
-    "/resend-otp",
-    validateRequest("ngo.resendOTP"),
-    resendVerificationOtp
-);
+router.post('/resend-otp', validateRequest('ngo.resendOTP'), resendVerificationOtp);
 
 // Protected Routes (Require Authentication)
 router.use(verifyJWT);
 
 // Profile Management
-router.get("/logout", logoutNGO);
+router.get('/logout', logoutNGO);
 
 router
-    .route("/profile")
-    .get(getNGOProfile)
-    .patch(
-        documentUpload,
-        handleMulterError,
-        validateRequest("ngo.profileUpdate"),
-        updateNGOProfile
-    );
+	.route('/profile')
+	.get(getNGOProfile)
+	.patch(
+		documentUpload,
+		handleMulterError,
+		validateRequest('ngo.profileUpdate'),
+		updateNGOProfile,
+	);
 
-router.post(
-    "/change-password",
-    validateRequest("ngo.passwordChange"),
-    changePassword
-);
+router.post('/change-password', validateRequest('ngo.passwordChange'), changePassword);
 
 // Facility Management
 router
-    .route("/facilities")
-    .post(validateRequest("ngo.facilityCreate"), manageFacility)
-    .get(validateRequest("ngo.facilityList"), async (req, res) => {
-        req.params.action = "LIST";
-        await manageFacility(req, res);
-    });
+	.route('/facilities')
+	.post(validateRequest('ngo.facilityCreate'), manageFacility)
+	.get(validateRequest('ngo.facilityList'), async (req, res) => {
+		req.params.action = 'LIST';
+		await manageFacility(req, res);
+	});
 
 router
-    .route("/facilities/:facilityId")
-    .patch(validateRequest("ngo.facilityUpdate"), async (req, res) => {
-        req.params.action = "UPDATE";
-        await manageFacility(req, res);
-    })
-    .delete(async (req, res) => {
-        req.params.action = "DELETE";
-        await manageFacility(req, res);
-    });
+	.route('/facilities/:facilityId')
+	.patch(validateRequest('ngo.facilityUpdate'), async (req, res) => {
+		req.params.action = 'UPDATE';
+		await manageFacility(req, res);
+	})
+	.delete(async (req, res) => {
+		req.params.action = 'DELETE';
+		await manageFacility(req, res);
+	});
 
 // Blood Inventory Management
 router
-    .route("/inventory")
-    .post(validateRequest("ngo.inventoryUpdate"), updateBloodInventory)
-    .get(async (req, res) => {
-        req.params.action = "GET";
-        await updateBloodInventory(req, res);
-    });
+	.route('/inventory')
+	.post(validateRequest('ngo.inventoryUpdate'), updateBloodInventory)
+	.get(async (req, res) => {
+		req.params.action = 'GET';
+		await updateBloodInventory(req, res);
+	});
 
 // Hospital Connections
-router.get("/hospitals/connected", getConnectedHospitals);
+router.get('/hospitals/connected', getConnectedHospitals);
 router.post(
-    "/hospitals/respond",
-    validateRequest("ngo.connectionResponse"),
-    respondToConnectionRequest
+	'/hospitals/respond',
+	validateRequest('ngo.connectionResponse'),
+	respondToConnectionRequest,
 );
 
 // Blood Request Management
 router
-    .route("/blood-requests/:requestId")
-    .post(validateRequest("ngo.bloodRequestResponse"), handleBloodRequest);
+	.route('/blood-requests/:requestId')
+	.post(validateRequest('ngo.bloodRequestResponse'), handleBloodRequest);
 
 // Analytics
-router.get(
-    "/analytics",
-    validateRequest("ngo.analyticsQuery"),
-    getNGOAnalytics
-);
+router.get('/analytics', validateRequest('ngo.analyticsQuery'), getNGOAnalytics);
 
 // Health Check
-router.get("/health", (req, res) => {
-    res.status(200).json({
-        status: "healthy",
-        ngoId: req.ngo?._id,
-        timestamp: new Date(),
-    });
+router.get('/health', (req, res) => {
+	res.status(200).json({
+		status: 'healthy',
+		ngoId: req.ngo?._id,
+		timestamp: new Date(),
+	});
 });
 
 export default router;
