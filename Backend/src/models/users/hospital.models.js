@@ -20,7 +20,8 @@ const hospitalSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true,
-            minlength: [3, "Name must be at least 3 characters"]
+            minlength: [3, "Name must be at least 3 characters"],
+            maxlength: [100, "Name must be at most 100 characters"],
         },
         email: {
             type: String,
@@ -132,7 +133,8 @@ const hospitalSchema = new mongoose.Schema(
                 publicId: String,
                 uploadedAt: { type: Date, default: Date.now },
                 status: { type: String, enum: ["PENDING", "APPROVED", "REJECTED"], default: "PENDING" }
-            }
+            },
+
         },
         bloodRequirements: [{
             bloodGroup: { type: String, enum: BLOOD_GROUPS, required: true },
@@ -145,13 +147,6 @@ const hospitalSchema = new mongoose.Schema(
             available: { type: Number, default: 0, min: 0 },
             reserved: { type: Number, default: 0, min: 0 },
             lastUpdated: { type: Date, default: Date.now }
-        }],
-        connectedNGOs: [{
-            ngoId: { type: mongoose.Schema.Types.ObjectId, ref: "NGO" },
-            status: { type: String, enum: ["Pending", "Approved", "Rejected", "Blocked"], default: "Pending" },
-            connectedDate: { type: Date, default: Date.now },
-            lastTransactionDate: Date,
-            totalTransactions: { type: Number, default: 0 }
         }],
         statistics: {
             totalRequestsMade: { type: Number, default: 0 },
