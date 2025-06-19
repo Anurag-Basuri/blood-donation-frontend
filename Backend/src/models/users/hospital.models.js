@@ -244,25 +244,59 @@ const hospitalSchema = new mongoose.Schema({
         }
     },
 
-        bloodInventory: [{
-        bloodGroup: { type: String, enum: BLOOD_GROUPS },
-        available: { type: Number, default: 0, min: 0 },
-        reserved: { type: Number, default: 0, min: 0 },
-        lastUpdated: { type: Date, default: Date.now }
-        }],
+    bloodInventory: [{
+        bloodGroup: {
+            type: String,
+            enum: BLOOD_GROUPS
+        },
+        available: {
+            type: Number,
+            default: 0,
+            min: 0
+        },
+        reserved: {
+            type: Number,
+            default: 0,
+            min: 0
+        },
+        lastUpdated: {
+            type: Date,
+            default: Date.now
+        }
+    }],
 
         statistics: {
-        totalRequestsMade: { type: Number, default: 0 },
-        successfulRequests: { type: Number, default: 0 },
-        emergencyRequests: { type: Number, default: 0 },
-        lastRequestDate: Date
+        totalRequestsMade: {
+            type: Number,
+            default: 0
         },
+        successfulRequests: {
+            type: Number,
+            default: 0
+        },
+        emergencyRequests: {
+            type: Number,
+            default: 0
+        },
+        lastRequestDate: {
+            type: Date
+        }
+    },
 
-        settings: {
-        autoApproveRequests: { type: Boolean, default: false },
+    settings: {
+            autoApproveRequests: {
+                type: Boolean,
+                default: false
+            },
         preferredBloodGroups: [{ type: String, enum: BLOOD_GROUPS }],
-        notificationEnabled: { type: Boolean, default: true },
-        responseRadius: { type: Number, default: 50 }
+        notificationEnabled: {
+            type: Boolean,
+            default: true
+        },
+            responseRadius: {
+                type: Number,
+                default: 50
+            }
         }
     },
     {
