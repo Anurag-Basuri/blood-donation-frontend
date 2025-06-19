@@ -1,18 +1,9 @@
-import mongoose from "mongoose";
 import { NGO } from "../../models/users/ngo.models.js";
-import {
-    Facility,
-    FACILITY_TYPE,
-} from "../../models/donation/facility.models.js";
-import { BloodRequest } from "../../models/donation/bloodrequest.models.js";
 import { Activity } from "../../models/others/activity.model.js";
-import { Notification } from "../../models/others/notification.model.js";
-import { User } from "../../models/users/user.models.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { uploadFile, deleteFile } from "../../utils/fileUpload.js";
-import notificationService from "../../services/notification.service.js";
 import { generateEmailVerificationToken } from "../utils/generateEmailToken.js";
 import { sendMail } from "../utils/sendMail.js";
 
@@ -639,9 +630,13 @@ const verifyNGOEmail = asyncHandler(async (req, res) => {
 
     await ngo.save();
 
-    return res.status(200).json(
-        new ApiResponse(200, { emailVerified: true }, "Email verified successfully")
-    );
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200, { emailVerified: true }, "Email verified successfully"
+            )
+        );
 });
 
 export {
@@ -660,5 +655,7 @@ export {
     getCurrentNGO,
     getNGOProfile,
     searchNGOs,
-    getNGOAnalytics
+    getNGOAnalytics,
+    sendNGOVerificationEmail,
+    verifyNGOEmail
 };
