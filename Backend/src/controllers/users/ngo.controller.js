@@ -477,33 +477,63 @@ const getCurrentNGO = asyncHandler(async (req, res) => {
 
 // Search NGOs
 const searchNGOs = asyncHandler(async (req, res) => {
-    const { city, bloodGroup } = req.query;
+    const { city, bloodGroup, lat, lng, radius = 10, page = 1, limit = 10, sortBy = "relevance" } = req.query;
 
     const query = {};
 
+    // City-based search
     if (city) {
-        query["address.city"] = { $regex: city, $options: "i" }; // case-insensitive search
+        query["address.city"] = { $regex: city, $options: "i" };
     }
 
+    // Blood group availability
     if (bloodGroup) {
         query["bloodInventory"] = {
             $elemMatch: {
                 bloodGroup,
-                units: { $gt: 0 } // only NGOs with stock
-            }
+                units: { $gt: 0 },
+            },
         };
     }
 
+    // Geo-radius based search
+    if (lat && lng) {
+        query["address.location"] = {
+            $near: {
+                $geometry: {
+                    type: "Point",
+                    coordinates: [parseFloat(lng), parseFloat(lat)],
+                },
+                $maxDistance: parseInt(radius) * 1000, // radius in meters
+            },
+        };
+    }
+
+    // Sorting
+    const sortOptions = {
+        relevance: null,
+        units: { "bloodInventory.units": -1 },
+        name: { name: 1 },
+    };
+
     const ngos = await NGO.find(query)
-        .select("name address logo bloodInventory facilities contactPerson")
-        .limit(20);
+        .select("name logo address bloodInventory contactPerson facilities")
+        .sort(sortOptions[sortBy] || null)
+        .skip((parseInt(page) - 1) * parseInt(limit))
+        .limit(parseInt(limit));
+
+    const total = await NGO.countDocuments(query);
 
     return res
         .status(200)
         .json(
-            new ApiResponse(
-                200, ngos, "NGOs matching your search criteria"
-            )
+            new ApiResponse(200, {
+                total,
+                count: ngos.length,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                ngos,
+            }, "NGOs matching your search criteria")
         );
 });
 
