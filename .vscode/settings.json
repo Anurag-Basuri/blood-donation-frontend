@@ -20,5 +20,7 @@
         "superadmin",
         "Telemedicine",
         "virtuals"
-    ]
+    ],
+    "files.autoSave": "afterDelay",
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
 }
