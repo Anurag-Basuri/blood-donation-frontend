@@ -475,31 +475,6 @@ const getCurrentNGO = asyncHandler(async (req, res) => {
         );
 });
 
-// Blood Request Management
-const handleBloodRequest = asyncHandler(async (req, res) => {
-    const { requestId } = req.params;
-    const { action, notes, assignedDonors } = req.body;
-    const ngoId = req.ngo._id;
-
-    const request = await BloodRequest.findOne({ _id: requestId }).populate(
-        "hospitalId",
-        "name address contactInfo"
-    );
-    if (!request) throw new ApiError(404, "Blood request not found");
-
-    await request.updateStatus(action, ngoId, notes);
-
-    // Handle different actions
-    if (action === "ACCEPTED" && assignedDonors) {
-        // Assign donors logic here if needed
-    }
-    // Add logic for COMPLETED, REJECTED, etc. as needed
-
-    return res
-        .status(200)
-        .json(new ApiResponse(200, request, "Request handled successfully"));
-});
-
 // Analytics & Reports
 const getNGOAnalytics = asyncHandler(async (req, res) => {
     // Implement analytics logic here
