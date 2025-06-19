@@ -622,22 +622,22 @@ const sendNGOVerificationEmail = asyncHandler(async (req, res) => {
 });
 
 // Verify Email Controller
-const verifyEmail = asyncHandler(async (req, res) => {
+const verifyNGOEmail = asyncHandler(async (req, res) => {
     const { token } = req.query;
 
     if (!token) throw new ApiError(400, "Verification token missing");
 
-    const user = await User.findOne({
-        emailVerificationOTP: token,
-        emailVerificationOTPExpiry: { $gt: Date.now() },
+    const ngo = await NGO.findOne({
+        "verificationOTP.code": token,
+        "verificationOTP.expiresAt": { $gt: Date.now() },
     });
 
-    if (!user) throw new ApiError(400, "Invalid or expired token");
+    if (!ngo) throw new ApiError(400, "Invalid or expired token");
 
-    user.isEmailVerified = true;
-    user.emailVerificationOTP = undefined;
-    user.emailVerificationOTPExpiry = undefined;
-    await user.save();
+    ngo.isVerified = true;
+    ngo.verificationOTP = undefined;
+
+    await ngo.save();
 
     return res.status(200).json(
         new ApiResponse(200, { emailVerified: true }, "Email verified successfully")
