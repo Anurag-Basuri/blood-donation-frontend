@@ -158,14 +158,7 @@ const hospitalSchema = new mongoose.Schema(
                 uploadedAt: { type: Date, default: Date.now },
                 status: { type: String, enum: ["PENDING", "APPROVED", "REJECTED"], default: "PENDING" }
             },
-
         },
-        bloodRequirements: [{
-            bloodGroup: { type: String, enum: BLOOD_GROUPS, required: true },
-            unitsNeeded: { type: Number, min: 1, required: true },
-            urgencyLevel: { type: String, enum: URGENCY_LEVELS, default: "Regular" },
-            requiredBy: { type: Date, required: true }
-        }],
         bloodInventory: [{
             bloodGroup: { type: String, enum: BLOOD_GROUPS },
             available: { type: Number, default: 0, min: 0 },
