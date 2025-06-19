@@ -475,6 +475,38 @@ const getCurrentNGO = asyncHandler(async (req, res) => {
         );
 });
 
+// Search NGOs
+const searchNGOs = asyncHandler(async (req, res) => {
+    const { city, bloodGroup } = req.query;
+
+    const query = {};
+
+    if (city) {
+        query["address.city"] = { $regex: city, $options: "i" }; // case-insensitive search
+    }
+
+    if (bloodGroup) {
+        query["bloodInventory"] = {
+            $elemMatch: {
+                bloodGroup,
+                units: { $gt: 0 } // only NGOs with stock
+            }
+        };
+    }
+
+    const ngos = await NGO.find(query)
+        .select("name address logo bloodInventory facilities contactPerson")
+        .limit(20);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200, ngos, "NGOs matching your search criteria"
+            )
+        );
+});
+
 // Analytics & Reports
 const getNGOAnalytics = asyncHandler(async (req, res) => {
     // Implement analytics logic here
@@ -498,6 +530,6 @@ export {
     updateSettings,
     getCurrentNGO,
     getNGOProfile,
-    handleBloodRequest,
+    searchNGOs,
     getNGOAnalytics
 };
