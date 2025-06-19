@@ -146,36 +146,73 @@ const hospitalSchema = new mongoose.Schema(
             }
         },
         documents: {
-            licenseCertificate: {
-                url: String,
-                publicId: String,
-                uploadedAt: { type: Date, default: Date.now },
-                status: { type: String, enum: ["PENDING", "APPROVED", "REJECTED"], default: "PENDING" }
-            },
-            hospitalRegistration: {
-                url: String,
-                publicId: String,
-                uploadedAt: { type: Date, default: Date.now },
-                status: { type: String, enum: ["PENDING", "APPROVED", "REJECTED"], default: "PENDING" }
-            },
+            registrationCertificate: { url, publicId, uploadedAt },
+            tradeLicense: { url, publicId, uploadedAt },
+            panCard: { url, publicId, uploadedAt },
+            gstCertificate: { url, publicId, uploadedAt },
+            fireSafetyCertificate: { url, publicId, uploadedAt },
+            bioWasteCertificate: { url, publicId, uploadedAt },
+            drugLicense: { url, publicId, uploadedAt },
+            bloodBankLicense: { url, publicId, uploadedAt },
+            radiologyLicense: { url, publicId, uploadedAt },
+            ambulanceRegistration: { url, publicId, uploadedAt },
+            accreditationCertificate: { url, publicId, uploadedAt }, // NABH/NABL
+            identityProof: { url, publicId, uploadedAt },
         },
         bloodInventory: [{
-            bloodGroup: { type: String, enum: BLOOD_GROUPS },
-            available: { type: Number, default: 0, min: 0 },
-            reserved: { type: Number, default: 0, min: 0 },
-            lastUpdated: { type: Date, default: Date.now }
+            bloodGroup: {
+                type: String,
+                enum: BLOOD_GROUPS
+            },
+            available: {
+                type: Number,
+                default: 0,
+                min: 0
+            },
+            reserved: {
+                type: Number,
+                default: 0,
+                min: 0
+            },
+            lastUpdated: {
+                type: Date,
+                default: Date.now
+            }
         }],
         statistics: {
-            totalRequestsMade: { type: Number, default: 0 },
-            successfulRequests: { type: Number, default: 0 },
-            emergencyRequests: { type: Number, default: 0 },
-            lastRequestDate: Date
+            totalRequestsMade: {
+                type: Number,
+                default: 0
+            },
+            successfulRequests: {
+                type: Number,
+                default: 0
+            },
+            emergencyRequests: {
+                type: Number,
+                default: 0
+            },
+            lastRequestDate: {
+                type: Date
+            }
         },
         settings: {
-            autoApproveRequests: { type: Boolean, default: false },
-            preferredBloodGroups: [{ type: String, enum: BLOOD_GROUPS }],
-            notificationEnabled: { type: Boolean, default: true },
-            responseRadius: { type: Number, default: 50 }
+            autoApproveRequests: {
+                type: Boolean,
+                default: false
+            },
+            preferredBloodGroups: [{
+                type: String,
+                enum: BLOOD_GROUPS
+            }],
+            notificationEnabled: {
+                type: Boolean,
+                default: true
+            },
+            responseRadius: {
+                type: Number,
+                default: 50
+            }
         }
     },
     {
