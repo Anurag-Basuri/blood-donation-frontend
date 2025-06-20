@@ -11,15 +11,16 @@
     "diffEditor.experimental.useTrueInlineView": true,
     "totvsLanguageServer.welcomePage": false,
     "cSpell.words": [
-        "aadhaar",
-        "bloodrequest",
-        "dsphere",
-        "maxlength",
-        "msword",
-        "NGOs",
-        "superadmin",
-        "Telemedicine",
-        "virtuals"
+      "aadhaar",
+      "bloodrequest",
+      "dsphere",
+      "Geospatial",
+      "maxlength",
+      "msword",
+      "NGOs",
+      "superadmin",
+      "Telemedicine",
+      "virtuals"
     ],
     "files.autoSave": "afterDelay",
     "editor.defaultFormatter": "esbenp.prettier-vscode"

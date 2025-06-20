@@ -330,7 +330,7 @@ const searchHospitals = asyncHandler(async (req, res) => {
 
 	const hospitals = await Hospital.find(query)
 		.select('name logo address bloodInventory contactPerson specialties statistics isVerified')
-		.sort(sortOptions[sortBy] || {})
+		.sort(sortOptions[sortBy] || { createdAt: -1 })
 		.skip(skip)
 		.limit(parsedLimit);
 
