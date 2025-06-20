@@ -27,7 +27,6 @@ const adminSchema = new mongoose.Schema(
 		},
 		role: {
 			type: String,
-			enum: ['admin'],
 			default: 'admin',
 		},
 		permissions: [
@@ -51,15 +50,19 @@ const adminSchema = new mongoose.Schema(
 			type: Boolean,
 			default: true,
 		},
+		tokenVersion: {
+			type: Number,
+			default: 0,
+		},
 	},
 	{
 		timestamps: true,
-	},
+	}
 );
 
 // Hash password before saving
 adminSchema.pre('save', async function (next) {
-	if (!this.isModified('password')) return next();
+	if (!this.isModified('password') || typeof this.password !== 'string') return next();
 	this.password = await bcrypt.hash(this.password, 12);
 	next();
 });
@@ -80,15 +83,22 @@ adminSchema.methods = {
 				_id: this._id,
 				role: this.role,
 				email: this.email,
+				fullName: this.fullName,
 				permissions: this.permissions,
+				tokenVersion: this.tokenVersion,
 			},
 			process.env.ACCESS_TOKEN_SECRET,
-			{ expiresIn: process.env.ACCESS_TOKEN_EXPIRY },
+			{ expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
 		);
 	},
 
 	hasPermission: function (permission) {
 		return this.role === 'superadmin' || this.permissions.includes(permission);
+	},
+
+	toSafeObject: function () {
+		const { _id, fullName, email, role, permissions, isActive } = this;
+		return { _id, fullName, email, role, permissions, isActive };
 	},
 };
 
