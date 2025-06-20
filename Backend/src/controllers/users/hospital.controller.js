@@ -320,6 +320,19 @@ const verifyHospitalEmail = asyncHandler(async (req, res) => {
 		);
 });
 
+// Get all hospitals
+const getAllHospitals = asyncHandler(async (req, res) => {
+	const hospitals = await Hospital.find().select('-password -refreshToken');
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200, hospitals, 'Hospitals fetched successfully'
+			)
+		);
+});
+
 export {
 	registerHospital,
 	loginHospital,
@@ -327,8 +340,10 @@ export {
 	changePassword,
 	uploadDocument,
 	getCurrentHospital,
+	getHospitalProfile,
 	updateHospitalProfile,
 	uploadLogo,
 	sendHospitalVerificationEmail,
 	verifyHospitalEmail,
+	getAllHospitals
 };
