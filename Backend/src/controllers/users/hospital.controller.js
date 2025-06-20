@@ -19,15 +19,24 @@ const generateTokens = async hospitalId => {
 };
 
 const registerHospital = asyncHandler(async (req, res) => {
-	const { name, email, password, address, contactPerson, emergencyContact, specialties } =
-		req.body;
+	const {
+		name,
+		email,
+		password,
+		address,
+		contactPerson,
+		emergencyContact,
+		specialties,
+		registrationNumber
+	} = req.body;
 
-	if (!name || !email || !password || !address || !contactPerson || !emergencyContact) {
+	if (!name || !email || !password || !address || !contactPerson || !emergencyContact || !registrationNumber) {
 		throw new ApiError(400, 'Missing required fields');
 	}
 
 	const existingHospital = await Hospital.findOne({ email });
-	if (existingHospital) throw new ApiError(409, 'Email already registered');
+	if (existingHospital)
+		throw new ApiError(409, 'Email already registered');
 
 	const hospital = await Hospital.create({
 		name,
@@ -37,6 +46,7 @@ const registerHospital = asyncHandler(async (req, res) => {
 		contactPerson,
 		emergencyContact,
 		specialties,
+		registrationNumber
 	});
 
 	return res
