@@ -274,6 +274,83 @@ const uploadLogo = asyncHandler(async (req, res) => {
 		);
 });
 
+// Search Hospitals
+const searchHospitals = asyncHandler(async (req, res) => {
+	const {
+		city,
+		lat,
+		lng,
+		bloodGroup,
+		radius = 10,
+		page = 1,
+		limit = 10,
+		sortBy = 'relevance',
+	} = req.query;
+
+	const query = {};
+
+	// City-based filter
+	if (city) {
+		query['address.city'] = { $regex: city, $options: 'i' };
+	}
+
+	// Blood group filter
+	if (bloodGroup) {
+		query['bloodInventory'] = {
+			$elemMatch: {
+				bloodGroup,
+				available: { $gt: 0 },
+			},
+		};
+	}
+
+	// Geospatial filter
+	if (lat && lng) {
+		query['address.location'] = {
+			$near: {
+				$geometry: {
+					type: 'Point',
+					coordinates: [parseFloat(lng), parseFloat(lat)],
+				},
+				$maxDistance: parseFloat(radius) * 1000, // Convert km to meters
+			},
+		};
+	}
+
+	// Sorting options
+	const sortOptions = {
+		relevance: null,
+		units: { 'bloodInventory.available': -1 },
+		name: { name: 1 },
+	};
+
+	const parsedPage = parseInt(page);
+	const parsedLimit = parseInt(limit);
+	const skip = (parsedPage - 1) * parsedLimit;
+
+	const hospitals = await Hospital.find(query)
+		.select('name logo address bloodInventory contactPerson specialties statistics isVerified')
+		.sort(sortOptions[sortBy] || {})
+		.skip(skip)
+		.limit(parsedLimit);
+
+	const total = await Hospital.countDocuments(query);
+
+	return res.status(200).json(
+		new ApiResponse(
+			200,
+			{
+				total,
+				count: hospitals.length,
+				page: parsedPage,
+				limit: parsedLimit,
+				hospitals,
+			},
+			'Hospitals matching your search criteria',
+		),
+	);
+});
+
 // Send hospital verification email
 const sendHospitalVerificationEmail = asyncHandler(async (req, res) => {
 	const hospital = await Hospital.findById(req.hospital._id);
