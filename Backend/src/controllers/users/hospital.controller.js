@@ -125,6 +125,74 @@ const changePassword = asyncHandler(async (req, res) => {
 		);
 });
 
+// Upload documents
+const uploadDocument = asyncHandler(async (req, res) => {
+	const { documentType } = req.params;
+	const hospitalId = req.user._id;
+
+	const allowedTypes = [
+		'registrationCertificate',
+		'tradeLicense',
+		'panCard',
+		'gstCertificate',
+		'fireSafety',
+		'bioWaste',
+		'drugLicense',
+		'bloodBankLicense',
+		'radiologyLicense',
+		'ambulanceRegistration',
+		'accreditation',
+		'identityProof',
+	];
+
+	if (!allowedTypes.includes(documentType)) {
+		throw new ApiError(400, 'Invalid document type');
+	}
+
+	const hospital = await Hospital.findById(hospitalId);
+	if (!hospital) throw new ApiError(404, 'Hospital not found');
+
+	const currentDoc = hospital.documents?.[documentType];
+
+	// Prevent re-upload unless REJECTED or not uploaded yet
+	if (currentDoc?.url && currentDoc.status !== 'REJECTED') {
+		throw new ApiError(403, `Cannot re-upload ${documentType}. It is not rejected.`);
+	}
+
+	const file = req.files?.document?.[0];
+	if (!file) {
+		throw new ApiError(400, 'Document file is required');
+	}
+
+	// Delete old document from Cloudinary if exists
+	if (currentDoc?.publicId) {
+		try {
+			await deleteFile(currentDoc.publicId);
+		} catch (err) {
+			console.error('Failed to delete old document:', err.message);
+		}
+	}
+
+	// Upload new document
+	const uploadedDoc = await uploadFile({ file, folder: `hospital-documents` });
+
+	hospital.documents[documentType] = {
+		...uploadedDoc,
+		uploadedAt: new Date(),
+		status: 'PENDING',
+	};
+
+	await hospital.save();
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200, hospital.documents[documentType],
+				`${documentType} uploaded successfully`
+			)
+		);
+});
+
 const getCurrentHospital = asyncHandler(async (req, res) => {
 	const hospital = await Hospital.findById(req.hospital._id).select('-password -refreshToken');
 	if (!hospital) throw new ApiError(404, 'Hospital not found');
@@ -230,6 +298,7 @@ export {
 	registerHospital,
 	loginHospital,
 	logoutHospital,
+	changePassword,
 	getCurrentHospital,
 	updateHospitalProfile,
 	uploadLogo,
