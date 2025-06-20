@@ -420,7 +420,26 @@ const getHospitalAnalytics = asyncHandler(async (req, res) => {
 		);
 });
 
+// Update settings for hospital
+const updateHospitalSettings = asyncHandler(async (req, res) => {
+	const { isPublic, allowBloodRequests } = req.body;
+	const hospital = await Hospital.findById(req.hospital._id);
+	if (!hospital) throw new ApiError(404, 'Hospital not found');
 
+	hospital.isPublic = isPublic !== undefined ? isPublic : hospital.isPublic;
+	hospital.allowBloodRequests = allowBloodRequests !== undefined ? allowBloodRequests : hospital.allowBloodRequests;
+
+	await hospital.save();
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200, hospital,
+				'Hospital settings updated successfully'
+			)
+		);
+});
 
 // Send hospital verification email
 const sendHospitalVerificationEmail = asyncHandler(async (req, res) => {
@@ -495,6 +514,7 @@ export {
 	updateBloodInventory,
 	updateStatistics,
 	getHospitalAnalytics,
+	updateHospitalSettings,
 	sendHospitalVerificationEmail,
 	verifyHospitalEmail,
 	getAllHospitals
