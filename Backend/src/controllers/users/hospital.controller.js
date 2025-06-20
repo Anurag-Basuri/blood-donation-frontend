@@ -405,6 +405,23 @@ const updateStatistics = asyncHandler(async (req, res) => {
 		);
 });
 
+// Get Hospital Analytics
+const getHospitalAnalytics = asyncHandler(async (req, res) => {
+	const hospital = await Hospital.findById(req.hospital._id).select('statistics');
+	if (!hospital) throw new ApiError(404, 'Hospital not found');
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200, hospital.statistics,
+				'Hospital analytics fetched successfully'
+			)
+		);
+});
+
+
+
 // Send hospital verification email
 const sendHospitalVerificationEmail = asyncHandler(async (req, res) => {
 	const hospital = await Hospital.findById(req.hospital._id);
@@ -477,6 +494,7 @@ export {
 	searchHospitals,
 	updateBloodInventory,
 	updateStatistics,
+	getHospitalAnalytics,
 	sendHospitalVerificationEmail,
 	verifyHospitalEmail,
 	getAllHospitals
