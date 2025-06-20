@@ -62,7 +62,15 @@ const loginHospital = asyncHandler(async (req, res) => {
 
 	const tokens = await generateTokens(hospital._id);
 
-	return res.status(200).json(new ApiResponse(200, { hospital, ...tokens }, 'Login successful'));
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				{ hospital, ...tokens },
+				'Login successful'
+			)
+		);
 });
 
 const logoutHospital = asyncHandler(async (req, res) => {
@@ -71,13 +79,26 @@ const logoutHospital = asyncHandler(async (req, res) => {
 
 	hospital.refreshToken = null;
 	await hospital.save({ validateBeforeSave: false });
-	return res.status(200).json(new ApiResponse(200, {}, 'Logout successful'));
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(200, {}, 'Logout successful')
+		);
 });
 
 const getCurrentHospital = asyncHandler(async (req, res) => {
 	const hospital = await Hospital.findById(req.hospital._id).select('-password -refreshToken');
 	if (!hospital) throw new ApiError(404, 'Hospital not found');
-	return res.status(200).json(new ApiResponse(200, hospital, 'Hospital profile fetched'));
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				hospital,
+				'Hospital profile fetched'
+			)
+		);
 });
 
 const updateHospitalProfile = asyncHandler(async (req, res) => {
@@ -86,7 +107,16 @@ const updateHospitalProfile = asyncHandler(async (req, res) => {
 
 	Object.assign(hospital, req.body);
 	await hospital.save();
-	return res.status(200).json(new ApiResponse(200, hospital, 'Profile updated'));
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				hospital,
+				'Profile updated'
+			)
+		);
 });
 
 const uploadLogo = asyncHandler(async (req, res) => {
