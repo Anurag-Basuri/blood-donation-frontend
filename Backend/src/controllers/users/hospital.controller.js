@@ -18,6 +18,7 @@ const generateTokens = async hospitalId => {
 	return { accessToken, refreshToken };
 };
 
+// Register a new hospital
 const registerHospital = asyncHandler(async (req, res) => {
 	const {
 		name,
@@ -60,9 +61,11 @@ const registerHospital = asyncHandler(async (req, res) => {
 		);
 });
 
+// Login a hospital
 const loginHospital = asyncHandler(async (req, res) => {
 	const { email, password } = req.body;
-	if (!email || !password) throw new ApiError(400, 'Email and password required');
+	if (!email || !password)
+		throw new ApiError(400, 'Email and password required');
 
 	const hospital = await Hospital.findOne({ email }).select('+password');
 	if (!hospital) throw new ApiError(404, 'Hospital not found');
@@ -83,6 +86,7 @@ const loginHospital = asyncHandler(async (req, res) => {
 		);
 });
 
+// Logout a hospital
 const logoutHospital = asyncHandler(async (req, res) => {
 	const hospital = await Hospital.findById(req.hospital._id);
 	if (!hospital) throw new ApiError(404, 'Hospital not found');
@@ -93,6 +97,31 @@ const logoutHospital = asyncHandler(async (req, res) => {
 		.status(200)
 		.json(
 			new ApiResponse(200, {}, 'Logout successful')
+		);
+});
+
+// Change Password
+const changePassword = asyncHandler(async (req, res) => {
+	const { oldPassword, newPassword } = req.body;
+	const hospitalId = req.hospital._id;
+
+	if (!oldPassword || !newPassword) throw new ApiError(400, 'Old and new passwords are required');
+
+	const hospital = await Hospital.findById(hospitalId);
+	if (!hospital) throw new ApiError(404, 'Hospital not found');
+
+	const isMatch = await hospital.comparePassword(oldPassword);
+	if (!isMatch) throw new ApiError(401, 'Old password is incorrect');
+
+	hospital.password = newPassword;
+	await hospital.save();
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200, {}, 'Password updated successfully'
+			)
 		);
 });
 
