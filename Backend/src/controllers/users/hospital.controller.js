@@ -1,4 +1,3 @@
-// NOTE: This controller assumes you already have middleware to attach `req.hospital` where needed
 import { Hospital } from '../../models/users/hospital.model.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiError } from '../../utils/ApiError.js';
@@ -8,7 +7,7 @@ import { generateEmailVerificationToken } from '../utils/generateEmailToken.js';
 import { sendMail } from '../utils/sendMail.js';
 
 // Generate access and refresh tokens
-const generateTokens = async (hospitalId) => {
+const generateTokens = async hospitalId => {
 	const hospital = await Hospital.findById(hospitalId);
 	const accessToken = hospital.generateAccessToken();
 	const refreshToken = hospital.generateRefreshToken();
@@ -20,7 +19,8 @@ const generateTokens = async (hospitalId) => {
 };
 
 const registerHospital = asyncHandler(async (req, res) => {
-	const { name, email, password, address, contactPerson, emergencyContact, specialties } = req.body;
+	const { name, email, password, address, contactPerson, emergencyContact, specialties } =
+		req.body;
 
 	if (!name || !email || !password || !address || !contactPerson || !emergencyContact) {
 		throw new ApiError(400, 'Missing required fields');
@@ -39,7 +39,15 @@ const registerHospital = asyncHandler(async (req, res) => {
 		specialties,
 	});
 
-	return res.status(201).json(new ApiResponse(201, { id: hospital._id }, 'Hospital registered'));
+	return res
+		.status(201)
+		.json(
+			new ApiResponse(
+				201,
+				{ id: hospital._id },
+				'Hospital registered'
+			)
+		);
 });
 
 const loginHospital = asyncHandler(async (req, res) => {
