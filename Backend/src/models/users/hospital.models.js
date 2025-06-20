@@ -356,19 +356,6 @@ hospitalSchema.methods = {
 		}
 		return this.save();
 	},
-
-	async requestBlood(bloodGroup, units, urgencyLevel = 'Regular') {
-		if (!BLOOD_GROUPS.includes(bloodGroup)) {
-			throw new ApiError(400, 'Invalid blood group');
-		}
-
-		this.statistics.totalRequestsMade += 1;
-		if (urgencyLevel === 'Emergency') {
-			this.statistics.emergencyRequests += 1;
-		}
-		this.statistics.lastRequestDate = new Date();
-		return this.save();
-	},
 };
 
 // Middleware: Password hashing
