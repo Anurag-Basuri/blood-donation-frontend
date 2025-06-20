@@ -351,6 +351,27 @@ const searchHospitals = asyncHandler(async (req, res) => {
 	);
 });
 
+// Blood Inventory Update
+const updateBloodInventory = asyncHandler(async (req, res) => {
+	const { bloodGroup, change } = req.body;
+	if (!bloodGroup || typeof change !== 'number') {
+		throw new ApiError(400, 'Blood group and change amount are required');
+	}
+
+	const hospital = await Hospital.findById(req.hospital._id);
+	if (!hospital) throw new ApiError(404, 'Hospital not found');
+
+	const updatedHospital = await hospital.updateBloodInventory(bloodGroup, change);
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200, updatedHospital.bloodInventory,
+				'Blood inventory updated successfully'
+			)
+		);
+});
+
 // Send hospital verification email
 const sendHospitalVerificationEmail = asyncHandler(async (req, res) => {
 	const hospital = await Hospital.findById(req.hospital._id);
@@ -420,6 +441,8 @@ export {
 	getHospitalProfile,
 	updateHospitalProfile,
 	uploadLogo,
+	searchHospitals,
+	updateBloodInventory,
 	sendHospitalVerificationEmail,
 	verifyHospitalEmail,
 	getAllHospitals
