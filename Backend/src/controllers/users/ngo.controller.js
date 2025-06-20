@@ -592,6 +592,41 @@ const verifyNGOEmail = asyncHandler(async (req, res) => {
 		.json(new ApiResponse(200, { emailVerified: true }, 'Email verified successfully'));
 });
 
+// Get All NGOs
+const getAllNGOs = asyncHandler(async (req, res) => {
+	// Parse pagination params with defaults
+	const page = parseInt(req.query.page, 10) || 1;
+	const limit = parseInt(req.query.limit, 10) || 10;
+	const skip = (page - 1) * limit;
+
+	// Optional: Add filters here if needed (e.g., status, city, etc.)
+	const filter = {};
+
+	// Get total count for pagination
+	const total = await NGO.countDocuments(filter);
+
+	// Fetch NGOs with pagination
+	const ngos = await NGO.find(filter)
+		.select('name email logo address contactPerson facilities status isVerified')
+		.skip(skip)
+		.limit(limit)
+		.sort({ createdAt: -1 });
+
+	return res.status(200).json(
+		new ApiResponse(
+			200,
+			{
+				total,
+				count: ngos.length,
+				page,
+				limit,
+				ngos,
+			},
+			'NGOs fetched successfully',
+		),
+	);
+});
+
 export {
 	registerNGO,
 	loginNGO,
@@ -611,4 +646,5 @@ export {
 	getNGOAnalytics,
 	sendNGOVerificationEmail,
 	verifyNGOEmail,
+	getAllNGOs,
 };
