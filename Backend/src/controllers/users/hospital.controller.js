@@ -193,6 +193,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
 		);
 });
 
+// Get current hospital profile
 const getCurrentHospital = asyncHandler(async (req, res) => {
 	const hospital = await Hospital.findById(req.hospital._id).select('-password -refreshToken');
 	if (!hospital) throw new ApiError(404, 'Hospital not found');
@@ -208,6 +209,28 @@ const getCurrentHospital = asyncHandler(async (req, res) => {
 		);
 });
 
+// Get hospital profile by ID
+const getHospitalProfile = asyncHandler(async (req, res) => {
+	const { id } = req.params;
+
+	const hospital = await Hospital.findById(id).select(
+		'name email logo address contactPerson specialties bloodInventory statistics emergencyContact isVerified adminApproved',
+	);
+
+	if (!hospital) {
+		throw new ApiError(404, 'Hospital not found');
+	}
+
+	return res
+		.status(200)
+		.json(new ApiResponse(
+			200,
+			hospital,
+			'Hospital profile fetched successfully'
+		));
+});
+
+// Update hospital profile
 const updateHospitalProfile = asyncHandler(async (req, res) => {
 	const hospital = await Hospital.findById(req.hospital._id);
 	if (!hospital) throw new ApiError(404, 'Hospital not found');
@@ -226,6 +249,7 @@ const updateHospitalProfile = asyncHandler(async (req, res) => {
 		);
 });
 
+// Upload hospital logo
 const uploadLogo = asyncHandler(async (req, res) => {
 	const file = req.files?.logo?.[0];
 	if (!file) throw new ApiError(400, 'Logo file is required');
@@ -250,6 +274,7 @@ const uploadLogo = asyncHandler(async (req, res) => {
 		);
 });
 
+// Send hospital verification email
 const sendHospitalVerificationEmail = asyncHandler(async (req, res) => {
 	const hospital = await Hospital.findById(req.hospital._id);
 	if (!hospital || hospital.isVerified) throw new ApiError(400, 'Already verified');
@@ -272,6 +297,7 @@ const sendHospitalVerificationEmail = asyncHandler(async (req, res) => {
 		);
 });
 
+// Verify hospital email
 const verifyHospitalEmail = asyncHandler(async (req, res) => {
 	const { token } = req.query;
 	const hospital = await Hospital.findOne({
@@ -299,6 +325,7 @@ export {
 	loginHospital,
 	logoutHospital,
 	changePassword,
+	uploadDocument,
 	getCurrentHospital,
 	updateHospitalProfile,
 	uploadLogo,
