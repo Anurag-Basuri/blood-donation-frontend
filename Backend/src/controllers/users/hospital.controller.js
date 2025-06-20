@@ -131,7 +131,16 @@ const uploadLogo = asyncHandler(async (req, res) => {
 
 	hospital.logo = uploaded;
 	await hospital.save();
-	return res.status(200).json(new ApiResponse(200, uploaded, 'Logo uploaded successfully'));
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				uploaded,
+				'Logo uploaded successfully'
+			)
+		);
 });
 
 const sendHospitalVerificationEmail = asyncHandler(async (req, res) => {
@@ -147,7 +156,13 @@ const sendHospitalVerificationEmail = asyncHandler(async (req, res) => {
 	const html = `<h2>Verify your hospital email</h2><a href="${verificationURL}">Click to verify</a>`;
 	await sendMail({ to: hospital.email, subject: 'Email Verification - BloodConnect 🩸', html });
 
-	return res.status(200).json(new ApiResponse(200, {}, 'Verification email sent'));
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200, {}, 'Verification email sent'
+			)
+		);
 });
 
 const verifyHospitalEmail = asyncHandler(async (req, res) => {
@@ -162,7 +177,14 @@ const verifyHospitalEmail = asyncHandler(async (req, res) => {
 	hospital.isVerified = true;
 	hospital.verificationOTP = undefined;
 	await hospital.save();
-	return res.status(200).json(new ApiResponse(200, {}, 'Email verified successfully'));
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200, {}, 'Email verified successfully'
+			)
+		);
 });
 
 export {
