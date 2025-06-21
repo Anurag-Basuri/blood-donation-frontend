@@ -70,7 +70,7 @@ const createAppointment = asyncHandler(async (req, res) => {
 		details: { appointmentId: appointment._id, facility: facility.name, date },
 	});
 
-	res
+	return res
 		.status(201)
 		.json(
 			new ApiResponse(
@@ -106,14 +106,14 @@ const updateAppointment = asyncHandler(async (req, res) => {
 
 	await appointment.save();
 
-	res
+	return res
 		.status(200)
 		.json(
-			new ApiResponse
-				(
-					200,
-					{ appointment }, 'Appointment updated'
-				)
+			new ApiResponse(
+				200,
+				{ appointment },
+				'Appointment updated'
+			)
 		);
 });
 
@@ -146,7 +146,7 @@ const sendReminder = asyncHandler(async (req, res) => {
 		metadata: { directions, trafficInfo, weatherInfo },
 	});
 
-	res
+	return res
 		.status(200)
 		.json(
 			new ApiResponse(
@@ -159,7 +159,7 @@ const sendReminder = asyncHandler(async (req, res) => {
 const getMyAppointments = asyncHandler(async (req, res) => {
 	const appointments = await DonationAppointment.find({ userId: req.user._id }).sort({ date: -1 });
 
-	res
+	return res
 		.status(200)
 		.json(
 			new ApiResponse(
@@ -170,10 +170,29 @@ const getMyAppointments = asyncHandler(async (req, res) => {
 		);
 });
 
+// Fetch appointment details by ID
+const getAppointmentById = asyncHandler(async (req, res) => {
+    const appointment = await DonationAppointment.findById(req.params.id)
+        .populate('userId', 'fullName email')
+        .populate('centerId', 'name address');
+    if (!appointment) throw new ApiError(404, "Appointment not found");
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				{ appointment },
+				"Appointment details"
+			)
+		);
+});
+
 export {
 	createAppointment,
 	updateAppointment,
 	sendReminder,
 	APPOINTMENT_STATUS,
-	getMyAppointments
+	getMyAppointments,
+	getAppointmentById
 };
