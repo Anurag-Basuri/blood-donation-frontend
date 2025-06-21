@@ -69,7 +69,15 @@ const createAppointment = asyncHandler(async (req, res) => {
 		details: { appointmentId: appointment._id, facility: facility.name, date },
 	});
 
-	res.status(201).json(new ApiResponse(201, { appointment }, 'Appointment created'));
+	res
+		.status(201)
+		.json(
+			new ApiResponse(
+				201,
+				{ appointment },
+				'Appointment created'
+			)
+		);
 });
 
 const updateAppointment = asyncHandler(async (req, res) => {
@@ -95,7 +103,16 @@ const updateAppointment = asyncHandler(async (req, res) => {
 	}
 
 	await appointment.save();
-	res.status(200).json(new ApiResponse(200, { appointment }, 'Appointment updated'));
+
+	res
+		.status(200)
+		.json(
+			new ApiResponse
+				(
+					200,
+					{ appointment }, 'Appointment updated'
+				)
+		);
 });
 
 const sendReminder = asyncHandler(async (req, res) => {
@@ -126,7 +143,13 @@ const sendReminder = asyncHandler(async (req, res) => {
 		metadata: { directions, trafficInfo, weatherInfo },
 	});
 
-	res.status(200).json(new ApiResponse(200, {}, 'Reminder sent'));
+	res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200, {}, 'Reminder sent'
+			)
+		);
 });
 
 export { createAppointment, updateAppointment, sendReminder, APPOINTMENT_STATUS };
