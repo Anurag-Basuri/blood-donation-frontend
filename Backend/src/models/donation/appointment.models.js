@@ -1,11 +1,10 @@
 import mongoose from 'mongoose';
 import { ApiError } from '../../utils/ApiError.js';
 
-// Constants
 const TIME_SLOTS = {
-	MORNING: 'Morning', // 9:00 AM - 12:00 PM
-	AFTERNOON: 'Afternoon', // 1:00 PM - 4:00 PM
-	EVENING: 'Evening', // 5:00 PM - 8:00 PM
+	MORNING: 'Morning',
+	AFTERNOON: 'Afternoon',
+	EVENING: 'Evening',
 };
 
 const APPOINTMENT_STATUS = {
@@ -29,28 +28,26 @@ const appointmentSchema = new mongoose.Schema(
 		userId: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'User',
-			required: [true, 'User ID is required'],
+			required: true,
 			index: true,
 		},
 		centerId: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'Center',
-			required: [true, 'Center ID is required'],
+			required: true,
 		},
 		date: {
 			type: Date,
-			required: [true, 'Appointment date is required'],
+			required: true,
 			validate: {
-				validator: function (date) {
-					return date > new Date();
-				},
+				validator: date => date > new Date(),
 				message: 'Appointment date must be in the future',
 			},
 		},
 		timeSlot: {
 			type: String,
 			enum: Object.values(TIME_SLOTS),
-			required: [true, 'Time slot is required'],
+			required: true,
 		},
 		status: {
 			type: String,
@@ -60,34 +57,34 @@ const appointmentSchema = new mongoose.Schema(
 		healthInformation: {
 			hemoglobin: {
 				type: Number,
-				min: [12.5, 'Hemoglobin must be at least 12.5 g/dL'],
-				max: [20, 'Hemoglobin too high'],
+				min: 12.5,
+				max: 20,
 			},
 			bloodPressure: {
 				systolic: {
 					type: Number,
-					min: [90, 'Systolic BP too low'],
-					max: [180, 'Systolic BP too high'],
+					min: 90,
+					max: 180,
 				},
 				diastolic: {
 					type: Number,
-					min: [60, 'Diastolic BP too low'],
-					max: [100, 'Diastolic BP too high'],
+					min: 60,
+					max: 100,
 				},
 			},
 			weight: {
 				type: Number,
-				min: [50, 'Weight must be at least 50 kg'],
+				min: 50,
 			},
 			temperature: {
 				type: Number,
-				min: [35.5, 'Temperature too low'],
-				max: [37.5, 'Temperature too high'],
+				min: 35.5,
+				max: 37.5,
 			},
 			pulseRate: {
 				type: Number,
-				min: [60, 'Pulse rate too low'],
-				max: [100, 'Pulse rate too high'],
+				min: 60,
+				max: 100,
 			},
 			recordedAt: {
 				type: Date,
@@ -120,7 +117,7 @@ const appointmentSchema = new mongoose.Schema(
 		rescheduleCount: {
 			type: Number,
 			default: 0,
-			max: [3, 'Maximum reschedule limit reached'],
+			max: 3,
 		},
 		reminders: [
 			{
@@ -147,7 +144,7 @@ appointmentSchema.index({ date: 1, status: 1 });
 appointmentSchema.index({ centerId: 1, date: 1 });
 appointmentSchema.index({ userId: 1, date: -1 });
 
-// Methods
+// Instance Methods
 appointmentSchema.methods = {
 	async updateStatus(newStatus, userId, reason) {
 		if (!Object.values(APPOINTMENT_STATUS).includes(newStatus)) {
@@ -175,30 +172,28 @@ appointmentSchema.methods = {
 	},
 };
 
-// Statics
+// Static Methods
 appointmentSchema.statics = {
 	async findUpcoming(userId) {
 		return this.find({
 			userId,
 			date: { $gt: new Date() },
-			status: {
-				$in: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED],
-			},
+			status: { $in: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED] },
 		}).sort({ date: 1 });
 	},
 
 	async findSlotAvailability(centerId, date) {
-		const appointments = await this.aggregate([
+		const start = new Date(date);
+		start.setHours(0, 0, 0, 0);
+		const end = new Date(date);
+		end.setHours(23, 59, 59, 999);
+
+		return this.aggregate([
 			{
 				$match: {
 					centerId: mongoose.Types.ObjectId(centerId),
-					date: {
-						$gte: new Date(date).setHours(0, 0, 0),
-						$lt: new Date(date).setHours(23, 59, 59),
-					},
-					status: {
-						$in: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED],
-					},
+					date: { $gte: start, $lte: end },
+					status: { $in: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.CONFIRMED] },
 				},
 			},
 			{
@@ -208,12 +203,10 @@ appointmentSchema.statics = {
 				},
 			},
 		]);
-
-		return appointments;
 	},
 };
 
-// Pre-save middleware
+// Pre-save Hook
 appointmentSchema.pre('save', function (next) {
 	if (this.isNew) {
 		this.statusHistory = [
@@ -227,5 +220,5 @@ appointmentSchema.pre('save', function (next) {
 	next();
 });
 
-export const DonationAppointment = mongoose.model('DonationAppointment', appointmentSchema);
-export { TIME_SLOTS, APPOINTMENT_STATUS };
+const DonationAppointment = mongoose.model('DonationAppointment', appointmentSchema);
+export { DonationAppointment, TIME_SLOTS, APPOINTMENT_STATUS };
