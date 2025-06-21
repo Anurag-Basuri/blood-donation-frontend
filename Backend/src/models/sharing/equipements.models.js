@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { ApiError } from '../../utils/ApiError.js';
 
+// ENUMS
 const EQUIPMENT_TYPES = {
 	OXYGEN: 'Oxygen Cylinder',
 	WHEELCHAIR: 'Wheelchair',
@@ -21,18 +22,20 @@ const EQUIPMENT_STATUS = {
 	RETIRED: 'Retired',
 };
 
+// SCHEMA
 const equipmentSchema = new mongoose.Schema(
 	{
 		equipmentId: {
 			type: String,
 			unique: true,
+			required: true,
 			default: () => `EQ${Date.now()}`,
 		},
 
 		type: {
 			type: String,
 			enum: Object.values(EQUIPMENT_TYPES),
-			required: [true, 'Equipment type is required'],
+			required: true,
 		},
 
 		owner: {
@@ -85,15 +88,13 @@ const equipmentSchema = new mongoose.Schema(
 				type: [Number],
 				required: true,
 				validate: {
-					validator: function (coords) {
-						return (
-							coords.length === 2 &&
-							coords[0] >= -180 &&
-							coords[0] <= 180 &&
-							coords[1] >= -90 &&
-							coords[1] <= 90
-						);
-					},
+					validator: coords =>
+						Array.isArray(coords) &&
+						coords.length === 2 &&
+						coords[0] >= -180 &&
+						coords[0] <= 180 &&
+						coords[1] >= -90 &&
+						coords[1] <= 90,
 					message: 'Invalid coordinates',
 				},
 			},
@@ -168,42 +169,44 @@ const equipmentSchema = new mongoose.Schema(
 	},
 );
 
-// Indexes
+// INDEXES
 equipmentSchema.index({ location: '2dsphere' });
 equipmentSchema.index({ type: 1, 'status.current': 1 });
 equipmentSchema.index({ 'owner.entityId': 1, 'owner.entityType': 1 });
 
-// Methods
+// METHODS
 equipmentSchema.methods = {
-	async updateStatus(newStatus, notes) {
+	async updateStatus(newStatus, notes = '') {
 		if (!Object.values(EQUIPMENT_STATUS).includes(newStatus)) {
 			throw new ApiError(400, 'Invalid equipment status');
 		}
-
 		this.status.current = newStatus;
 		this.status.lastUpdated = new Date();
 		this.status.notes = notes;
-
 		return this.save();
 	},
 
-	async createBooking(borrowerId, borrowerType, startDate, endDate, purpose) {
+	async createBooking(borrowerId, borrowerType, startDate, endDate, purpose = '') {
 		if (this.currentBooking) {
 			throw new ApiError(400, 'Equipment already booked');
 		}
-
-		this.currentBooking = {
-			borrowerId,
-			borrowerType,
-			startDate,
-			endDate,
-			purpose,
-		};
-
+		this.currentBooking = { borrowerId, borrowerType, startDate, endDate, purpose };
 		this.status.current = EQUIPMENT_STATUS.RESERVED;
+		return this.save();
+	},
+
+	async endBooking() {
+		if (!this.currentBooking) {
+			throw new ApiError(400, 'No active booking to end');
+		}
+		this.usageHistory.push({ ...this.currentBooking });
+		this.currentBooking = undefined;
+		this.status.current = EQUIPMENT_STATUS.AVAILABLE;
+		this.status.lastUpdated = new Date();
 		return this.save();
 	},
 };
 
 const Equipment = mongoose.model('Equipment', equipmentSchema);
+
 export { Equipment, EQUIPMENT_TYPES, EQUIPMENT_STATUS };
