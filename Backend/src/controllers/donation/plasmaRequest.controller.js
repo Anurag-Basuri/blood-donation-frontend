@@ -1,6 +1,5 @@
 import { PlasmaRequest } from '../../models/donation/plasmarequest.models.js';
 import { Hospital } from '../../models/users/hospital.models.js';
-import { NGO } from '../../models/users/ngo.models.js';
 import { User } from '../../models/users/user.models.js';
 import { Activity } from '../../models/others/activity.model.js';
 import { Notification } from '../../models/others/notification.model.js';
@@ -21,9 +20,8 @@ const createPlasmaRequest = asyncHandler(async (req, res) => {
 		antibodyTiter,
 	} = req.body;
 
-	// Validate request
-	if (!bloodGroup || !units || !hospitalId) {
-		throw new ApiError(400, 'Missing required fields');
+	if (!bloodGroup || !units || !urgency || !requiredBy || !hospitalId || !patientInfo) {
+		throw new ApiError(400, 'Missing required plasma request fields');
 	}
 
 	const hospital = await Hospital.findById(hospitalId);
@@ -31,13 +29,12 @@ const createPlasmaRequest = asyncHandler(async (req, res) => {
 		throw new ApiError(404, 'Hospital not found');
 	}
 
-	// Find nearby NGOs
-	const nearbyNGOs = await hospital.findNearbyNGOs(20000); // 20km radius
+	const nearbyNGOs = await hospital.findNearbyNGOs(20000);
 	if (!nearbyNGOs?.length) {
-		throw new ApiError(404, 'No NGOs found in nearby area');
+		throw new ApiError(404, 'No NGOs found nearby');
 	}
 
-	const request = await PlasmaRequest.create({
+	const plasmaRequest = await PlasmaRequest.create({
 		hospitalId,
 		bloodGroup,
 		units,
@@ -49,25 +46,22 @@ const createPlasmaRequest = asyncHandler(async (req, res) => {
 		status: 'PENDING',
 	});
 
-	// Notify NGOs
 	await Promise.all(
 		nearbyNGOs.map(ngo =>
 			Notification.create({
-				type: 'URGENT_BLOOD_REQUEST',
+				type: 'URGENT_PLASMA_REQUEST',
 				recipient: ngo._id,
 				recipientModel: 'NGO',
 				data: {
-					requestId: request._id,
+					requestId: plasmaRequest._id,
 					bloodGroup,
 					hospital: hospital.name,
 					urgency,
-					isPlasma: true,
 				},
 			}),
 		),
 	);
 
-	// Log activity
 	await Activity.create({
 		type: 'PLASMA_REQUEST_CREATED',
 		performedBy: {
@@ -75,7 +69,7 @@ const createPlasmaRequest = asyncHandler(async (req, res) => {
 			userModel: req.user.role,
 		},
 		details: {
-			requestId: request._id,
+			requestId: plasmaRequest._id,
 			bloodGroup,
 			units,
 			urgency,
@@ -84,22 +78,25 @@ const createPlasmaRequest = asyncHandler(async (req, res) => {
 
 	return res
 		.status(201)
-		.json(new ApiResponse(201, request, 'Plasma request created successfully'));
+		.json(
+			new ApiResponse(
+				201,
+				plasmaRequest,
+				'Plasma request created successfully'
+			)
+		);
 });
 
-// Update Request Status
+// Update Status
 const updateRequestStatus = asyncHandler(async (req, res) => {
 	const { requestId } = req.params;
 	const { status, notes } = req.body;
 
 	const request = await PlasmaRequest.findById(requestId);
-	if (!request) {
-		throw new ApiError(404, 'Plasma request not found');
-	}
+	if (!request) throw new ApiError(404, 'Plasma request not found');
 
 	await request.updateStatus(status, req.user._id, notes);
 
-	// Notify hospital
 	await Notification.create({
 		type: 'REQUEST_STATUS_UPDATE',
 		recipient: request.hospitalId,
@@ -114,35 +111,46 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
 
 	return res
 		.status(200)
-		.json(new ApiResponse(200, request, 'Request status updated successfully'));
+		.json(
+			new ApiResponse(
+				200,
+				request,
+				'Request status updated successfully'
+			)
+		);
 });
 
 // Find Eligible Donors
 const findEligibleDonors = asyncHandler(async (req, res) => {
 	const { requestId } = req.params;
 
-	const request = await PlasmaRequest.findById(requestId);
-	if (!request) {
-		throw new ApiError(404, 'Request not found');
-	}
+	const request = await PlasmaRequest.findById(requestId).populate('hospitalId');
+	if (!request) throw new ApiError(404, 'Request not found');
 
-	// Find eligible donors based on criteria
 	const donors = await User.find({
 		bloodType: request.bloodGroup,
 		donorStatus: 'Active',
+		covidRecovered: true,
 		'address.location': {
 			$near: {
-				$geometry: request.hospital.location,
-				$maxDistance: 10000, // 10km radius
+				$geometry: request.hospitalId.location,
+				$maxDistance: 10000,
 			},
 		},
-		covidRecovered: true, // Only COVID recovered donors for plasma
 		lastDonationDate: {
-			$lt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days gap
+			$lt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
 		},
-	}).select('name bloodType lastDonationDate phone email covidRecoveryDate');
+	}).select('name bloodType phone email lastDonationDate covidRecoveryDate');
 
-	return res.status(200).json(new ApiResponse(200, donors, 'Eligible plasma donors found'));
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				donors,
+				'Eligible plasma donors found'
+			)
+		);
 });
 
 // Track Request
@@ -153,14 +161,12 @@ const trackRequest = asyncHandler(async (req, res) => {
 		.populate('hospitalId', 'name address')
 		.select('-patientInfo.confidential');
 
-	if (!request) {
-		throw new ApiError(404, 'Plasma request not found');
-	}
+	if (!request) throw new ApiError(404, 'Plasma request not found');
 
 	return res.status(200).json(new ApiResponse(200, request, 'Request details fetched'));
 });
 
-// Get Emergency Plasma Requests
+// Get Emergency Requests
 const getEmergencyRequests = asyncHandler(async (req, res) => {
 	const emergencyRequests = await PlasmaRequest.find({
 		urgency: 'Critical',
@@ -169,7 +175,13 @@ const getEmergencyRequests = asyncHandler(async (req, res) => {
 
 	return res
 		.status(200)
-		.json(new ApiResponse(200, emergencyRequests, 'Emergency plasma requests fetched'));
+		.json(
+			new ApiResponse(
+				200,
+				emergencyRequests,
+				'Emergency plasma requests fetched'
+			)
+		);
 });
 
 // Cancel Request
@@ -178,13 +190,10 @@ const cancelRequest = asyncHandler(async (req, res) => {
 	const { reason } = req.body;
 
 	const request = await PlasmaRequest.findById(requestId);
-	if (!request) {
-		throw new ApiError(404, 'Plasma request not found');
-	}
+	if (!request) throw new ApiError(404, 'Plasma request not found');
 
 	await request.updateStatus('CANCELLED', req.user._id, reason);
 
-	// Log activity
 	await Activity.create({
 		type: 'PLASMA_REQUEST_CANCELLED',
 		performedBy: {
@@ -199,7 +208,13 @@ const cancelRequest = asyncHandler(async (req, res) => {
 
 	return res
 		.status(200)
-		.json(new ApiResponse(200, request, 'Plasma request cancelled successfully'));
+		.json(
+			new ApiResponse(
+				200,
+				request,
+				'Plasma request cancelled successfully'
+			)
+		);
 });
 
 export {
