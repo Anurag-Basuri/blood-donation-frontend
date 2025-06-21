@@ -11,11 +11,7 @@ import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 
 // Admin Permission Levels with detailed access control
-const ADMIN_PERMISSIONS = {
-	SUPERADMIN: ['all'],
-	ADMIN: ['basic', 'verify', 'monitor', 'reports'],
-	MODERATOR: ['basic', 'monitor'],
-};
+const ADMIN_PERMISSIONS = [];
 
 // 🔐 Authentication Controllers
 class AuthController {
