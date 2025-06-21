@@ -1,13 +1,14 @@
 import mongoose from 'mongoose';
 import { ApiError } from '../../utils/ApiError.js';
+
+// Enums
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const URGENCY_LEVELS = {
-	EMERGENCY: 'Emergency', // Need within 2 hours
-	URGENT: 'Urgent', // Need within 24 hours
-	STANDARD: 'Standard', // Need within 72 hours
-	PLANNED: 'Planned', // Future scheduled need
+	EMERGENCY: 'Emergency',
+	URGENT: 'Urgent',
+	STANDARD: 'Standard',
+	PLANNED: 'Planned',
 };
-
 const STATUS_TYPES = {
 	PENDING: 'Pending',
 	ACCEPTED: 'Accepted',
@@ -25,21 +26,20 @@ const bloodRequestSchema = new mongoose.Schema(
 		requestId: {
 			type: String,
 			unique: true,
-			required: true,
 			default: () => `BR${Date.now()}`,
 		},
 
 		hospitalId: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'Hospital',
-			required: [true, 'Hospital ID is required'],
+			required: true,
 			index: true,
 		},
 
 		ngoId: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'NGO',
-			required: [true, 'NGO ID is required'],
+			required: true,
 			index: true,
 		},
 
@@ -47,17 +47,14 @@ const bloodRequestSchema = new mongoose.Schema(
 			{
 				bloodGroup: {
 					type: String,
-					enum: {
-						values: BLOOD_TYPES,
-						message: '{VALUE} is not a valid blood group',
-					},
+					enum: BLOOD_TYPES,
 					required: true,
 				},
 				units: {
 					type: Number,
 					required: true,
-					min: [1, 'Minimum 1 unit required'],
-					max: [50, 'Maximum 50 units allowed per request'],
+					min: 1,
+					max: 50,
 				},
 				fulfilledUnits: {
 					type: Number,
@@ -87,11 +84,9 @@ const bloodRequestSchema = new mongoose.Schema(
 
 		requiredBy: {
 			type: Date,
-			required: [true, 'Required date is mandatory'],
+			required: true,
 			validate: {
-				validator: function (date) {
-					return date > new Date();
-				},
+				validator: (date) => date > new Date(),
 				message: 'Required date must be in the future',
 			},
 		},
@@ -165,39 +160,17 @@ const bloodRequestSchema = new mongoose.Schema(
 				coordinates: {
 					type: [Number],
 					validate: {
-						validator: function (coords) {
-							return (
-								coords.length === 2 &&
-								coords[0] >= -180 &&
-								coords[0] <= 180 &&
-								coords[1] >= -90 &&
-								coords[1] <= 90
-							);
-						},
+						validator: (coords) =>
+							coords.length === 2 &&
+							coords[0] >= -180 &&
+							coords[0] <= 180 &&
+							coords[1] >= -90 &&
+							coords[1] <= 90,
 						message: 'Invalid coordinates',
 					},
 				},
 			},
 		},
-
-		documents: [
-			{
-				name: String,
-				fileUrl: String,
-				fileType: {
-					type: String,
-					enum: ['prescription', 'authorization', 'test_report', 'other'],
-				},
-				uploadedBy: {
-					type: mongoose.Schema.Types.ObjectId,
-					ref: 'User',
-				},
-				uploadedAt: {
-					type: Date,
-					default: Date.now,
-				},
-			},
-		],
 
 		priority: {
 			type: Number,
@@ -206,9 +179,7 @@ const bloodRequestSchema = new mongoose.Schema(
 			default: 3,
 		},
 	},
-	{
-		timestamps: true,
-	},
+	{ timestamps: true }
 );
 
 // Indexes
@@ -222,14 +193,12 @@ bloodRequestSchema.methods = {
 		if (!Object.values(STATUS_TYPES).includes(newStatus)) {
 			throw new ApiError(400, 'Invalid status');
 		}
-
 		this.status = newStatus;
 		this.statusHistory.push({
 			status: newStatus,
 			updatedBy: userId,
 			notes,
 		});
-
 		return this.save();
 	},
 
@@ -246,7 +215,7 @@ bloodRequestSchema.methods = {
 		return {
 			totalRequested,
 			totalFulfilled,
-			percentageFulfilled: (totalFulfilled / totalRequested) * 100,
+			percentageFulfilled: ((totalFulfilled / totalRequested) * 100).toFixed(2),
 		};
 	},
 };
@@ -255,9 +224,7 @@ bloodRequestSchema.methods = {
 bloodRequestSchema.statics = {
 	async findUrgentRequests() {
 		return this.find({
-			urgencyLevel: {
-				$in: [URGENCY_LEVELS.EMERGENCY, URGENCY_LEVELS.URGENT],
-			},
+			urgencyLevel: { $in: [URGENCY_LEVELS.EMERGENCY, URGENCY_LEVELS.URGENT] },
 			status: { $nin: [STATUS_TYPES.COMPLETED, STATUS_TYPES.CANCELLED] },
 		}).sort({ priority: -1, createdAt: 1 });
 	},
@@ -270,5 +237,10 @@ bloodRequestSchema.statics = {
 	},
 };
 
-export const BloodRequest = mongoose.model('BloodRequest', bloodRequestSchema);
-export { BLOOD_TYPES };
+const BloodRequest = mongoose.model('BloodRequest', bloodRequestSchema);
+export {
+	BloodRequest,
+	BLOOD_TYPES,
+	URGENCY_LEVELS,
+	STATUS_TYPES
+};
