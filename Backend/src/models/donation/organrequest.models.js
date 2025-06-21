@@ -12,6 +12,8 @@ const STATUS_TYPES = {
 	CANCELLED: 'Cancelled',
 };
 
+const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
 const organRequestSchema = new mongoose.Schema(
 	{
 		requestId: {
@@ -24,31 +26,31 @@ const organRequestSchema = new mongoose.Schema(
 		hospitalId: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'Hospital',
-			required: [true, 'Hospital ID is required'],
+			required: true,
 			index: true,
 		},
 
 		organType: {
 			type: String,
 			enum: ORGAN_TYPES,
-			required: [true, 'Organ type is required'],
+			required: true,
 		},
 
 		bloodGroup: {
 			type: String,
-			enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+			enum: BLOOD_TYPES,
 			required: true,
 		},
 
 		patientInfo: {
-			name: String,
-			age: Number,
+			name: { type: String },
+			age: { type: Number },
 			gender: {
 				type: String,
 				enum: ['Male', 'Female', 'Other'],
 			},
-			weight: Number,
-			height: Number,
+			weight: { type: Number },
+			height: { type: Number },
 			medicalHistory: [String],
 			diagnosisDetails: String,
 			urgencyScore: {
@@ -81,7 +83,10 @@ const organRequestSchema = new mongoose.Schema(
 
 		statusHistory: [
 			{
-				status: String,
+				status: {
+					type: String,
+					enum: Object.values(STATUS_TYPES),
+				},
 				updatedBy: {
 					type: mongoose.Schema.Types.ObjectId,
 					ref: 'User',
@@ -129,22 +134,21 @@ organRequestSchema.index({ status: 1, 'patientInfo.urgencyScore': -1 });
 organRequestSchema.index({ organType: 1, bloodGroup: 1, status: 1 });
 
 // Methods
-organRequestSchema.methods = {
-	async updateStatus(newStatus, userId, notes) {
-		if (!Object.values(STATUS_TYPES).includes(newStatus)) {
-			throw new ApiError(400, 'Invalid status');
-		}
+organRequestSchema.methods.updateStatus = async function (newStatus, userId, notes) {
+	if (!Object.values(STATUS_TYPES).includes(newStatus)) {
+		throw new ApiError(400, 'Invalid status');
+	}
 
-		this.status = newStatus;
-		this.statusHistory.push({
-			status: newStatus,
-			updatedBy: userId,
-			notes,
-		});
+	this.status = newStatus;
+	this.statusHistory.push({
+		status: newStatus,
+		updatedBy: userId,
+		notes,
+	});
 
-		return this.save();
-	},
+	return this.save();
 };
 
 const OrganRequest = mongoose.model('OrganRequest', organRequestSchema);
-export { OrganRequest };
+
+export { OrganRequest, ORGAN_TYPES, STATUS_TYPES, BLOOD_TYPES };
