@@ -15,7 +15,13 @@ const APPOINTMENT_STATUS = {
 };
 
 const createAppointment = asyncHandler(async (req, res) => {
-	const { facilityId, date, slotTime, bloodGroup, donationType } = req.body;
+	const {
+		facilityId,
+		date,
+		slotTime,
+		bloodGroup,
+		donationType
+	} = req.body;
 	const user = req.user;
 
 	if (!facilityId || !date || !slotTime || !bloodGroup || !donationType) {
