@@ -11,8 +11,12 @@ import { ApiResponse } from '../../utils/ApiResponse.js';
 const createBloodRequest = asyncHandler(async (req, res) => {
 	const {
 		bloodGroups,
-		urgencyLevel, requiredBy, patientInfo, hospitalId, requestNotes } =
-		req.body;
+		urgencyLevel,
+		requiredBy,
+		patientInfo,
+		hospitalId,
+		requestNotes,
+	} = req.body;
 
 	if (!bloodGroups?.length) {
 		throw new ApiError(400, 'Blood group details are required');
@@ -68,7 +72,13 @@ const createBloodRequest = asyncHandler(async (req, res) => {
 
 	return res
 		.status(201)
-		.json(new ApiResponse(201, requests, 'Blood requests created successfully'));
+		.json(
+			new ApiResponse(
+				201,
+				requests,
+				'Blood requests created successfully'
+			)
+		);
 });
 
 // Update Blood Request Status
@@ -90,7 +100,13 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
 
 	return res
 		.status(200)
-		.json(new ApiResponse(200, request, 'Request status updated successfully'));
+		.json(
+			new ApiResponse(
+				200,
+				request,
+				'Request status updated successfully'
+			)
+		);
 });
 
 // Find Nearby Eligible Donors
@@ -112,7 +128,15 @@ const findDonors = asyncHandler(async (req, res) => {
 		},
 	}).select('fullName bloodType lastDonationDate phone email');
 
-	return res.status(200).json(new ApiResponse(200, donors, 'Eligible donors found'));
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				donors,
+				'Eligible donors found'
+			)
+		);
 });
 
 // Get All Emergency Requests
@@ -122,7 +146,15 @@ const getEmergencyRequests = asyncHandler(async (req, res) => {
 		status: { $nin: ['Completed', 'Cancelled'] },
 	}).populate('hospitalId', 'name address');
 
-	return res.status(200).json(new ApiResponse(200, requests, 'Emergency requests fetched'));
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				requests,
+				'Emergency requests fetched'
+			)
+		);
 });
 
 // Track Blood Request
@@ -139,7 +171,13 @@ const trackRequest = asyncHandler(async (req, res) => {
 
 	return res
 		.status(200)
-		.json(new ApiResponse(200, { request, fulfillment }, 'Request details fetched'));
+		.json(
+			new ApiResponse(
+				200,
+				{ request, fulfillment },
+				'Request details fetched'
+			)
+		);
 });
 
 // Cancel Blood Request
@@ -167,7 +205,15 @@ const cancelRequest = asyncHandler(async (req, res) => {
 		}),
 	]);
 
-	return res.status(200).json(new ApiResponse(200, request, 'Request cancelled successfully'));
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				request,
+				'Request cancelled successfully'
+			)
+		);
 });
 
 export {
