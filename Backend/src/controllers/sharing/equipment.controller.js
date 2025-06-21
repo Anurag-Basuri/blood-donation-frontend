@@ -6,20 +6,21 @@ import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 
 const EQUIPMENT_STATUS = {
-	AVAILABLE: 'AVAILABLE',
-	IN_USE: 'IN_USE',
-	MAINTENANCE: 'MAINTENANCE',
-	DISPOSED: 'DISPOSED',
-	RESERVED: 'RESERVED',
+	AVAILABLE: 'Available',
+	IN_USE: 'In Use',
+	MAINTENANCE: 'Under Maintenance',
+	RESERVED: 'Reserved',
+	DISPOSED: 'Retired',
 };
 
+// 📍 List Equipment with filtering and pagination
 const listEquipment = asyncHandler(async (req, res) => {
 	const {
 		type,
 		location,
 		radius = 10,
 		condition,
-		sortBy = 'distance',
+		sortBy = 'recentlyAdded',
 		page = 1,
 		limit = 10,
 		availability = true,
@@ -28,19 +29,19 @@ const listEquipment = asyncHandler(async (req, res) => {
 	const query = {
 		...(type && { type }),
 		...(condition && { 'details.condition': condition }),
-		'status.current': availability
-			? EQUIPMENT_STATUS.AVAILABLE
-			: { $ne: EQUIPMENT_STATUS.DISPOSED },
+		...(availability
+			? { 'status.current': EQUIPMENT_STATUS.AVAILABLE }
+			: { 'status.current': { $ne: EQUIPMENT_STATUS.DISPOSED } }),
 	};
 
-	if (location) {
+	if (location?.longitude && location?.latitude) {
 		query.location = {
 			$near: {
 				$geometry: {
 					type: 'Point',
-					coordinates: [location.longitude, location.latitude],
+					coordinates: [parseFloat(location.longitude), parseFloat(location.latitude)],
 				},
-				$maxDistance: radius * 1000, // Convert km to meters
+				$maxDistance: parseFloat(radius) * 1000, // in meters
 			},
 		};
 	}
@@ -51,36 +52,32 @@ const listEquipment = asyncHandler(async (req, res) => {
 		recentlyAdded: { createdAt: -1 },
 	};
 
-	const equipment = await Equipment.find(query)
+	const equipmentList = await Equipment.find(query)
 		.populate('owner.entityId', 'name contactInfo')
-		.sort(sortOptions[sortBy])
+		.sort(sortOptions[sortBy] || { createdAt: -1 })
 		.skip((page - 1) * limit)
-		.limit(limit)
+		.limit(parseInt(limit))
 		.lean();
 
 	const total = await Equipment.countDocuments(query);
 
 	return res.status(200).json(
-		new ApiResponse(
-			200,
-			{
-				equipment,
-				pagination: {
-					currentPage: page,
-					totalPages: Math.ceil(total / limit),
-					totalItems: total,
-				},
+		new ApiResponse(200, {
+			equipment: equipmentList,
+			pagination: {
+				currentPage: +page,
+				totalPages: Math.ceil(total / limit),
+				totalItems: total,
 			},
-			'Equipment list fetched',
-		),
+		}, 'Equipment list fetched')
 	);
 });
 
+// ➕ Add new Equipment
 const addEquipment = asyncHandler(async (req, res) => {
-	const { name, type, details, location, maintenance, availability } = req.body;
+	const { name, type, details, location, availability, currentBooking } = req.body;
 
-	// Validate required fields
-	if (!name || !type || !details?.condition) {
+	if (!name || !type || !details?.condition || !location?.coordinates) {
 		throw new ApiError(400, 'Missing required fields');
 	}
 
@@ -89,11 +86,12 @@ const addEquipment = asyncHandler(async (req, res) => {
 		type,
 		details,
 		location,
-		maintenance,
 		availability,
+		currentBooking,
 		owner: {
 			entityId: req.user._id,
 			entityType: req.user.role,
+			name: req.user.fullName,
 		},
 		status: {
 			current: EQUIPMENT_STATUS.AVAILABLE,
@@ -114,9 +112,18 @@ const addEquipment = asyncHandler(async (req, res) => {
 		},
 	});
 
-	return res.status(201).json(new ApiResponse(201, equipment, 'Equipment added successfully'));
+	return res
+		.status(201)
+		.json(
+			new ApiResponse(
+				201,
+				equipment,
+				'Equipment added successfully'
+			)
+		);
 });
 
+// 🔁 Update Equipment Status
 const updateEquipmentStatus = asyncHandler(async (req, res) => {
 	const { equipmentId } = req.params;
 	const { status, notes, maintenanceDetails } = req.body;
@@ -127,29 +134,43 @@ const updateEquipmentStatus = asyncHandler(async (req, res) => {
 	}
 
 	if (!Object.values(EQUIPMENT_STATUS).includes(status)) {
-		throw new ApiError(400, 'Invalid status');
+		throw new ApiError(400, 'Invalid equipment status');
 	}
 
-	// Handle maintenance status
 	if (status === EQUIPMENT_STATUS.MAINTENANCE && maintenanceDetails) {
-		equipment.maintenance = {
-			...equipment.maintenance,
-			lastMaintenance: new Date(),
-			maintenanceHistory: [
-				...equipment.maintenance.maintenanceHistory,
-				{
-					...maintenanceDetails,
-					date: new Date(),
-				},
-			],
-		};
+		equipment.maintenanceHistory.push({
+			...maintenanceDetails,
+			date: new Date(),
+		});
 	}
 
 	await equipment.updateStatus(status, notes);
 
-	return res.status(200).json(new ApiResponse(200, equipment, 'Equipment status updated'));
+	await Activity.create({
+		type: 'EQUIPMENT_STATUS_UPDATED',
+		performedBy: {
+			userId: req.user._id,
+			userModel: req.user.role,
+		},
+		details: {
+			equipmentId,
+			newStatus: status,
+			notes,
+		},
+	});
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				equipment,
+				'Equipment status updated'
+			)
+		);
 });
 
+// 📆 Book Equipment
 const bookEquipment = asyncHandler(async (req, res) => {
 	const { equipmentId } = req.params;
 	const { startDate, endDate, purpose } = req.body;
@@ -165,7 +186,6 @@ const bookEquipment = asyncHandler(async (req, res) => {
 
 	await equipment.createBooking(req.user._id, req.user.role, startDate, endDate, purpose);
 
-	// Notify equipment owner
 	await notificationService.sendNotification('EQUIPMENT_BOOKED', equipment.owner.entityId, {
 		equipmentId: equipment._id,
 		equipmentName: equipment.name,
@@ -174,27 +194,55 @@ const bookEquipment = asyncHandler(async (req, res) => {
 		endDate,
 	});
 
-	return res.status(200).json(new ApiResponse(200, equipment, 'Equipment booked successfully'));
+	await Activity.create({
+		type: 'EQUIPMENT_BOOKED',
+		performedBy: {
+			userId: req.user._id,
+			userModel: req.user.role,
+		},
+		details: {
+			equipmentId,
+			startDate,
+			endDate,
+			purpose,
+		},
+	});
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				equipment,
+				'Equipment booked successfully'
+			)
+		);
 });
 
+// 📚 Get Equipment History
 const getEquipmentHistory = asyncHandler(async (req, res) => {
 	const { equipmentId } = req.params;
 
-	const equipment = await Equipment.findById(equipmentId)
-		.select('+maintenance.maintenanceHistory +availability.usageHistory')
-		.populate('availability.usageHistory.userId', 'name');
-
+	const equipment = await Equipment.findById(equipmentId);
 	if (!equipment) {
 		throw new ApiError(404, 'Equipment not found');
 	}
 
 	const history = {
-		maintenance: equipment.maintenance.maintenanceHistory,
-		usage: equipment.availability.usageHistory,
-		status: equipment.status.history,
+		maintenance: equipment.maintenanceHistory || [],
+		usage: equipment.usageHistory || [],
+		statusHistory: equipment.statusHistory || [],
 	};
 
-	return res.status(200).json(new ApiResponse(200, history, 'Equipment history fetched'));
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				history,
+				'Equipment history fetched'
+			)
+		);
 });
 
 export {
