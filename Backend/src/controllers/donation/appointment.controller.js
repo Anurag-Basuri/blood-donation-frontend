@@ -14,6 +14,7 @@ const APPOINTMENT_STATUS = {
 	CANCELLED: 'CANCELLED',
 };
 
+// Create a new appointment for blood donation
 const createAppointment = asyncHandler(async (req, res) => {
 	const {
 		facilityId,
@@ -80,6 +81,7 @@ const createAppointment = asyncHandler(async (req, res) => {
 		);
 });
 
+// Update an existing appointment for blood donation
 const updateAppointment = asyncHandler(async (req, res) => {
 	const { appointmentId } = req.params;
 	const { status, newDate, newSlotTime } = req.body;
@@ -115,6 +117,7 @@ const updateAppointment = asyncHandler(async (req, res) => {
 		);
 });
 
+// Send a reminder for an upcoming appointment
 const sendReminder = asyncHandler(async (req, res) => {
 	const { appointmentId } = req.params;
 	const appointment = await DonationAppointment.findById(appointmentId)
@@ -152,4 +155,25 @@ const sendReminder = asyncHandler(async (req, res) => {
 		);
 });
 
-export { createAppointment, updateAppointment, sendReminder, APPOINTMENT_STATUS };
+// Fetch all appointments for the logged-in user
+const getMyAppointments = asyncHandler(async (req, res) => {
+	const appointments = await DonationAppointment.find({ userId: req.user._id }).sort({ date: -1 });
+
+	res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				{ appointments },
+				"User appointments fetched"
+			)
+		);
+});
+
+export {
+	createAppointment,
+	updateAppointment,
+	sendReminder,
+	APPOINTMENT_STATUS,
+	getMyAppointments
+};
