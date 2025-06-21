@@ -175,7 +175,7 @@ const bloodRequestSchema = new mongoose.Schema(
 		priority: {
 			type: Number,
 			min: 1,
-			max: 5,
+			max: 3,
 			default: 3,
 		},
 	},
