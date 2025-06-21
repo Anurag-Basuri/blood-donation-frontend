@@ -71,7 +71,13 @@ const createOrganRequest = asyncHandler(async (req, res) => {
 
 	return res
 		.status(201)
-		.json(new ApiResponse(201, request, 'Organ request created successfully'));
+		.json(
+			new ApiResponse(
+				201,
+				request,
+				'Organ request created successfully'
+			)
+		);
 });
 
 // Update Organ Request Status
@@ -97,7 +103,13 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
 
 	return res
 		.status(200)
-		.json(new ApiResponse(200, request, 'Request status updated successfully'));
+		.json(
+			new ApiResponse(
+				200,
+				request,
+				'Request status updated successfully'
+			)
+		);
 });
 
 // Find Potential Donors
@@ -121,7 +133,13 @@ const findPotentialDonors = asyncHandler(async (req, res) => {
 
 	return res
 		.status(200)
-		.json(new ApiResponse(200, potentialDonors, 'Potential organ donors found'));
+		.json(
+			new ApiResponse(
+				200,
+				potentialDonors,
+				'Potential organ donors found'
+			)
+		);
 });
 
 // Track Request Status
@@ -136,7 +154,13 @@ const trackRequest = asyncHandler(async (req, res) => {
 
 	return res
 		.status(200)
-		.json(new ApiResponse(200, request, 'Request details fetched'));
+		.json(
+			new ApiResponse(
+				200,
+				request,
+				'Request details fetched'
+			)
+		);
 });
 
 // Get High Priority Organ Requests
@@ -148,7 +172,13 @@ const getHighPriorityRequests = asyncHandler(async (req, res) => {
 
 	return res
 		.status(200)
-		.json(new ApiResponse(200, requests, 'High priority organ requests fetched'));
+		.json(
+			new ApiResponse(
+				200,
+				requests,
+				'High priority organ requests fetched'
+			)
+		);
 });
 
 // Cancel Organ Request
@@ -175,7 +205,13 @@ const cancelRequest = asyncHandler(async (req, res) => {
 
 	return res
 		.status(200)
-		.json(new ApiResponse(200, request, 'Organ request cancelled successfully'));
+		.json(
+			new ApiResponse(
+				200,
+				request,
+				'Organ request cancelled successfully'
+			)
+		);
 });
 
 export {
