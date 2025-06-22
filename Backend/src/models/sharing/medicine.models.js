@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { ApiError } from '../../utils/ApiError.js';
 
+// ENUMS
 const MEDICINE_CATEGORIES = {
 	TABLET: 'Tablet',
 	CAPSULE: 'Capsule',
@@ -18,6 +19,7 @@ const VERIFICATION_STATUS = {
 	EXPIRED: 'Expired',
 };
 
+// SCHEMA
 const medicineSchema = new mongoose.Schema(
 	{
 		listingId: {
@@ -51,7 +53,15 @@ const medicineSchema = new mongoose.Schema(
 		},
 
 		expiry: {
-			manufacturingDate: Date,
+			manufacturingDate: {
+				type: Date,
+				validate: {
+					validator: function (date) {
+						return !this.expiry?.expiryDate || date < this.expiry.expiryDate;
+					},
+					message: 'Manufacturing date must be before expiry date',
+				},
+			},
 			expiryDate: {
 				type: Date,
 				required: true,
@@ -127,7 +137,10 @@ const medicineSchema = new mongoose.Schema(
 					enum: ['Point'],
 					default: 'Point',
 				},
-				coordinates: [Number],
+				coordinates: {
+					type: [Number],
+					default: [0, 0],
+				},
 				address: String,
 			},
 		},
@@ -164,26 +177,24 @@ const medicineSchema = new mongoose.Schema(
 	},
 );
 
-// Indexes
+// INDEXES
 medicineSchema.index({ name: 'text' });
 medicineSchema.index({ 'storage.location': '2dsphere' });
 medicineSchema.index({ 'expiry.expiryDate': 1 });
 medicineSchema.index({ 'verification.status': 1 });
 
-// Methods
+// METHODS
 medicineSchema.methods = {
 	async verifyListing(ngoId, status, remarks) {
 		if (!Object.values(VERIFICATION_STATUS).includes(status)) {
 			throw new ApiError(400, 'Invalid verification status');
 		}
-
 		this.verification = {
 			status,
 			verifiedBy: ngoId,
 			verificationDate: new Date(),
 			remarks,
 		};
-
 		return this.save();
 	},
 
@@ -191,17 +202,21 @@ medicineSchema.methods = {
 		if (quantity > this.quantity.available) {
 			throw new ApiError(400, 'Requested quantity exceeds available stock');
 		}
-
 		this.quantity.available -= quantity;
-		this.isAvailable = this.quantity.available > 0;
-
+		this.distribution.isAvailable = this.quantity.available > 0;
 		return this.save();
 	},
 
 	isExpired() {
-		return new Date() > this.expiry.expiryDate;
+		return !!this.expiry?.expiryDate && new Date() > this.expiry.expiryDate;
 	},
 };
 
+// VIRTUAL (Optional)
+medicineSchema.virtual('isExpiredVirtual').get(function () {
+	return this.isExpired();
+});
+
 const Medicine = mongoose.model('Medicine', medicineSchema);
+
 export { Medicine, MEDICINE_CATEGORIES, VERIFICATION_STATUS };
