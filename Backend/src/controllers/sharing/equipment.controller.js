@@ -4,6 +4,7 @@ import notificationService from '../../services/notification.service.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
+import { uploadFile, deleteFile } from '../../utils/fileUpload.js';
 
 const EQUIPMENT_STATUS = {
 	AVAILABLE: 'Available',
@@ -345,6 +346,46 @@ const cancelBooking = asyncHandler(async (req, res) => {
 		);
 });
 
+// upload equipment image
+const uploadEquipmentImage = asyncHandler(async (req, res) => {
+	const { equipmentId } = req.params;
+	const equipment = await Equipment.findById(equipmentId);
+	if (!equipment) {
+		throw new ApiError(404, 'Equipment not found');
+	}
+
+	if (!req.file) {
+		throw new ApiError(400, 'No file uploaded');
+	}
+
+	const fileData = {
+		localPath: req.file.path,
+		mimeType: req.file.mimetype,
+		category: 'equipment',
+		entityId: equipment._id.toString(),
+	};
+	const uploadResult = await uploadFile(fileData);
+	if (!uploadResult.success) {
+		throw new ApiError(500, 'File upload failed');
+	}
+
+	equipment.image = {
+		url: uploadResult.url,
+		publicId: uploadResult.publicId,
+		format: uploadResult.format,
+	};
+	await equipment.save();
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				equipment,
+				'Equipment image uploaded successfully'
+			)
+		);
+});
 
 export {
 	listEquipment,
@@ -354,5 +395,6 @@ export {
 	getEquipmentHistory,
 	endBooking,
 	cancelBooking,
+	uploadEquipmentImage,
 	EQUIPMENT_STATUS,
 };
