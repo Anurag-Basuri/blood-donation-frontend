@@ -301,7 +301,6 @@ const endBooking = asyncHandler(async (req, res) => {
 		);
 });
 
-
 export {
 	listEquipment,
 	addEquipment,
