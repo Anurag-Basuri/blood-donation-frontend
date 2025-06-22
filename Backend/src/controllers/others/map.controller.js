@@ -4,24 +4,31 @@ import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { Activity } from '../../models/others/activity.model.js';
 
-/**
- * Map Controller for handling location-based operations
- */
 class MapController {
-	// Find nearby blood donation centers
+	static parseFloatParam(value, name) {
+		const num = parseFloat(value);
+		if (isNaN(num)) throw new ApiError(400, `Invalid ${name}`);
+		return num;
+	}
+
+	static validateUser(req) {
+		if (!req.user) throw new ApiError(401, 'Authentication required');
+	}
+
+	// Finds nearby centers based on provided coordinates and radius
 	static findNearestCenters = asyncHandler(async (req, res) => {
 		const { longitude, latitude, radius = 10 } = req.query;
 
 		if (!longitude || !latitude) {
-			throw new ApiError(400, 'Longitude and latitude are required');
+			throw new ApiError(400, 'Both longitude and latitude are required');
 		}
 
-		const centers = await mapsService.findNearestCenters(
-			[parseFloat(longitude), parseFloat(latitude)],
-			parseFloat(radius),
-		);
+		const lng = this.parseFloatParam(longitude, 'longitude');
+		const lat = this.parseFloatParam(latitude, 'latitude');
+		const rad = this.parseFloatParam(radius, 'radius');
 
-		// Log search activity
+		const centers = await mapsService.findNearestCenters([lng, lat], rad);
+
 		await Activity.create({
 			type: 'LOCATION_SEARCH',
 			performedBy: {
@@ -30,50 +37,53 @@ class MapController {
 			},
 			details: {
 				coordinates: [longitude, latitude],
-				radius,
+				radius: rad,
 				resultsCount: centers.length,
 			},
 		});
 
-		return res
-			.status(200)
-			.json(new ApiResponse(200, { centers }, 'Nearby centers fetched successfully'));
+		res.status(200).json(
+			new ApiResponse(200, { centers }, 'Nearby centers fetched successfully'),
+		);
 	});
 
-	// Get route directions
+	// Calculates directions between two points
 	static getDirections = asyncHandler(async (req, res) => {
 		const { originLng, originLat, destLng, destLat, mode = 'driving' } = req.query;
 
 		if (!originLng || !originLat || !destLng || !destLat) {
-			throw new ApiError(400, 'Origin and destination coordinates required');
+			throw new ApiError(400, 'All origin and destination coordinates are required');
 		}
 
-		const routes = await mapsService.calculateRoute(
-			[parseFloat(originLng), parseFloat(originLat)],
-			[parseFloat(destLng), parseFloat(destLat)],
-			mode,
-		);
+		const origin = [
+			this.parseFloatParam(originLng, 'originLng'),
+			this.parseFloatParam(originLat, 'originLat'),
+		];
+		const destination = [
+			this.parseFloatParam(destLng, 'destLng'),
+			this.parseFloatParam(destLat, 'destLat'),
+		];
 
-		return res
-			.status(200)
-			.json(new ApiResponse(200, { routes }, 'Route calculated successfully'));
+		const routes = await mapsService.calculateRoute(origin, destination, mode);
+
+		res.status(200).json(new ApiResponse(200, { routes }, 'Route calculated successfully'));
 	});
 
-	// Batch geocode addresses
+	// Geocodes multiple addresses in a single request
 	static geocodeAddresses = asyncHandler(async (req, res) => {
 		const { addresses } = req.body;
 
 		if (!Array.isArray(addresses) || addresses.length === 0) {
-			throw new ApiError(400, 'Valid addresses array required');
+			throw new ApiError(400, 'Addresses must be a non-empty array');
 		}
 
 		if (addresses.length > 50) {
-			throw new ApiError(400, 'Maximum 50 addresses allowed per request');
+			throw new ApiError(400, 'Maximum 50 addresses allowed');
 		}
 
 		const results = await mapsService.batchGeocode(addresses);
 
-		return res.status(200).json(
+		res.status(200).json(
 			new ApiResponse(
 				200,
 				{
@@ -89,13 +99,16 @@ class MapController {
 		);
 	});
 
-	// Get place details
+	// Fetches details for a specific place by ID
 	static getPlaceDetails = asyncHandler(async (req, res) => {
 		const { placeId } = req.params;
 
+		if (!placeId) {
+			throw new ApiError(400, 'Place ID is required');
+		}
+
 		const details = await mapsService.getPlaceDetails(placeId);
 
-		// Cache the result in user's recent searches if authenticated
 		if (req.user) {
 			await this.updateRecentSearches(req.user._id, {
 				placeId,
@@ -104,16 +117,14 @@ class MapController {
 			});
 		}
 
-		return res
-			.status(200)
-			.json(new ApiResponse(200, { details }, 'Place details fetched successfully'));
+		res.status(200).json(
+			new ApiResponse(200, { details }, 'Place details fetched successfully'),
+		);
 	});
 
-	// Get user's recent searches
+	// Fetches recent searches made by the user
 	static getRecentSearches = asyncHandler(async (req, res) => {
-		if (!req.user) {
-			throw new ApiError(401, 'Authentication required');
-		}
+		this.validateUser(req);
 
 		const recentSearches = await Activity.find({
 			'performedBy.userId': req.user._id,
@@ -122,34 +133,24 @@ class MapController {
 			.sort({ createdAt: -1 })
 			.limit(10);
 
-		return res.status(200).json(
-			new ApiResponse(
-				200,
-				{
-					recentSearches,
-				},
-				'Recent searches fetched successfully',
-			),
+		res.status(200).json(
+			new ApiResponse(200, { recentSearches }, 'Recent searches fetched successfully'),
 		);
 	});
 
-	// Clear recent searches
+	// Clears recent searches for the authenticated user
 	static clearRecentSearches = asyncHandler(async (req, res) => {
-		if (!req.user) {
-			throw new ApiError(401, 'Authentication required');
-		}
+		this.validateUser(req);
 
 		await Activity.deleteMany({
 			'performedBy.userId': req.user._id,
 			type: 'LOCATION_SEARCH',
 		});
 
-		return res
-			.status(200)
-			.json(new ApiResponse(200, null, 'Recent searches cleared successfully'));
+		res.status(200).json(new ApiResponse(200, null, 'Recent searches cleared successfully'));
 	});
 
-	// Private helper method
+	// Updates recent searches with new search data
 	static async updateRecentSearches(userId, searchData) {
 		const maxSearches = 10;
 
@@ -162,23 +163,15 @@ class MapController {
 			details: searchData,
 		});
 
-		// Clean up old searches if needed
-		const searchCount = await Activity.countDocuments({
+		const excess = await Activity.find({
 			'performedBy.userId': userId,
 			type: 'PLACE_SEARCH',
-		});
+		})
+			.sort({ createdAt: 1 })
+			.skip(maxSearches);
 
-		if (searchCount > maxSearches) {
-			const oldestSearches = await Activity.find({
-				'performedBy.userId': userId,
-				type: 'PLACE_SEARCH',
-			})
-				.sort({ createdAt: 1 })
-				.limit(searchCount - maxSearches);
-
-			await Activity.deleteMany({
-				_id: { $in: oldestSearches.map(s => s._id) },
-			});
+		if (excess.length) {
+			await Activity.deleteMany({ _id: { $in: excess.map(e => e._id) } });
 		}
 	}
 }
