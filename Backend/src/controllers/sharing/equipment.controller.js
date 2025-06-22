@@ -301,6 +301,51 @@ const endBooking = asyncHandler(async (req, res) => {
 		);
 });
 
+// ❌ Cancel Equipment Booking
+const cancelBooking = asyncHandler(async (req, res) => {
+	const { equipmentId } = req.params;
+	const { reason } = req.body;
+
+	const equipment = await Equipment.findById(equipmentId);
+	if (!equipment || !equipment.currentBooking) {
+		throw new ApiError(404, 'No active booking found to cancel');
+	}
+
+	const now = new Date();
+	if (new Date(equipment.currentBooking.startDate) <= now) {
+		throw new ApiError(400, 'Cannot cancel a booking that has already started');
+	}
+
+	equipment.currentBooking = null;
+	equipment.status.current = EQUIPMENT_STATUS.AVAILABLE;
+	equipment.status.lastUpdated = now;
+
+	await equipment.save();
+
+	await Activity.create({
+		type: 'EQUIPMENT_BOOKING_CANCELLED',
+		performedBy: {
+			userId: req.user._id,
+			userModel: req.user.role,
+		},
+		details: {
+			equipmentId,
+			reason,
+		},
+	});
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				equipment,
+				'Booking cancelled successfully'
+			)
+		);
+});
+
+
 export {
 	listEquipment,
 	addEquipment,
@@ -308,5 +353,6 @@ export {
 	bookEquipment,
 	getEquipmentHistory,
 	endBooking,
+	cancelBooking,
 	EQUIPMENT_STATUS,
 };
