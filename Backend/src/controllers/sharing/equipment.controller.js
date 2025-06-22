@@ -245,11 +245,69 @@ const getEquipmentHistory = asyncHandler(async (req, res) => {
 		);
 });
 
+// 🏁 End Equipment Booking
+const endBooking = asyncHandler(async (req, res) => {
+	const { equipmentId } = req.params;
+	const { conditionAfter, notes } = req.body;
+
+	const equipment = await Equipment.findById(equipmentId);
+	if (!equipment || !equipment.currentBooking) {
+		throw new ApiError(404, 'Active booking not found for this equipment');
+	}
+
+	const booking = equipment.currentBooking;
+
+	// Move to usage history
+	equipment.usageHistory.push({
+		borrowerId: booking.borrowerId,
+		borrowerType: booking.borrowerType,
+		startDate: booking.startDate,
+		endDate: new Date(),
+		purpose: booking.purpose,
+		condition: {
+			before: equipment.details.condition,
+			after: conditionAfter || equipment.details.condition,
+		},
+		notes,
+	});
+
+	equipment.currentBooking = null;
+	equipment.status.current = EQUIPMENT_STATUS.AVAILABLE;
+	equipment.status.lastUpdated = new Date();
+
+	await equipment.save();
+
+	await Activity.create({
+		type: 'EQUIPMENT_RETURNED',
+		performedBy: {
+			userId: req.user._id,
+			userModel: req.user.role,
+		},
+		details: {
+			equipmentId,
+			conditionAfter,
+			notes,
+		},
+	});
+
+	return re
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				equipment,
+				'Equipment booking ended'
+			)
+		);
+});
+
+
 export {
 	listEquipment,
 	addEquipment,
 	updateEquipmentStatus,
 	bookEquipment,
 	getEquipmentHistory,
+	endBooking,
 	EQUIPMENT_STATUS,
 };
