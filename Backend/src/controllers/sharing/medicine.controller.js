@@ -14,7 +14,7 @@ const MEDICINE_STATUS = {
 	RESERVED: 'RESERVED',
 };
 
-// List medicines with filtering
+// 📦 List Medicines (with filters, pagination, sorting)
 const listMedicines = asyncHandler(async (req, res) => {
 	const {
 		category,
@@ -29,22 +29,22 @@ const listMedicines = asyncHandler(async (req, res) => {
 
 	const query = {
 		'status.current': { $in: [MEDICINE_STATUS.AVAILABLE, MEDICINE_STATUS.LOW_STOCK] },
-		'expiry.expiryDate': { $gt: expiryAfter || new Date() },
+		'expiry.expiryDate': { $gt: expiryAfter ? new Date(expiryAfter) : new Date() },
 	};
 
 	if (category) query['details.category'] = category;
 	if (prescriptionRequired !== undefined) {
-		query['details.prescriptionRequired'] = prescriptionRequired;
+		query['details.prescriptionRequired'] = prescriptionRequired === 'true';
 	}
 
-	if (location) {
-		query.location = {
+	if (location?.longitude && location?.latitude) {
+		query['storage.location'] = {
 			$near: {
 				$geometry: {
 					type: 'Point',
-					coordinates: [location.longitude, location.latitude],
+					coordinates: [parseFloat(location.longitude), parseFloat(location.latitude)],
 				},
-				$maxDistance: radius * 1000,
+				$maxDistance: parseFloat(radius) * 1000,
 			},
 		};
 	}
@@ -56,35 +56,31 @@ const listMedicines = asyncHandler(async (req, res) => {
 	};
 
 	const medicines = await Medicine.find(query)
-		.populate('donor.entityId', 'name contactInfo')
-		.sort(sortOptions[sortBy])
-		.skip((page - 1) * limit)
-		.limit(limit);
+		.populate('donor.userId', 'name contactInfo')
+		.sort(sortOptions[sortBy] || { createdAt: -1 })
+		.skip((page - 1) * parseInt(limit))
+		.limit(parseInt(limit));
 
 	const total = await Medicine.countDocuments(query);
 
 	return res.status(200).json(
-		new ApiResponse(
-			200,
-			{
-				medicines,
-				pagination: {
-					currentPage: page,
-					totalPages: Math.ceil(total / limit),
-					totalItems: total,
-				},
+		new ApiResponse(200, {
+			medicines,
+			pagination: {
+				currentPage: +page,
+				totalPages: Math.ceil(total / limit),
+				totalItems: total,
 			},
-			'Medicines fetched successfully',
-		),
+		}, 'Medicines fetched successfully')
 	);
 });
 
-// Add new medicine
+// ➕ Add New Medicine
 const addMedicine = asyncHandler(async (req, res) => {
 	const {
 		name,
 		category,
-		details,
+		details = {},
 		expiryDate,
 		quantity,
 		location,
@@ -92,7 +88,6 @@ const addMedicine = asyncHandler(async (req, res) => {
 		prescriptionRequired,
 	} = req.body;
 
-	// Validation
 	if (!name || !category || !expiryDate || !quantity) {
 		throw new ApiError(400, 'Missing required fields');
 	}
@@ -106,7 +101,7 @@ const addMedicine = asyncHandler(async (req, res) => {
 		details: {
 			...details,
 			category,
-			prescriptionRequired,
+			prescriptionRequired: prescriptionRequired !== false,
 		},
 		expiry: {
 			manufacturingDate: new Date(),
@@ -114,21 +109,17 @@ const addMedicine = asyncHandler(async (req, res) => {
 		},
 		quantity: {
 			available: quantity,
-			unit: 'units',
+			unit: details?.unit || 'units',
 		},
 		storage,
 		location,
 		donor: {
-			entityId: req.user._id,
-			entityType: req.user.role,
-		},
-		status: {
-			current: MEDICINE_STATUS.AVAILABLE,
-			lastUpdated: new Date(),
+			userId: req.user._id,
+			userType: req.user.role,
+			name: req.user.fullName,
 		},
 	});
 
-	// Log activity
 	await Activity.create({
 		type: 'MEDICINE_ADDED',
 		performedBy: {
@@ -142,7 +133,6 @@ const addMedicine = asyncHandler(async (req, res) => {
 		},
 	});
 
-	// Notify nearby hospitals if essential medicine
 	if (category === 'ESSENTIAL') {
 		await notifyNearbyFacilities(medicine);
 	}
@@ -150,31 +140,35 @@ const addMedicine = asyncHandler(async (req, res) => {
 	return res.status(201).json(new ApiResponse(201, medicine, 'Medicine added successfully'));
 });
 
-// Update medicine status
+// 🔁 Update Medicine Status
 const updateMedicineStatus = asyncHandler(async (req, res) => {
 	const { medicineId } = req.params;
 	const { status, quantity, notes } = req.body;
 
 	const medicine = await Medicine.findById(medicineId);
-	if (!medicine) {
-		throw new ApiError(404, 'Medicine not found');
-	}
+	if (!medicine) throw new ApiError(404, 'Medicine not found');
 
 	if (quantity !== undefined) {
 		medicine.quantity.available = Math.max(0, quantity);
-		medicine.status.current =
-			quantity === 0
-				? MEDICINE_STATUS.OUT_OF_STOCK
-				: quantity <= medicine.quantity.threshold
+		medicine.status = {
+			current:
+				quantity === 0
+					? MEDICINE_STATUS.OUT_OF_STOCK
+					: quantity <= (medicine.quantity.threshold || 10)
 					? MEDICINE_STATUS.LOW_STOCK
-					: MEDICINE_STATUS.AVAILABLE;
+					: MEDICINE_STATUS.AVAILABLE,
+			lastUpdated: new Date(),
+		};
 	}
 
 	if (status) {
-		await medicine.updateStatus(status, req.user._id, notes);
+		if (Object.values(MEDICINE_STATUS).includes(status)) {
+			medicine.status = { current: status, lastUpdated: new Date() };
+		} else {
+			throw new ApiError(400, 'Invalid status');
+		}
 	}
 
-	// Check expiry
 	if (new Date(medicine.expiry.expiryDate) <= new Date()) {
 		medicine.status.current = MEDICINE_STATUS.EXPIRED;
 	}
@@ -184,7 +178,7 @@ const updateMedicineStatus = asyncHandler(async (req, res) => {
 	return res.status(200).json(new ApiResponse(200, medicine, 'Medicine updated successfully'));
 });
 
-// Get medicine analytics
+// 📊 Medicine Analytics (category-wise)
 const getMedicineAnalytics = asyncHandler(async (req, res) => {
 	const { startDate, endDate } = req.query;
 
@@ -202,7 +196,7 @@ const getMedicineAnalytics = asyncHandler(async (req, res) => {
 				_id: '$details.category',
 				totalQuantity: { $sum: '$quantity.available' },
 				averageQuantity: { $avg: '$quantity.available' },
-				expiringCount: {
+				expiringSoon: {
 					$sum: {
 						$cond: [
 							{
@@ -220,24 +214,22 @@ const getMedicineAnalytics = asyncHandler(async (req, res) => {
 		},
 	]);
 
-	return res
-		.status(200)
-		.json(new ApiResponse(200, { analytics }, 'Analytics fetched successfully'));
+	return res.status(200).json(new ApiResponse(200, { analytics }, 'Analytics fetched successfully'));
 });
 
-// Helper function to notify nearby facilities
-const notifyNearbyFacilities = async medicine => {
-	const nearbyHospitals = await Hospital.find({
+// 🛎️ Notify nearby hospitals
+const notifyNearbyFacilities = async (medicine) => {
+	const hospitals = await Hospital.find({
 		'address.location': {
 			$near: {
 				$geometry: medicine.location,
-				$maxDistance: 50000, // 50km radius
+				$maxDistance: 50000, // 50km
 			},
 		},
 		isVerified: true,
 	}).select('_id name');
 
-	const notifications = nearbyHospitals.map(hospital => ({
+	const notifications = hospitals.map((hospital) => ({
 		type: 'MEDICINE_AVAILABLE',
 		recipient: hospital._id,
 		recipientModel: 'Hospital',
@@ -253,4 +245,10 @@ const notifyNearbyFacilities = async medicine => {
 	await notificationService.sendBulkNotifications(notifications);
 };
 
-export { listMedicines, addMedicine, updateMedicineStatus, getMedicineAnalytics, MEDICINE_STATUS };
+export {
+	listMedicines,
+	addMedicine,
+	updateMedicineStatus,
+	getMedicineAnalytics,
+	MEDICINE_STATUS,
+};
