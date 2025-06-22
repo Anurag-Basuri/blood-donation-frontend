@@ -65,6 +65,20 @@ const equipmentSchema = new mongoose.Schema(
 			specifications: mongoose.Schema.Types.Mixed,
 		},
 
+		images: [
+			{
+				url: {
+					type: String,
+					required: true,
+					validate: {
+						validator: v => /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/.test(v),
+						message: 'Invalid image URL',
+					},
+				},
+				caption: String,
+			},
+		],
+
 		status: {
 			current: {
 				type: String,
