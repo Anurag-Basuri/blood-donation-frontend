@@ -44,3 +44,28 @@ const registerAdmin = asyncHandler(async (req, res) => {
 			)
 		);
 });
+
+// login admin
+const loginAdmin = asyncHandler(async (req, res) => {
+	const { email, password, secret } = req.body;
+
+	if (!email || !password || secret !== process.env.ADMIN_SECRET) {
+		throw new ApiError(400, 'Email, password, and admin secret are required');
+	}
+
+	const admin = await Admin.findOne({ email }).select('+password');
+	if (!admin || !(await admin.matchPassword(password))) {
+		throw new ApiError(401, 'Invalid email or password');
+	}
+
+	const token = await admin.generateAuthToken();
+
+	res
+		.status(200)
+		.json(
+			new ApiResponse(
+				'Admin logged in successfully',
+				{ token, admin }
+			)
+		);
+});
