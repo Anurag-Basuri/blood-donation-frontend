@@ -29,19 +29,6 @@ const adminSchema = new mongoose.Schema(
 			type: String,
 			default: 'admin',
 		},
-		permissions: [
-			{
-				type: String,
-				enum: [
-					'manage_users',
-					'manage_donations',
-					'manage_hospitals',
-					'manage_ngos',
-					'view_analytics',
-					'manage_admins',
-				],
-			},
-		],
 		refreshToken: {
 			type: String,
 			select: false,
@@ -90,10 +77,6 @@ adminSchema.methods = {
 			process.env.ACCESS_TOKEN_SECRET,
 			{ expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
 		);
-	},
-
-	hasPermission: function (permission) {
-		return this.role === 'superadmin' || this.permissions.includes(permission);
 	},
 
 	toSafeObject: function () {
