@@ -5,6 +5,13 @@ const NOTIFICATION_TYPES = {
 	DONATION_REMINDER: 'donation-reminder',
 	APPOINTMENT_CONFIRMATION: 'appointment-confirmation',
 	BLOOD_AVAILABILITY: 'blood-availability',
+	GENERAL: 'general',
+};
+
+const DELIVERY_STATUS = {
+	PENDING: 'pending',
+	SENT: 'sent',
+	FAILED: 'failed',
 };
 
 const NOTIFICATION_STATUS = {
@@ -13,6 +20,23 @@ const NOTIFICATION_STATUS = {
 	FAILED: 'failed',
 	READ: 'read',
 };
+
+const deliveryAttemptSchema = new mongoose.Schema(
+	{
+		status: {
+			type: String,
+			enum: Object.values(DELIVERY_STATUS),
+			default: DELIVERY_STATUS.PENDING,
+		},
+		attempts: {
+			type: Number,
+			default: 0,
+		},
+		lastAttempt: Date,
+		error: String,
+	},
+	{ _id: false },
+);
 
 const notificationSchema = new mongoose.Schema(
 	{
@@ -65,100 +89,71 @@ const notificationSchema = new mongoose.Schema(
 		},
 
 		deliveryAttempts: {
-			email: {
-				status: {
-					type: String,
-					enum: ['pending', 'sent', 'failed'],
-					default: 'pending',
-				},
-				attempts: {
-					type: Number,
-					default: 0,
-				},
-				lastAttempt: Date,
-				error: String,
-			},
-			sms: {
-				status: {
-					type: String,
-					enum: ['pending', 'sent', 'failed'],
-					default: 'pending',
-				},
-				attempts: {
-					type: Number,
-					default: 0,
-				},
-				lastAttempt: Date,
-				error: String,
-			},
+			email: deliveryAttemptSchema,
+			sms: deliveryAttemptSchema,
 		},
 
 		readAt: Date,
 		sentAt: Date,
+
 		expiresAt: {
 			type: Date,
-			default: () => new Date(+new Date() + 30 * 24 * 60 * 60 * 1000), // 30 days from creation
+			default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days TTL
 		},
 	},
-	{
-		timestamps: true,
-	},
+	{ timestamps: true },
 );
 
-// Indexes for common queries
+// TTL index
+notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+// Helpful indexes
 notificationSchema.index({ createdAt: -1 });
-notificationSchema.index({ status: 1, createdAt: -1 });
 notificationSchema.index({ recipient: 1, status: 1, type: 1 });
-notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index
 
-// Instance methods
-notificationSchema.methods = {
-	async markAsRead() {
-		this.status = NOTIFICATION_STATUS.READ;
-		this.readAt = new Date();
-		return this.save();
-	},
-
-	async updateDeliveryStatus(channel, success, error = null) {
-		this.deliveryAttempts[channel].attempts += 1;
-		this.deliveryAttempts[channel].lastAttempt = new Date();
-
-		if (success) {
-			this.deliveryAttempts[channel].status = 'sent';
-		} else {
-			this.deliveryAttempts[channel].status = 'failed';
-			this.deliveryAttempts[channel].error = error;
-		}
-
-		return this.save();
-	},
+// ──────────────── Instance Methods ────────────────
+notificationSchema.methods.markAsRead = async function () {
+	this.status = NOTIFICATION_STATUS.READ;
+	this.readAt = new Date();
+	return await this.save();
 };
 
-// Static methods
-notificationSchema.statics = {
-	async getUnreadNotifications(recipientId) {
-		return this.find({
+notificationSchema.methods.updateDeliveryStatus = async function (channel, success, error = null) {
+	if (!['email', 'sms'].includes(channel)) return;
+
+	const attempt = this.deliveryAttempts[channel];
+	attempt.attempts += 1;
+	attempt.lastAttempt = new Date();
+	attempt.status = success ? DELIVERY_STATUS.SENT : DELIVERY_STATUS.FAILED;
+	if (!success && error) {
+		attempt.error = error;
+	}
+	return await this.save();
+};
+
+// ──────────────── Static Methods ────────────────
+notificationSchema.statics.getUnreadForRecipient = async function (recipientId) {
+	return this.find({
+		recipient: recipientId,
+		status: { $ne: NOTIFICATION_STATUS.READ },
+	}).sort({ createdAt: -1 });
+};
+
+notificationSchema.statics.markAllAsReadForRecipient = async function (recipientId) {
+	return this.updateMany(
+		{
 			recipient: recipientId,
 			status: { $ne: NOTIFICATION_STATUS.READ },
-		}).sort({ createdAt: -1 });
-	},
-
-	async markAllAsRead(recipientId) {
-		return this.updateMany(
-			{
-				recipient: recipientId,
-				status: { $ne: NOTIFICATION_STATUS.READ },
+		},
+		{
+			$set: {
+				status: NOTIFICATION_STATUS.READ,
+				readAt: new Date(),
 			},
-			{
-				$set: {
-					status: NOTIFICATION_STATUS.READ,
-					readAt: new Date(),
-				},
-			},
-		);
-	},
+		},
+	);
 };
 
 const Notification = mongoose.model('Notification', notificationSchema);
 
-export { Notification, NOTIFICATION_TYPES, NOTIFICATION_STATUS };
+export { Notification, NOTIFICATION_TYPES, NOTIFICATION_STATUS, DELIVERY_STATUS };
