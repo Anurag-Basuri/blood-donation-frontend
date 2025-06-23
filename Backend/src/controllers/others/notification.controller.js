@@ -1,10 +1,9 @@
 import { Notification, NOTIFICATION_STATUS } from '../../models/others/notification.model.js';
-import notificationService from '../../services/notification.service.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 
-// Get user notifications with filtering
+// ──────────────────────────────── GET Notifications ────────────────────────────────
 const getNotifications = asyncHandler(async (req, res) => {
 	const { status, type, page = 1, limit = 20, sortBy = 'createdAt' } = req.query;
 
@@ -14,12 +13,13 @@ const getNotifications = asyncHandler(async (req, res) => {
 		...(type && { type }),
 	};
 
-	const notifications = await Notification.find(query)
-		.sort({ [sortBy]: -1 })
-		.skip((page - 1) * limit)
-		.limit(limit);
-
-	const total = await Notification.countDocuments(query);
+	const [notifications, total] = await Promise.all([
+		Notification.find(query)
+			.sort({ [sortBy]: -1 })
+			.skip((+page - 1) * +limit)
+			.limit(+limit),
+		Notification.countDocuments(query),
+	]);
 
 	return res.status(200).json(
 		new ApiResponse(
@@ -27,8 +27,8 @@ const getNotifications = asyncHandler(async (req, res) => {
 			{
 				notifications,
 				pagination: {
-					currentPage: page,
-					totalPages: Math.ceil(total / limit),
+					currentPage: +page,
+					totalPages: Math.ceil(total / +limit),
 					totalItems: total,
 				},
 			},
@@ -37,7 +37,7 @@ const getNotifications = asyncHandler(async (req, res) => {
 	);
 });
 
-// Mark notification as read
+// ──────────────────────────────── Mark Single as Read ────────────────────────────────
 const markAsRead = asyncHandler(async (req, res) => {
 	const { notificationId } = req.params;
 
@@ -55,24 +55,22 @@ const markAsRead = asyncHandler(async (req, res) => {
 	return res.status(200).json(new ApiResponse(200, notification, 'Notification marked as read'));
 });
 
-// Mark all notifications as read
+// ──────────────────────────────── Mark All as Read ────────────────────────────────
 const markAllAsRead = asyncHandler(async (req, res) => {
-	const result = await Notification.markAllAsRead(req.user._id);
+	const result = await Notification.markAllAsReadForRecipient(req.user._id);
 
 	return res.status(200).json(
 		new ApiResponse(
 			200,
-			{
-				updated: result.modifiedCount,
-			},
+			{ updated: result.modifiedCount },
 			'All notifications marked as read',
 		),
 	);
 });
 
-// Get notification preferences
+// ──────────────────────────────── Get Preferences ────────────────────────────────
 const getPreferences = asyncHandler(async (req, res) => {
-	const preferences = req.user.notificationPreferences || {
+	const defaultPreferences = {
 		email: true,
 		sms: true,
 		push: false,
@@ -84,16 +82,17 @@ const getPreferences = asyncHandler(async (req, res) => {
 		},
 	};
 
+	const preferences = req.user.notificationPreferences || defaultPreferences;
+
 	return res
 		.status(200)
 		.json(new ApiResponse(200, preferences, 'Notification preferences fetched'));
 });
 
-// Update notification preferences
+// ──────────────────────────────── Update Preferences ────────────────────────────────
 const updatePreferences = asyncHandler(async (req, res) => {
 	const { preferences } = req.body;
 
-	// Validate preferences structure
 	if (!preferences || typeof preferences !== 'object') {
 		throw new ApiError(400, 'Invalid preferences format');
 	}
@@ -108,38 +107,35 @@ const updatePreferences = asyncHandler(async (req, res) => {
 	return res
 		.status(200)
 		.json(
-			new ApiResponse(
-				200,
-				req.user.notificationPreferences,
-				'Notification preferences updated',
-			),
+			new ApiResponse(200, req.user.notificationPreferences, 'Notification preferences updated'),
 		);
 });
 
-// Get notification statistics
+// ──────────────────────────────── Get Stats ────────────────────────────────
 const getNotificationStats = asyncHandler(async (req, res) => {
-	const stats = await Notification.aggregate([
-		{
-			$match: {
-				recipient: req.user._id,
-				createdAt: {
-					$gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+	const past30Days = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+	const [stats, unreadCount] = await Promise.all([
+		Notification.aggregate([
+			{
+				$match: {
+					recipient: req.user._id,
+					createdAt: { $gte: past30Days },
 				},
 			},
-		},
-		{
-			$group: {
-				_id: '$status',
-				count: { $sum: 1 },
-				types: { $addToSet: '$type' },
+			{
+				$group: {
+					_id: '$status',
+					count: { $sum: 1 },
+					types: { $addToSet: '$type' },
+				},
 			},
-		},
+		]),
+		Notification.countDocuments({
+			recipient: req.user._id,
+			status: { $ne: NOTIFICATION_STATUS.READ },
+		}),
 	]);
-
-	const unreadCount = await Notification.countDocuments({
-		recipient: req.user._id,
-		status: { $ne: NOTIFICATION_STATUS.READ },
-	});
 
 	return res.status(200).json(
 		new ApiResponse(
@@ -153,16 +149,16 @@ const getNotificationStats = asyncHandler(async (req, res) => {
 	);
 });
 
-// Delete notification
+// ──────────────────────────────── Delete Notification ────────────────────────────────
 const deleteNotification = asyncHandler(async (req, res) => {
 	const { notificationId } = req.params;
 
-	const notification = await Notification.findOneAndDelete({
+	const deleted = await Notification.findOneAndDelete({
 		_id: notificationId,
 		recipient: req.user._id,
 	});
 
-	if (!notification) {
+	if (!deleted) {
 		throw new ApiError(404, 'Notification not found');
 	}
 
