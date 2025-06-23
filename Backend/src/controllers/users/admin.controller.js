@@ -1,4 +1,3 @@
-// controllers/admin/admin.controller.js
 import mongoose from 'mongoose';
 import { Admin } from '../../models/users/admin.models.js';
 import { Hospital } from '../../models/users/hospital.models.js';
@@ -11,263 +10,196 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 
-// Permission structure (extendable)
-const ADMIN_PERMISSIONS = {
-	SUPERADMIN: ['create_admin', 'verify', 'view_analytics'],
-	ADMIN: ['verify', 'view_analytics'],
+// ======================= 🔐 AUTHENTICATION =======================
+
+const generateTokens = async (admin, req) => {
+	const accessToken = admin.generateAccessToken();
+	const refreshToken = admin.generateRefreshToken();
+
+	admin.refreshToken = refreshToken;
+	admin.lastLogin = new Date();
+	admin.loginHistory.push({
+		timestamp: new Date(),
+		ipAddress: req.ip,
+		userAgent: req.headers['user-agent'],
+	});
+
+	await admin.save({ validateBeforeSave: false });
+	return { accessToken, refreshToken };
 };
 
-// ==================== AUTH CONTROLLER ==================== //
-class AdminAuthController {
-	static generateTokens = async (admin, req) => {
-		const accessToken = admin.generateAccessToken();
-		const refreshToken = admin.generateRefreshToken();
+const registerAdmin = asyncHandler(async (req, res) => {
+	const { fullName, email, password, role = 'admin' } = req.body;
 
-		admin.refreshToken = refreshToken;
-		admin.lastLogin = new Date();
-		admin.loginHistory.push({
-			timestamp: new Date(),
-			ipAddress: req.ip,
-			userAgent: req.headers['user-agent'],
-		});
+	if (!email?.includes('@') || password?.length < 8) {
+		throw new ApiError(400, 'Invalid email or password too short');
+	}
 
-		await admin.save({ validateBeforeSave: false });
-		return { accessToken, refreshToken };
-	};
+	if (role === 'superadmin') {
+		const exists = await Admin.findOne({ role: 'superadmin' });
+		if (exists) throw new ApiError(403, 'Superadmin already exists');
+	}
 
-	static register = asyncHandler(async (req, res) => {
-		const { fullName, email, password, role = 'ADMIN' } = req.body;
+	const admin = await Admin.create({
+		fullName,
+		email,
+		password,
+		role,
+		createdBy: req.admin?._id,
+	});
 
-		if (!email?.includes('@') || password?.length < 8) {
-			throw new ApiError(400, 'Invalid email or password too short');
-		}
+	await Activity.create({
+		type: 'ADMIN_CREATED',
+		performedBy: {
+			userId: req.admin?._id || admin._id,
+			userModel: 'Admin',
+		},
+		details: { adminId: admin._id, role },
+	});
 
-		await AdminAuthController.validateRoleCreation(role, req.admin);
+	res.status(201).json(
+		new ApiResponse(
+			201,
+			{
+				admin: {
+					_id: admin._id,
+					fullName: admin.fullName,
+					email: admin.email,
+					role: admin.role,
+				},
+			},
+			'Admin registered successfully',
+		),
+	);
+});
 
-		const admin = await Admin.create({
-			fullName,
-			email,
-			password,
-			role,
-			permissions: ADMIN_PERMISSIONS[role.toUpperCase()],
-			createdBy: req.admin?._id,
-		});
+const loginAdmin = asyncHandler(async (req, res) => {
+	const { email, password } = req.body;
 
+	const admin = await Admin.findOne({ email }).select('+password +loginHistory');
+	if (!admin || !(await admin.isPasswordCorrect(password))) {
 		await Activity.create({
-			type: 'ADMIN_CREATED',
-			performedBy: {
-				userId: req.admin?._id || admin._id,
-				userModel: 'Admin',
-			},
-			details: {
-				adminId: admin._id,
-				role,
-				permissions: admin.permissions,
-				createdAt: new Date(),
-			},
+			type: 'FAILED_LOGIN_ATTEMPT',
+			details: { email, timestamp: new Date() },
 		});
+		throw new ApiError(401, 'Invalid credentials');
+	}
 
-		return res.status(201).json(
+	const { accessToken, refreshToken } = await generateTokens(admin, req);
+
+	res.status(200)
+		.cookie('accessToken', accessToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+		})
+		.cookie('refreshToken', refreshToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+		})
+		.json(
 			new ApiResponse(
-				201,
+				200,
 				{
 					admin: {
 						_id: admin._id,
 						fullName: admin.fullName,
-						email: admin.email,
 						role: admin.role,
-						permissions: admin.permissions,
 					},
+					tokens: { accessToken, refreshToken },
 				},
-				'Admin registered successfully',
+				'Login successful',
 			),
 		);
+});
+
+// ======================= ✅ VERIFICATION =======================
+
+const verifyEntity = asyncHandler(async (req, res) => {
+	const { entity, entityId } = req.params;
+	const { status, remarks, verificationDocuments } = req.body;
+
+	const Model = entity === 'hospital' ? Hospital : NGO;
+	const entityDoc = await Model.findById(entityId);
+	if (!entityDoc) throw new ApiError(404, `${entity} not found`);
+
+	entityDoc.isVerified = status === 'approved';
+	entityDoc.verificationRemarks = remarks;
+	entityDoc.verificationDocuments = verificationDocuments;
+	entityDoc.verifiedBy = {
+		adminId: req.admin._id,
+		verifiedAt: new Date(),
+	};
+
+	await entityDoc.save();
+
+	await Activity.create({
+		type: `${entity.toUpperCase()}_VERIFICATION`,
+		performedBy: { userId: req.admin._id, userModel: 'Admin' },
+		details: { entityId, status, remarks },
 	});
 
-	static login = asyncHandler(async (req, res) => {
-		const { email, password } = req.body;
-		const admin = await Admin.findOne({ email }).select('+password +loginHistory');
-
-		if (!admin || !(await admin.isPasswordCorrect(password))) {
-			await Activity.create({ type: 'FAILED_LOGIN_ATTEMPT', details: { email } });
-			throw new ApiError(401, 'Invalid credentials');
-		}
-
-		const tokens = await AdminAuthController.generateTokens(admin, req);
-
-		return res
-			.status(200)
-			.cookie('accessToken', tokens.accessToken, {
-				httpOnly: true,
-				secure: true,
-				sameSite: 'strict',
-			})
-			.cookie('refreshToken', tokens.refreshToken, {
-				httpOnly: true,
-				secure: true,
-				sameSite: 'strict',
-			})
-			.json(
-				new ApiResponse(
-					200,
-					{
-						admin: {
-							_id: admin._id,
-							fullName: admin.fullName,
-							role: admin.role,
-							permissions: admin.permissions,
-						},
-						tokens,
-					},
-					'Login successful',
-				),
-			);
+	await Notification.create({
+		type: status === 'approved' ? 'VERIFICATION_APPROVED' : 'VERIFICATION_REJECTED',
+		recipient: entityDoc._id,
+		recipientModel: entity === 'hospital' ? 'Hospital' : 'NGO',
+		data: {
+			status,
+			remarks,
+			verifiedBy: req.admin.fullName,
+		},
 	});
 
-	static async validateRoleCreation(role, requester) {
-		if (role === 'SUPERADMIN') {
-			const exists = await Admin.findOne({ role: 'SUPERADMIN' });
-			if (exists) throw new ApiError(403, 'Superadmin already exists');
-		}
-		if (role === 'ADMIN' && (!requester || requester.role !== 'SUPERADMIN')) {
-			throw new ApiError(403, 'Only superadmin can create admins');
-		}
-	}
-}
+	return res
+		.status(200)
+		.json(new ApiResponse(200, entityDoc, `${entity.toUpperCase()} verification updated`));
+});
 
-// ==================== VERIFICATION CONTROLLER ==================== //
-class VerificationController {
-	static verifyEntity = asyncHandler(async (req, res, entityModel, entityIdKey, entityName) => {
-		const { status, remarks, verificationDocuments } = req.body;
-		const entityId = req.params[entityIdKey];
+// ======================= 📊 ANALYTICS =======================
 
-		const entity = await entityModel.findById(entityId);
-		if (!entity) throw new ApiError(404, `${entityName} not found`);
+const getSystemAnalytics = asyncHandler(async (req, res) => {
+	const timeframe = req.query.timeframe || '24h';
+	const duration =
+		{
+			'24h': 24 * 60 * 60 * 1000,
+			'7d': 7 * 24 * 60 * 60 * 1000,
+			'30d': 30 * 24 * 60 * 60 * 1000,
+		}[timeframe] || 24 * 60 * 60 * 1000;
 
-		entity.isVerified = status === 'approved';
-		entity.verificationRemarks = remarks;
-		entity.verificationDocuments = verificationDocuments;
-		entity.verifiedBy = { adminId: req.admin._id, verifiedAt: new Date() };
+	const [hospitals, ngos, analytics, urgentRequests] = await Promise.all([
+		Hospital.aggregate([{ $group: { _id: '$isVerified', count: { $sum: 1 } } }]),
+		NGO.aggregate([{ $group: { _id: '$isVerified', count: { $sum: 1 } } }]),
+		Analytics.findOne().sort({ createdAt: -1 }),
+		BloodRequest.countDocuments({
+			urgencyLevel: 'Emergency',
+			status: { $nin: ['Completed', 'Cancelled'] },
+			createdAt: { $gte: new Date(Date.now() - duration) },
+		}),
+	]);
 
-		await entity.save();
+	const systemHealth = {
+		status: 'Operational',
+		timestamp: new Date(),
+		memoryUsage: process.memoryUsage(),
+		cpuUsage: process.cpuUsage(),
+	};
 
-		await Activity.create({
-			type: `${entityName.toUpperCase()}_VERIFICATION`,
-			performedBy: { userId: req.admin._id, userModel: 'Admin' },
-			details: { id: entityId, status, remarks },
-		});
-
-		await Notification.create({
-			type: status === 'approved' ? 'VERIFICATION_APPROVED' : 'VERIFICATION_REJECTED',
-			recipient: entity._id,
-			recipientModel: entityName,
-			data: { status, remarks, verifiedBy: req.admin.fullName },
-		});
-
-		return res
-			.status(200)
-			.json(new ApiResponse(200, entity, `${entityName} verification updated`));
-	});
-
-	static verifyHospital = (req, res) =>
-		VerificationController.verifyEntity(req, res, Hospital, 'hospitalId', 'Hospital');
-
-	static verifyNGO = (req, res) =>
-		VerificationController.verifyEntity(req, res, NGO, 'ngoId', 'NGO');
-}
-
-// ==================== ANALYTICS CONTROLLER ==================== //
-class AnalyticsController {
-	static getSystemAnalytics = asyncHandler(async (req, res) => {
-		const timeframe = req.query.timeframe || '24h';
-
-		const [hospitals, ngos, analytics, urgentRequests] = await Promise.all([
-			Hospital.aggregate([
-				{
-					$group: {
-						_id: '$isVerified',
-						count: { $sum: 1 },
-						totalRequests: { $sum: '$statistics.totalRequestsMade' },
-						emergencyRequests: { $sum: '$statistics.emergencyRequests' },
-						capacityUtilization: {
-							$avg: {
-								$divide: [
-									'$statistics.currentPatients',
-									{ $max: ['$statistics.totalCapacity', 1] },
-								],
-							},
-						},
-					},
-				},
-			]),
-			NGO.aggregate([
-				{
-					$group: {
-						_id: '$isVerified',
-						count: { $sum: 1 },
-						totalCamps: { $sum: '$statistics.totalCampsOrganized' },
-						totalDonations: { $sum: '$statistics.totalDonationsCollected' },
-						successRate: {
-							$avg: {
-								$divide: [
-									'$statistics.successfulDonations',
-									{ $max: ['$statistics.totalAttempts', 1] },
-								],
-							},
-						},
-					},
-				},
-			]),
-			Analytics.findOne().sort({ createdAt: -1 }),
-			BloodRequest.countDocuments({
-				urgencyLevel: 'Emergency',
-				status: { $nin: ['Completed', 'Cancelled'] },
-				createdAt: {
-					$gte: new Date(Date.now() - AnalyticsController.getTimeframeInMS(timeframe)),
-				},
-			}),
-		]);
-
-		return res.status(200).json(
-			new ApiResponse(
-				200,
-				{
-					hospitals,
-					ngos,
-					analytics,
-					urgentRequests,
-					systemHealth: await AnalyticsController.getSystemHealth(),
-				},
-				'System analytics fetched',
-			),
-		);
-	});
-
-	static getTimeframeInMS(timeframe) {
-		const ranges = { '24h': 86400000, '7d': 604800000, '30d': 2592000000 };
-		return ranges[timeframe] || ranges['24h'];
-	}
-
-	static async getSystemHealth() {
-		return {
-			status: 'Operational',
-			checkedAt: new Date(),
-			metrics: {
-				cpu: process.cpuUsage(),
-				memory: process.memoryUsage(),
+	res.status(200).json(
+		new ApiResponse(
+			200,
+			{
+				hospitals,
+				ngos,
+				urgentRequests,
+				analytics,
+				systemHealth,
 			},
-			services: {
-				db: mongoose.connection.readyState === 1 ? 'Healthy' : 'Down',
-			},
-		};
-	}
-}
+			'System analytics fetched',
+		),
+	);
+});
 
-// ==================== EXPORT CONTROLLERS ==================== //
-export const registerAdmin = AdminAuthController.register;
-export const loginAdmin = AdminAuthController.login;
+// ======================= 🚀 EXPORT =======================
 
-export const verifyHospital = VerificationController.verifyHospital;
-export const verifyNGO = VerificationController.verifyNGO;
-
-export const getSystemAnalytics = AnalyticsController.getSystemAnalytics;
+export { registerAdmin, loginAdmin, verifyEntity, getSystemAnalytics };
