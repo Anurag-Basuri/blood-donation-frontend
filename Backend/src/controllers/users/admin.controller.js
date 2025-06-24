@@ -290,9 +290,9 @@ const deleteAdminAccount = asyncHandler(async (req, res) => {
  */
 // deactivate user account
 const deactivateUserAccount = asyncHandler(async (req, res) => {
-	const { userId } = req.params;
+    const { userId } = req.params;
 
-	if (!mongoose.isValidObjectId(userId)) {
+    if (!mongoose.isValidObjectId(userId)) {
 		throw new ApiError(400, 'Invalid user ID');
 	}
 
@@ -305,13 +305,20 @@ const deactivateUserAccount = asyncHandler(async (req, res) => {
 	user.deactivationReason = req.body.reason || 'User Request';
 	await user.save();
 
-	res.status(200).json(
-		new ApiResponse(
-			200,
-			user,
-			'User account deactivated successfully'
-		)
-	);
+	// Send notification to user (using Notification model's recipient field)
+	const notification = new Notification({
+		recipient: user._id,
+		recipientModel: 'User',
+		message: 'Your account has been deactivated by the admin.',
+		type: 'account_deactivation',
+		status: 'unread',
+		data: {
+			reason: user.deactivationReason,
+		},
+	});
+	await notification.save();
+
+    res.status(200).json(new ApiResponse(200, user, 'User account deactivated successfully'));
 });
 
 // reactivate user account
