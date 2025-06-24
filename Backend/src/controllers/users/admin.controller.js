@@ -72,44 +72,127 @@ const loginAdmin = asyncHandler(async (req, res) => {
 
 // Get admin dashboard data
 const getAdminDashboardData = asyncHandler(async (req, res) => {
-	const totalUsers = await User.countDocuments();
-	const totalNGOs = await NGO.countDocuments();
-	const totalHospitals = await Hospital.countDocuments();
-	const totalDonationAppointments = await DonationAppointment.countDocuments();
-	const totalBloodRequests = await BloodRequest.countDocuments();
-	const totalOrganRequests = await OrganRequest.countDocuments();
-	const totalPlasmaRequests = await PlasmaRequest.countDocuments();
-	const totalFacilities = await Facility.countDocuments();
-	const totalEquipments = await Equipment.countDocuments();
-	const totalMedicines = await Medicine.countDocuments();
-	const totalActivities = await Activity.countDocuments();
-	const totalNotifications = await Notification.countDocuments();
-	const totalAnalytics = await Analytics.countDocuments();
-	const totalAdmins = await Admin.countDocuments();
+	const now = new Date();
+	const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+	const last7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-	const dashboardData = {
+	const [
 		totalUsers,
-		totalNGOs,
+		newUsersThisMonth,
 		totalHospitals,
+		verifiedHospitals,
+		totalNGOs,
+		verifiedNGOs,
 		totalDonationAppointments,
+		fulfilledAppointments,
+		pendingAppointments,
 		totalBloodRequests,
+		activeBloodRequests,
 		totalOrganRequests,
+		activeOrganRequests,
 		totalPlasmaRequests,
+		activePlasmaRequests,
 		totalFacilities,
 		totalEquipments,
 		totalMedicines,
+		availableMedicines,
+		activityLast7Days,
 		totalActivities,
 		totalNotifications,
+		unreadNotifications,
 		totalAnalytics,
-		totalAdmins
+		totalAdmins,
+	] = await Promise.all([
+		User.countDocuments(),
+		User.countDocuments({ createdAt: { $gte: monthStart } }),
+		Hospital.countDocuments(),
+		Hospital.countDocuments({ isVerified: true }),
+		NGO.countDocuments(),
+		NGO.countDocuments({ isVerified: true }),
+		DonationAppointment.countDocuments(),
+		DonationAppointment.countDocuments({ status: 'completed' }),
+		DonationAppointment.countDocuments({ status: 'pending' }),
+		BloodRequest.countDocuments(),
+		BloodRequest.countDocuments({ status: { $nin: ['Completed', 'Cancelled'] } }),
+		OrganRequest.countDocuments(),
+		OrganRequest.countDocuments({ status: { $nin: ['Completed', 'Cancelled'] } }),
+		PlasmaRequest.countDocuments(),
+		PlasmaRequest.countDocuments({ status: { $nin: ['Completed', 'Cancelled'] } }),
+		Facility.countDocuments(),
+		Equipment.countDocuments(),
+		Medicine.countDocuments(),
+		Medicine.countDocuments({ stock: { $gt: 0 } }),
+		Activity.countDocuments({ createdAt: { $gte: last7Days } }),
+		Activity.countDocuments(),
+		Notification.countDocuments(),
+		Notification.countDocuments({ status: { $ne: 'read' } }),
+		Analytics.countDocuments(),
+		Admin.countDocuments(),
+	]);
+
+	const dashboardData = {
+		users: {
+			total: totalUsers,
+			newThisMonth: newUsersThisMonth,
+		},
+		ngos: {
+			total: totalNGOs,
+			verified: verifiedNGOs,
+			unverified: totalNGOs - verifiedNGOs,
+		},
+		hospitals: {
+			total: totalHospitals,
+			verified: verifiedHospitals,
+			unverified: totalHospitals - verifiedHospitals,
+		},
+		donations: {
+			totalAppointments: totalDonationAppointments,
+			fulfilled: fulfilledAppointments,
+			pending: pendingAppointments,
+		},
+		requests: {
+			blood: {
+				total: totalBloodRequests,
+				active: activeBloodRequests,
+			},
+			organ: {
+				total: totalOrganRequests,
+				active: activeOrganRequests,
+			},
+			plasma: {
+				total: totalPlasmaRequests,
+				active: activePlasmaRequests,
+			},
+		},
+		resources: {
+			facilities: totalFacilities,
+			equipments: totalEquipments,
+			medicines: {
+				total: totalMedicines,
+				available: availableMedicines,
+			},
+		},
+		activities: {
+			total: totalActivities,
+			last7Days: activityLast7Days,
+		},
+		notifications: {
+			total: totalNotifications,
+			unread: unreadNotifications,
+		},
+		system: {
+			analyticsEntries: totalAnalytics,
+			admins: totalAdmins,
+		},
 	};
 
-	res
+	return res
 		.status(200)
 		.json(
 			new ApiResponse(
-				'Admin dashboard data retrieved successfully',
-				dashboardData
+				200,
+				dashboardData,
+				'Admin dashboard data retrieved successfully'
 			)
 		);
 });
