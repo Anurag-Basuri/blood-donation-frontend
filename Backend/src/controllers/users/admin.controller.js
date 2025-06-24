@@ -794,3 +794,29 @@ const approveHospitalDocs = asyncHandler(async (req, res) => {
 		throw new ApiError(400, "Invalid action. Use 'approve' or 'warn'.");
 	}
 });
+
+// Get hospital documents
+const getHospitalDocuments = asyncHandler(async (req, res) => {
+	const { hospitalId } = req.params;
+
+	if (!mongoose.isValidObjectId(hospitalId)) {
+		throw new ApiError(400, 'Invalid hospital ID');
+	}
+
+	const hospital = await Hospital.findById(hospitalId).select(
+		'name email documents adminApproved isVerified status'
+	);
+
+	if (!hospital) {
+		throw new ApiError(404, 'Hospital not found');
+	}
+
+	// The 'documents' field should contain URLs/publicIds for each uploaded doc
+	return res.status(200).json(
+		new ApiResponse(
+			200,
+			hospital,
+			'Hospital documents fetched successfully'
+		)
+	);
+});
