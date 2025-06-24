@@ -383,6 +383,34 @@ const reactivateUserAccount = asyncHandler(async (req, res) => {
 });
 
 /**
- * NGO
+ * NGO\
  */
-// 
+// warn the NGO
+const warnNGO = asyncHandler(async (req, res) => {
+	const { ngoId } = req.params;
+
+	if (!mongoose.isValidObjectId(ngoId)) {
+		throw new ApiError(400, 'Invalid NGO ID');
+	}
+
+	// Send warning notification to NGO (using Notification model's recipient field)
+	const notification = new Notification({
+		recipient: ngoId,
+		recipientModel: 'NGO',
+		message: 'You have been warned by the admin.',
+		type: 'ngo_warning',
+		status: 'unread',
+		data: {
+			reason: 'Inappropriate behavior',
+		},
+	});
+	await notification.save();
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse
+				(200, null, 'NGO warned successfully'
+			)
+		);
+});
