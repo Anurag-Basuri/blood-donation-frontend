@@ -288,6 +288,30 @@ const deleteAdminAccount = asyncHandler(async (req, res) => {
 /**
  * User
  */
+// warn the user
+const warnUser = asyncHandler(async (req, res) => {
+	const { userId } = req.params;
+
+	if (!mongoose.isValidObjectId(userId)) {
+		throw new ApiError(400, 'Invalid user ID');
+	}
+
+	// Send warning notification to user (using Notification model's recipient field)
+	const notification = new Notification({
+		recipient: userId,
+		recipientModel: 'User',
+		message: 'You have been warned by the admin.',
+		type: 'user_warning',
+		status: 'unread',
+		data: {
+			reason: 'Inappropriate behavior',
+		},
+	});
+	await notification.save();
+
+	res.status(200).json(new ApiResponse(200, null, 'User warned successfully'));
+});
+
 // deactivate user account
 const deactivateUserAccount = asyncHandler(async (req, res) => {
     const { userId } = req.params;
