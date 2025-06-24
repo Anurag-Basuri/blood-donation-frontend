@@ -416,6 +416,20 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
 	});
 });
 
+// Delete User Account(Hard Delete)
+const deleteUserAccount = asyncHandler(async (req, res) => {
+	const userId = req.user._id || req.params.id;
+
+	if (!userId) {
+		return res.status(400).json(new ApiResponse(400, {}, 'User ID is required'));
+	}
+
+	const user = await User.findByIdAndDelete(userId);
+	if (!user) {
+		return res.status(404).json(new ApiResponse(404, {}, 'User not found'));
+	}
+});
+
 // send OTP to verify phone number
 const verifyPhoneNumber = asyncHandler(async (req, res) => {
 	let phone = req.user?.phone || req.body.phone;
@@ -552,6 +566,7 @@ export {
 	markNotificationsRead,
 	getUserProfile,
 	getCurrentUser,
+	deleteUserAccount,
 	verifyPhoneNumber,
 	verifyPhoneOTP,
 	sendVerificationEmail,
