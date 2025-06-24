@@ -213,3 +213,31 @@ const getAdminProfile = asyncHandler(async (req, res) => {
 			)
 		);
 });
+
+// Update admin profile
+const updateAdminProfile = asyncHandler(async (req, res) => {
+	const { fullName, email } = req.body;
+
+	if (!fullName || !email) {
+		throw new ApiError(400, 'Full name and email are required');
+	}
+
+	const updatedAdmin = await Admin.findByIdAndUpdate(
+		req.admin._id,
+		{ fullName, email },
+		{ new: true, runValidators: true }
+	).select('-password');
+
+	if (!updatedAdmin) {
+		throw new ApiError(404, 'Admin not found');
+	}
+
+	res
+		.status(200)
+		.json(
+			new ApiResponse(
+				'Admin profile updated successfully',
+				updatedAdmin
+			)
+		);
+});
