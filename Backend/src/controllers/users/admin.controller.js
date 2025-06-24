@@ -723,3 +723,74 @@ const reactivateHospitalAccount = asyncHandler(async (req, res) => {
 			)
 		);
 });
+
+// Verify hospital documents (adminApproved)
+const approveHospitalDocs = asyncHandler(async (req, res) => {
+	const { hospitalId } = req.params;
+	const { action, warningMessage } = req.body; // action: 'approve' or 'warn'
+
+	if (!mongoose.isValidObjectId(hospitalId)) {
+		throw new ApiError(400, 'Invalid hospital ID');
+	}
+
+	const hospital = await Hospital.findById(hospitalId);
+	if (!hospital) {
+		throw new ApiError(404, 'Hospital not found');
+	}
+
+	if (action === 'approve') {
+		if (hospital.adminApproved) {
+			throw new ApiError(400, 'Hospital documents are already approved');
+		}
+		hospital.adminApproved = true;
+		await hospital.save();
+
+		// Send approval notification
+		const notification = new Notification({
+			recipient: hospital._id,
+			recipientModel: 'Hospital',
+			message: 'Your documents have been approved by the admin.',
+			type: 'document_approval',
+			status: 'unread',
+			data: {
+				reason: 'Your documents have been approved and are now active.',
+			},
+		});
+		await notification.save();
+
+		return res.status(200).json(
+			new ApiResponse(
+				200,
+				hospital,
+				'Hospital documents approved successfully'
+			)
+		);
+	} else if (action === 'warn') {
+		if (!warningMessage || warningMessage.trim() === '') {
+			throw new ApiError(400, 'Warning message is required');
+		}
+
+		// Send warning notification
+		const notification = new Notification({
+			recipient: hospital._id,
+			recipientModel: 'Hospital',
+			message: warningMessage,
+			type: 'document_warning',
+			status: 'unread',
+			data: {
+				reason: warningMessage,
+			},
+		});
+		await notification.save();
+
+		return res.status(200).json(
+			new ApiResponse(
+				200,
+				null,
+				'Warning notification sent to Hospital'
+			)
+		);
+	} else {
+		throw new ApiError(400, "Invalid action. Use 'approve' or 'warn'.");
+	}
+});
