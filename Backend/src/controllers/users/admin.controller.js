@@ -505,3 +505,74 @@ const reactivateNGOAccount = asyncHandler(async (req, res) => {
 			)
 		);
 });
+
+// Verify NGO documents(adminApproved)
+const approveNGODocs = asyncHandler(async (req, res) => {
+    const { ngoId } = req.params;
+    const { action, warningMessage } = req.body; // action: 'approve' or 'warn'
+
+    if (!mongoose.isValidObjectId(ngoId)) {
+        throw new ApiError(400, 'Invalid NGO ID');
+    }
+
+    const ngo = await NGO.findById(ngoId);
+    if (!ngo) {
+        throw new ApiError(404, 'NGO not found');
+    }
+
+    if (action === 'approve') {
+        if (ngo.adminApproved) {
+            throw new ApiError(400, 'NGO documents are already approved');
+        }
+        ngo.adminApproved = true;
+        await ngo.save();
+
+        // Send approval notification
+        const notification = new Notification({
+            recipient: ngo._id,
+            recipientModel: 'NGO',
+            message: 'Your documents have been approved by the admin.',
+            type: 'document_approval',
+            status: 'unread',
+            data: {
+                reason: 'Your documents have been approved and are now active.',
+            },
+        });
+        await notification.save();
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                ngo,
+                'NGO documents approved successfully'
+            )
+        );
+    } else if (action === 'warn') {
+        if (!warningMessage || warningMessage.trim() === '') {
+            throw new ApiError(400, 'Warning message is required');
+        }
+
+        // Send warning notification
+        const notification = new Notification({
+            recipient: ngo._id,
+            recipientModel: 'NGO',
+            message: warningMessage,
+            type: 'document_warning',
+            status: 'unread',
+            data: {
+                reason: warningMessage,
+            },
+        });
+        await notification.save();
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                null,
+                'Warning notification sent to NGO'
+            )
+        );
+    } else {
+        throw new ApiError(400, "Invalid action. Use 'approve' or 'warn'.");
+    }
+});
