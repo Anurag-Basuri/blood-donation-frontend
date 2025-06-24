@@ -678,3 +678,48 @@ const deactivateHospitalAccount = asyncHandler(async (req, res) => {
 			)
 		);
 });
+
+// reactivate hospital account
+const reactivateHospitalAccount = asyncHandler(async (req, res) => {
+	const { hospitalId } = req.params;
+
+	if (!mongoose.isValidObjectId(hospitalId)) {
+		throw new ApiError(400, 'Invalid hospital ID');
+	}
+
+	const hospital = await Hospital.findById(hospitalId);
+	if (!hospital) {
+		throw new ApiError(404, 'Hospital not found');
+	}
+
+	if (!hospital.deactivated) {
+		throw new ApiError(400, 'Hospital account is not deactivated');
+	}
+
+	hospital.deactivated = false;
+	hospital.deactivationReason = null;
+	await hospital.save();
+
+	// Send notification to hospital (using Notification model's recipient field)
+	const notification = new Notification({
+		recipient: hospital._id,
+		recipientModel: 'Hospital',
+		message: 'Your account has been reactivated by the admin.',
+		type: 'account_reactivation',
+		status: 'unread',
+		data: {
+			reason: 'Your account has been reactivated and is now active.',
+		},
+	});
+	await notification.save();
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				hospital,
+				'Hospital account reactivated successfully'
+			)
+		);
+});
