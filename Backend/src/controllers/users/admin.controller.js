@@ -602,3 +602,38 @@ const getNGODocuments = asyncHandler(async (req, res) => {
         )
     );
 });
+
+/*
+ * Hospital
+*/
+// warn the hospital
+const warnHospital = asyncHandler(async (req, res) => {
+	const { hospitalId } = req.params;
+
+	if (!mongoose.isValidObjectId(hospitalId)) {
+		throw new ApiError(400, 'Invalid hospital ID');
+	}
+
+	// Send warning notification to hospital (using Notification model's recipient field)
+	const notification = new Notification({
+		recipient: hospitalId,
+		recipientModel: 'Hospital',
+		message: 'You have been warned by the admin.',
+		type: 'hospital_warning',
+		status: 'unread',
+		data: {
+			reason: 'Inappropriate behavior',
+		},
+	});
+	await notification.save();
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				null,
+				'Hospital warned successfully'
+			)
+		);
+});
