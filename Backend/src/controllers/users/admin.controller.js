@@ -287,7 +287,7 @@ const deleteAdminAccount = asyncHandler(async (req, res) => {
 
 /**
  * User
- */
+*/
 // warn the user
 const warnUser = asyncHandler(async (req, res) => {
 	const { userId } = req.params;
@@ -309,7 +309,7 @@ const warnUser = asyncHandler(async (req, res) => {
 	});
 	await notification.save();
 
-	res.status(200).json(new ApiResponse(200, null, 'User warned successfully'));
+	return res.status(200).json(new ApiResponse(200, null, 'User warned successfully'));
 });
 
 // deactivate user account
@@ -342,7 +342,7 @@ const deactivateUserAccount = asyncHandler(async (req, res) => {
 	});
 	await notification.save();
 
-    res.status(200).json(new ApiResponse(200, user, 'User account deactivated successfully'));
+    return res.status(200).json(new ApiResponse(200, user, 'User account deactivated successfully'));
 });
 
 // reactivate user account
@@ -379,11 +379,19 @@ const reactivateUserAccount = asyncHandler(async (req, res) => {
 	});
 	await notification.save();
 
-    res.status(200).json(new ApiResponse(200, user, 'User account reactivated successfully'));
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				user,
+				'User account reactivated successfully'
+			)
+		);
 });
 
 /**
- * NGO\
+ * NGO
  */
 // warn the NGO
 const warnNGO = asyncHandler(async (req, res) => {
@@ -411,6 +419,46 @@ const warnNGO = asyncHandler(async (req, res) => {
 		.json(
 			new ApiResponse
 				(200, null, 'NGO warned successfully'
+			)
+		);
+});
+
+// deactivate NGO account
+const deactivateNGOAccount = asyncHandler(async (req, res) => {
+	const { ngoId } = req.params;
+
+	if (!mongoose.isValidObjectId(ngoId)) {
+		throw new ApiError(400, 'Invalid NGO ID');
+	}
+
+	const ngo = await NGO.findById(ngoId);
+	if (!ngo) {
+		throw new ApiError(404, 'NGO not found');
+	}
+	ngo.deactivated = true;
+	ngo.deactivationReason = req.body.reason || 'User Request';
+	await ngo.save();
+
+	// Send notification to NGO (using Notification model's recipient field)
+	const notification = new Notification({
+		recipient: ngo._id,
+		recipientModel: 'NGO',
+		message: 'Your account has been deactivated by the admin.',
+		type: 'account_deactivation',
+		status: 'unread',
+		data: {
+			reason: ngo.deactivationReason,
+		},
+	});
+	await notification.save();
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				ngo,
+				'NGO account deactivated successfully'
 			)
 		);
 });
