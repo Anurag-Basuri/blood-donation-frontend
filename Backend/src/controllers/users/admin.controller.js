@@ -36,7 +36,7 @@ const registerAdmin = asyncHandler(async (req, res) => {
 
 	const newAdmin = await Admin.create({ fullName, email, password });
 
-	res
+	return res
 		.status(201)
 		.json(
 			new ApiResponse(
@@ -60,7 +60,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
 
 	const token = await admin.generateAuthToken();
 
-	res
+	return res
 		.status(200)
 		.json(
 			new ApiResponse(
@@ -204,7 +204,7 @@ const getAdminProfile = asyncHandler(async (req, res) => {
 		throw new ApiError(404, 'Admin not found');
 	}
 
-	res
+	return res
 		.status(200)
 		.json(
 			new ApiResponse(
@@ -232,7 +232,7 @@ const updateAdminProfile = asyncHandler(async (req, res) => {
 		throw new ApiError(404, 'Admin not found');
 	}
 
-	res
+	return res
 		.status(200)
 		.json(
 			new ApiResponse(
@@ -258,7 +258,7 @@ const changeAdminPassword = asyncHandler(async (req, res) => {
 	admin.password = newPassword;
 	await admin.save();
 
-	res
+	return res
 		.status(200)
 		.json(
 			new ApiResponse(
