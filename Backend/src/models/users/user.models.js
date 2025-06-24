@@ -98,6 +98,21 @@ const userSchema = new Schema(
 		},
 		lastLogin: Date,
 
+		deactivated: {
+			type: Boolean,
+			default: false,
+		},
+		deactivationReason: {
+			type: String,
+			enum: [
+				'User Request',
+				'Inactivity',
+				'Violation of Terms',
+				'Other',
+			],
+			default: 'User Request',
+		},
+
 		// Personal Information
 		dateOfBirth: {
 			type: Date,
