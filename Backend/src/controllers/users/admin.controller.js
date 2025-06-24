@@ -266,3 +266,21 @@ const changeAdminPassword = asyncHandler(async (req, res) => {
 			)
 		);
 });
+
+// Delete admin account
+const deleteAdminAccount = asyncHandler(async (req, res) => {
+	const admin = await Admin.findById(req.admin._id);
+	if (!admin) {
+		throw new ApiError(404, 'Admin not found');
+	}
+
+	await admin.remove();
+
+	res
+		.status(200)
+		.json(
+			new ApiResponse(
+				'Admin account deleted successfully'
+			)
+		);
+});
