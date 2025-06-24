@@ -298,8 +298,13 @@ const changePassword = asyncHandler(async (req, res) => {
 
 // HISTORY & TRACKING
 const getDonationHistory = asyncHandler(async (req, res) => {
+	const userId = req.user._id || req.params.id;
+	if (!userId) {
+		return res.status(400).json(new ApiResponse(400, [], 'User ID is required'));
+	}
+
 	const donations = await DonationAppointment.find({
-		userId: req.user._id,
+		userId,
 		status: 'Completed',
 	})
 		.sort({ date: -1 })
@@ -308,6 +313,42 @@ const getDonationHistory = asyncHandler(async (req, res) => {
 	return res
 		.status(200)
 		.json(new ApiResponse(200, donations, 'Donation history fetched successfully'));
+});
+
+const getUserActivities = asyncHandler(async (req, res) => {
+	const userId = req.user._id || req.params.id;
+	if (!userId) {
+		return res.status(400).json(new ApiResponse(400, [], 'User ID is required'));
+	}
+
+	const activities = await Activity.find({ 'performedBy.userId': userId })
+		.sort({ createdAt: -1 })
+		.populate('performedBy.userId', 'userName fullName');
+
+	if (!activities || activities.length === 0) {
+		return res.status(404).json(new ApiResponse(404, [], 'No activities found for this user'));
+	}
+
+	// Format activities to include only necessary fields
+	const formattedActivities = activities.map(activity => ({
+		_id: activity._id,
+		type: activity.type,
+		performedBy: {
+			userId: activity.performedBy.userId._id,
+			userName: activity.performedBy.userId.userName,
+			fullName: activity.performedBy.userId.fullName,
+		},
+		details: activity.details,
+		createdAt: activity.createdAt,
+	}));
+
+	if (formattedActivities.length === 0) {
+		return res.status(404).json(new ApiResponse(404, [], 'No activities found for this user'));
+	}
+
+	return res
+		.status(200)
+		.json(new ApiResponse(200, formattedActivities, 'User activities fetched successfully'));
 });
 
 // NOTIFICATIONS
@@ -506,6 +547,7 @@ export {
 	updateProfile,
 	changePassword,
 	getDonationHistory,
+	getUserActivities,
 	getNotifications,
 	markNotificationsRead,
 	getUserProfile,
