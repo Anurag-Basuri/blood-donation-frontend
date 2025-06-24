@@ -462,3 +462,46 @@ const deactivateNGOAccount = asyncHandler(async (req, res) => {
 			)
 		);
 });
+
+// reactivate NGO account
+const reactivateNGOAccount = asyncHandler(async (req, res) => {
+	const { ngoId } = req.params;
+
+	if (!mongoose.isValidObjectId(ngoId)) {
+		throw new ApiError(400, 'Invalid NGO ID');
+	}
+
+	const ngo = await NGO.findById(ngoId);
+	if (!ngo) {
+		throw new ApiError(404, 'NGO not found');
+	}
+	if (!ngo.deactivated) {
+		throw new ApiError(400, 'NGO account is not deactivated');
+	}
+	ngo.deactivated = false;
+	ngo.deactivationReason = null;
+	await ngo.save();
+
+	// Send notification to NGO (using Notification model's recipient field)
+	const notification = new Notification({
+		recipient: ngo._id,
+		recipientModel: 'NGO',
+		message: 'Your account has been reactivated by the admin.',
+		type: 'account_reactivation',
+		status: 'unread',
+		data: {
+			reason: 'Your account has been reactivated and is now active.',
+		},
+	});
+	await notification.save();
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				ngo,
+				'NGO account reactivated successfully'
+			)
+		);
+});
