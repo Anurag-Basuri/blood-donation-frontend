@@ -323,9 +323,9 @@ const deactivateUserAccount = asyncHandler(async (req, res) => {
 
 // reactivate user account
 const reactivateUserAccount = asyncHandler(async (req, res) => {
-	const { userId } = req.params;
+    const { userId } = req.params;
 
-	if (!mongoose.isValidObjectId(userId)) {
+    if (!mongoose.isValidObjectId(userId)) {
 		throw new ApiError(400, 'Invalid user ID');
 	}
 
@@ -342,11 +342,18 @@ const reactivateUserAccount = asyncHandler(async (req, res) => {
 	user.deactivationReason = null;
 	await user.save();
 
-	res.status(200).json(
-		new ApiResponse(
-			200,
-			user,
-			'User account reactivated successfully'
-		)
-	);
+	// Send notification to user (using Notification model's recipient field)
+	const notification = new Notification({
+		recipient: user._id,
+		recipientModel: 'User',
+		message: 'Your account has been reactivated by the admin.',
+		type: 'account_reactivation',
+		status: 'unread',
+		data: {
+			reason: 'Your account has been reactivated and is now active.',
+		},
+	});
+	await notification.save();
+
+    res.status(200).json(new ApiResponse(200, user, 'User account reactivated successfully'));
 });
