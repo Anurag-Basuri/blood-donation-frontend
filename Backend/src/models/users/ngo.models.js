@@ -89,6 +89,16 @@ const ngoSchema = new mongoose.Schema(
 			type: Number,
 			default: 0,
 		},
+
+		deactivated: {
+			type: Boolean,
+			default: false,
+		},
+		deactivationReason: {
+			type: String,
+			enum: ['User Request', 'Inactivity', 'Violation of Terms', 'Other'],
+			default: 'User Request',
+		},
 		lockedUntil: Date,
 
 		// Contact

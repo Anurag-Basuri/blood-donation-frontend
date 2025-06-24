@@ -381,3 +381,8 @@ const reactivateUserAccount = asyncHandler(async (req, res) => {
 
     res.status(200).json(new ApiResponse(200, user, 'User account reactivated successfully'));
 });
+
+/**
+ * NGO
+ */
+// 
