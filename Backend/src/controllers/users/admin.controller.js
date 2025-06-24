@@ -285,4 +285,29 @@ const deleteAdminAccount = asyncHandler(async (req, res) => {
 		);
 });
 
-// 
+// deactivate user account
+const deactivateUserAccount = asyncHandler(async (req, res) => {
+	const { userId } = req.params;
+
+	if (!mongoose.isValidObjectId(userId)) {
+		throw new ApiError(400, 'Invalid user ID');
+	}
+
+	const user = await User.findById(userId);
+	if (!user) {
+		throw new ApiError(404, 'User not found');
+	}
+
+	user.deactivated = true;
+	user.deactivationReason = req.body.reason || 'User Request';
+	await user.save();
+
+	res.status(200).json(
+		new ApiResponse(
+			200,
+			user,
+			'User account deactivated successfully'
+		)
+	);
+});
+
