@@ -576,3 +576,29 @@ const approveNGODocs = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid action. Use 'approve' or 'warn'.");
     }
 });
+
+// Get NGO documents
+const getNGODocuments = asyncHandler(async (req, res) => {
+    const { ngoId } = req.params;
+
+    if (!mongoose.isValidObjectId(ngoId)) {
+        throw new ApiError(400, 'Invalid NGO ID');
+    }
+
+    const ngo = await NGO.findById(ngoId).select(
+        'name email documents adminApproved isVerified status'
+    );
+
+    if (!ngo) {
+        throw new ApiError(404, 'NGO not found');
+    }
+
+    // The 'documents' field should contain URLs/publicIds for each uploaded doc
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            ngo,
+            'NGO documents fetched successfully'
+        )
+    );
+});
