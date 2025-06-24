@@ -637,3 +637,44 @@ const warnHospital = asyncHandler(async (req, res) => {
 			)
 		);
 });
+
+// deactivate hospital account
+const deactivateHospitalAccount = asyncHandler(async (req, res) => {
+	const { hospitalId } = req.params;
+
+	if (!mongoose.isValidObjectId(hospitalId)) {
+		throw new ApiError(400, 'Invalid hospital ID');
+	}
+
+	const hospital = await Hospital.findById(hospitalId);
+	if (!hospital) {
+		throw new ApiError(404, 'Hospital not found');
+	}
+
+	hospital.deactivated = true;
+	hospital.deactivationReason = req.body.reason || 'User Request';
+	await hospital.save();
+
+	// Send notification to hospital (using Notification model's recipient field)
+	const notification = new Notification({
+		recipient: hospital._id,
+		recipientModel: 'Hospital',
+		message: 'Your account has been deactivated by the admin.',
+		type: 'account_deactivation',
+		status: 'unread',
+		data: {
+			reason: hospital.deactivationReason,
+		},
+	});
+	await notification.save();
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				hospital,
+				'Hospital account deactivated successfully'
+			)
+		);
+});
