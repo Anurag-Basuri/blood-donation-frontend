@@ -69,3 +69,64 @@ const loginAdmin = asyncHandler(async (req, res) => {
 			)
 		);
 });
+
+// Get admin dashboard data
+const getAdminDashboardData = asyncHandler(async (req, res) => {
+	const totalUsers = await User.countDocuments();
+	const totalNGOs = await NGO.countDocuments();
+	const totalHospitals = await Hospital.countDocuments();
+	const totalDonationAppointments = await DonationAppointment.countDocuments();
+	const totalBloodRequests = await BloodRequest.countDocuments();
+	const totalOrganRequests = await OrganRequest.countDocuments();
+	const totalPlasmaRequests = await PlasmaRequest.countDocuments();
+	const totalFacilities = await Facility.countDocuments();
+	const totalEquipments = await Equipment.countDocuments();
+	const totalMedicines = await Medicine.countDocuments();
+	const totalActivities = await Activity.countDocuments();
+	const totalNotifications = await Notification.countDocuments();
+	const totalAnalytics = await Analytics.countDocuments();
+	const totalAdmins = await Admin.countDocuments();
+
+	const dashboardData = {
+		totalUsers,
+		totalNGOs,
+		totalHospitals,
+		totalDonationAppointments,
+		totalBloodRequests,
+		totalOrganRequests,
+		totalPlasmaRequests,
+		totalFacilities,
+		totalEquipments,
+		totalMedicines,
+		totalActivities,
+		totalNotifications,
+		totalAnalytics,
+		totalAdmins
+	};
+
+	res
+		.status(200)
+		.json(
+			new ApiResponse(
+				'Admin dashboard data retrieved successfully',
+				dashboardData
+			)
+		);
+});
+
+// Get admin profile
+const getAdminProfile = asyncHandler(async (req, res) => {
+	const admin = await Admin.findById(req.admin._id).select('-password');
+	if (!admin) {
+		throw new ApiError(404, 'Admin not found');
+	}
+
+	res
+		.status(200)
+		.json(
+			new ApiResponse(
+				'Admin profile retrieved successfully',
+				admin
+			)
+		);
+});
