@@ -861,3 +861,21 @@ const getAllBloodRequests = asyncHandler(async (req, res) => {
 			)
 		);
 });
+
+// Get all organ requests
+const getAllOrganRequests = asyncHandler(async (req, res) => {
+	const organRequests = await OrganRequest.find()
+		.populate('hospitalId', 'name address')
+		.populate('ngoId', 'name')
+		.select('-patientInfo.confidential');
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				organRequests,
+				'All organ requests fetched successfully'
+			)
+		);
+});
