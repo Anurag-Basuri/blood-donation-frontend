@@ -879,3 +879,21 @@ const getAllOrganRequests = asyncHandler(async (req, res) => {
 			)
 		);
 });
+
+// Get all plasma requests
+const getAllPlasmaRequests = asyncHandler(async (req, res) => {
+	const plasmaRequests = await PlasmaRequest.find()
+		.populate('hospitalId', 'name address')
+		.populate('ngoId', 'name')
+		.select('-patientInfo.confidential');
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				plasmaRequests,
+				'All plasma requests fetched successfully'
+			)
+		);
+});
