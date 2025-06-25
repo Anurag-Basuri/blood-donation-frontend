@@ -390,7 +390,7 @@ const reactivateUserAccount = asyncHandler(async (req, res) => {
 		);
 });
 
-/**
+/*
  * NGO
  */
 // warn the NGO
@@ -820,3 +820,5 @@ const getHospitalDocuments = asyncHandler(async (req, res) => {
 		)
 	);
 });
+
+//
