@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { Admin } from '../../models/users/admin.models.js';
 import { User } from '../../models/users/user.models.js';
-import { FACILITIES, NGO } from '../../models/users/ngo.models.js';
+import { NGO } from '../../models/users/ngo.models.js';
 import { Hospital } from '../../models/users/hospital.models.js';
 import { DonationAppointment } from '../../models/donation/appointment.models.js';
 import { BloodRequest } from '../../models/donation/bloodrequest.models.js';
@@ -841,4 +841,23 @@ const getHospitalDocuments = asyncHandler(async (req, res) => {
 	);
 });
 
-//
+/*
+* Requests
+*/
+// Get all blood requests
+const getAllBloodRequests = asyncHandler(async (req, res) => {
+	const bloodRequests = await BloodRequest.find()
+		.populate('hospitalId', 'name address')
+		.populate('ngoId', 'name')
+		.select('-patientInfo.confidential');
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				bloodRequests,
+				'All blood requests fetched successfully'
+			)
+		);
+});
