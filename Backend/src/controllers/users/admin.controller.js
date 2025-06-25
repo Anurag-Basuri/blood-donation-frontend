@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { Admin } from '../../models/users/admin.models.js';
 import { User } from '../../models/users/user.models.js';
-import { NGO } from '../../models/users/ngo.models.js';
+import { FACILITIES, NGO } from '../../models/users/ngo.models.js';
 import { Hospital } from '../../models/users/hospital.models.js';
 import { DonationAppointment } from '../../models/donation/appointment.models.js';
 import { BloodRequest } from '../../models/donation/bloodrequest.models.js';
@@ -601,6 +601,26 @@ const getNGODocuments = asyncHandler(async (req, res) => {
             'NGO documents fetched successfully'
         )
     );
+});
+
+// Get NGO camps and centers
+const getNGOCampsAndCenters = asyncHandler(async (req, res) => {
+	const { ngoId } = req.params;
+
+	if (!mongoose.isValidObjectId(ngoId)) {
+		throw new ApiError(400, 'Invalid NGO ID');
+	}
+
+	const camps = await Facility.find({ ngoId, type: 'camp' });
+	const centers = await Facility.find({ ngoId, type: 'center' });
+
+	return res.status(200).json(
+		new ApiResponse(
+			200,
+			{ camps, centers },
+			'NGO camps and centers fetched successfully'
+		)
+	);
 });
 
 /*
