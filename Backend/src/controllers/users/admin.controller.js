@@ -897,3 +897,34 @@ const getAllPlasmaRequests = asyncHandler(async (req, res) => {
 			)
 		);
 });
+
+/**
+ * Equipment and Medicine
+ */
+
+export {
+	registerAdmin,
+	loginAdmin,
+	getAdminDashboardData,
+	getAdminProfile,
+	updateAdminProfile,
+	changeAdminPassword,
+	deleteAdminAccount,
+	warnUser,
+	deactivateUserAccount,
+	reactivateUserAccount,
+	warnNGO,
+	deactivateNGOAccount,
+	reactivateNGOAccount,
+	approveNGODocs,
+	getNGODocuments,
+	getNGOCampsAndCenters,
+	warnHospital,
+	deactivateHospitalAccount,
+	reactivateHospitalAccount,
+	approveHospitalDocs,
+	getHospitalDocuments,
+	getAllBloodRequests,
+	getAllOrganRequests,
+	getAllPlasmaRequests,
+};
