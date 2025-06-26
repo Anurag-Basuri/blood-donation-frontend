@@ -176,7 +176,7 @@ const changePassword = asyncHandler(async (req, res) => {
 // Upload documents
 const uploadDocuments = asyncHandler(async (req, res) => {
 	const { documentType } = req.params;
-	const ngoId = req.user._id;
+	const ngoId = req.ngo._id;
 
 	const allowedTypes = ['aadhaarCard', 'panCard', 'gstCertificate', 'licenseDocument'];
 	if (!allowedTypes.includes(documentType)) {
@@ -323,7 +323,7 @@ const updateNGOProfile = asyncHandler(async (req, res) => {
 
 // Blood Inventory Management
 const manageBloodInventory = asyncHandler(async (req, res) => {
-	const ngoId = req.user._id;
+	const ngoId = req.ngo._id;
 	const { bloodGroup, units, operation } = req.body;
 
 	if (
@@ -355,7 +355,7 @@ const manageBloodInventory = asyncHandler(async (req, res) => {
 
 // Statistics
 const getStatistics = asyncHandler(async (req, res) => {
-	const ngo = await NGO.findById(req.user._id).select('statistics');
+	const ngo = await NGO.findById(req.ngo._id).select('statistics');
 	if (!ngo) throw new ApiError(404, 'NGO not found');
 
 	return res.status(200).json(new ApiResponse(200, ngo.statistics, 'NGO statistics fetched.'));
@@ -363,7 +363,7 @@ const getStatistics = asyncHandler(async (req, res) => {
 
 // Recalculate Statistics
 const recalculateStatistics = asyncHandler(async (req, res) => {
-	const ngo = await NGO.findById(req.user._id);
+	const ngo = await NGO.findById(req.ngo._id);
 	if (!ngo) throw new ApiError(404, 'NGO not found');
 
 	await ngo.calculateStatistics();
@@ -372,7 +372,7 @@ const recalculateStatistics = asyncHandler(async (req, res) => {
 
 // Settings Management
 const getSettings = asyncHandler(async (req, res) => {
-	const ngo = await NGO.findById(req.user._id).select('settings');
+	const ngo = await NGO.findById(req.ngo._id).select('settings');
 	if (!ngo) throw new ApiError(404, 'NGO not found');
 
 	return res.status(200).json(new ApiResponse(200, ngo.settings, 'Settings retrieved.'));
@@ -381,7 +381,7 @@ const getSettings = asyncHandler(async (req, res) => {
 // Update Settings
 const updateSettings = asyncHandler(async (req, res) => {
 	const { settings } = req.body;
-	const ngo = await NGO.findById(req.user._id);
+	const ngo = await NGO.findById(req.ngo._id);
 
 	if (!ngo) throw new ApiError(404, 'NGO not found');
 	if (typeof settings !== 'object') throw new ApiError(400, 'Invalid settings format');
@@ -409,7 +409,7 @@ const getNGOProfile = asyncHandler(async (req, res) => {
 
 // Get current NGO
 const getCurrentNGO = asyncHandler(async (req, res) => {
-	const ngo = await NGO.findById(req.user._id).select('-password -refreshToken');
+	const ngo = await NGO.findById(req.ngo._id).select('-password -refreshToken');
 
 	if (!ngo) {
 		throw new ApiError(404, 'NGO not found');
@@ -493,7 +493,7 @@ const searchNGOs = asyncHandler(async (req, res) => {
 
 // Analytics & Reports
 const getNGOAnalytics = asyncHandler(async (req, res) => {
-	const ngoId = req.user?._id;
+	const ngoId = req.ngo?._id;
 
 	if (!ngoId) {
 		throw new ApiError(401, 'Unauthorized');
@@ -530,7 +530,7 @@ const getNGOAnalytics = asyncHandler(async (req, res) => {
 
 // Send Verification Email
 const sendNGOVerificationEmail = asyncHandler(async (req, res) => {
-	const ngoId = req.user?._id;
+	const ngoId = req.ngo?._id;
 
 	if (!ngoId) throw new ApiError(401, 'Unauthorized');
 
@@ -646,5 +646,5 @@ export {
 	getNGOAnalytics,
 	sendNGOVerificationEmail,
 	verifyNGOEmail,
-	getAllNGOs,
+	getAllNGOs
 };
