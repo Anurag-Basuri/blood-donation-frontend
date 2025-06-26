@@ -1,4 +1,3 @@
-// controllers/donation/appointment.controller.js
 import { DonationAppointment } from '../../models/donation/appointment.models.js';
 import { Facility } from '../../models/donation/facility.models.js';
 import { Activity } from '../../models/others/activity.model.js';

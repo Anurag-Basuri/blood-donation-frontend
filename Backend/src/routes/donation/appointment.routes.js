@@ -5,7 +5,8 @@ import {
 	createAppointment,
 	updateAppointment,
 	sendReminder,
-	APPOINTMENT_STATUS,
+	getMyAppointments,
+	getAppointmentById,
 } from '../../controllers/donation/appointment.controller.js';
 
 const router = Router();
@@ -13,24 +14,19 @@ const router = Router();
 // Protect all appointment routes
 router.use(verifyJWT);
 
-// Create appointment with rate limiting
-router.post('/', validateRequest('appointment.create'), createAppointment);
+// Create a new appointment
+router.post('/', validateRequest('createAppointment'), createAppointment);
 
-// Update appointment
-router.patch('/:appointmentId', validateRequest('appointment.update'), updateAppointment);
+// Update an existing appointment
+router.put('/:id', validateRequest('updateAppointment'), updateAppointment);
 
-// Send reminder
-router.post('/:appointmentId/remind', validateRequest('appointment.reminder'), sendReminder);
+// Send a reminder for an appointment
+router.post('/:id/reminder', validateRequest('sendReminder'), sendReminder);
 
-// Error handler
-router.use((err, req, res, next) => {
-	if (err.name === 'ValidationError') {
-		return res.status(400).json({
-			success: false,
-			message: err.message,
-		});
-	}
-	next(err);
-});
+// Get all appointments for the authenticated user
+router.get('/', getMyAppointments);
+
+// Get appointment details by ID
+router.get('/:id', getAppointmentById);
 
 export default router;
