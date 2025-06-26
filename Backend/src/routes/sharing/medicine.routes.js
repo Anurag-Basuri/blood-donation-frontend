@@ -6,33 +6,23 @@ import {
 	addMedicine,
 	updateMedicineStatus,
 	getMedicineAnalytics,
-	MEDICINE_STATUS,
 } from '../../controllers/sharing/medicine.controller.js';
 
 const router = Router();
 
-// Public routes with rate limiting
-router.get('/', validateRequest('medicine.list'), listMedicines);
+// 📦 Public Route - List available medicines
+router.get('/', listMedicines);
 
-// Protected routes
+// 🔐 Protected routes for registered users/NGOs/Hospitals
 router.use(verifyJWT);
 
-router.post('/', validateRequest('medicine.add'), addMedicine);
+// ➕ Add a new medicine entry
+router.post('/add', addMedicine);
 
-router.patch('/:medicineId/status', validateRequest('medicine.updateStatus'), updateMedicineStatus);
+// ✅ Update medicine status (available, used, expired, etc.)
+router.put('/:medicineId/status', updateMedicineStatus);
 
-router.get('/analytics', validateRequest('medicine.analytics'), getMedicineAnalytics);
-
-// Error handler
-router.use((err, req, res, next) => {
-	console.error('Medicine Error:', err);
-	if (err.name === 'ValidationError') {
-		return res.status(400).json({
-			success: false,
-			message: err.message,
-		});
-	}
-	next(err);
-});
+// 📊 Get analytics (stock levels, usage stats, expiration tracking, etc.)
+router.get('/analytics/report', getMedicineAnalytics);
 
 export default router;
