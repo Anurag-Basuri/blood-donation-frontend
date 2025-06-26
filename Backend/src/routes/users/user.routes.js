@@ -18,20 +18,69 @@ import {
 	sendVerificationEmail,
 	verifyEmail,
 } from '../../controllers/users/user.controller.js';
-import { verifyJWT } from '../../middleware/auth.middleware.js';
+
+import { verifyJWT, requireRoles } from '../../middleware/auth.middleware.js';
 import { validateRequest } from '../../middleware/validator.middleware.js';
 import { userValidationRules } from '../../validations/user.validations.js';
 
 const router = express.Router();
 
-// User registration
+// Ensure JSON parsing (optional here if done globally in app.js)
+router.use(express.json());
+
+/*🔓 PUBLIC ROUTES*/
+// User registration and login
 router.post('/register', validateRequest(userValidationRules.register), registerUser);
 
-// User login
+// User login and token refresh
 router.post('/login', validateRequest(userValidationRules.login), loginUser);
-// User logout
-router.use(verifyJWT);
-router.post('/logout', verifyJWT, logoutUser);
 
+// Refresh access token
+router.post('/refresh-token', refreshAccessToken);
+
+// Verify phone number and OTP
+router.post('/verify-phone', verifyPhoneNumber);
+
+// Verify phone OTP
+router.post('/verify-phone-otp', verifyPhoneOTP);
+
+// Send verification email and verify email
+router.post('/send-verification-email', sendVerificationEmail);
+
+// Verify email
+router.post('/verify-email', verifyEmail);
+
+/*🔐 PROTECTED USER ROUTES*/
+router.use(verifyJWT, requireRoles(['user'])); // Only allow users
+
+// Logout user
+router.post('/logout', logoutUser);
+
+// Verify phone number
+router.put('/profile', validateRequest(userValidationRules.profileUpdate), updateProfile);
+
+// Change password
+router.put('/change-password', validateRequest(userValidationRules.passwordChange), changePassword);
+
+// Verify phone number
+router.get('/donation-history', getDonationHistory);
+
+// Get user activities
+router.get('/activities', getUserActivities);
+
+// Get notifications
+router.get('/notifications', getNotifications);
+
+// Mark notifications as read
+router.put('/notifications/mark-read', markNotificationsRead);
+
+// Get user profile details
+router.get('/profile', getUserProfile);
+
+// Get current user details
+router.get('/me', getCurrentUser);
+
+// Delete user account
+router.delete('/account', deleteUserAccount);
 
 export default router;

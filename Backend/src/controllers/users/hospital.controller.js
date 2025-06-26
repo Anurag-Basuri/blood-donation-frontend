@@ -128,7 +128,7 @@ const changePassword = asyncHandler(async (req, res) => {
 // Upload documents
 const uploadDocument = asyncHandler(async (req, res) => {
 	const { documentType } = req.params;
-	const hospitalId = req.user._id;
+	const hospitalId = req.hospital._id;
 
 	const allowedTypes = [
 		'registrationCertificate',
