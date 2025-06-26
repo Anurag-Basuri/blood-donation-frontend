@@ -12,32 +12,25 @@ import {
 
 const router = Router();
 
-// Public routes with rate limiting
-router.get('/centers', validateRequest('map.findCenters'), findNearestCenters);
-
-router.get('/directions', validateRequest('map.directions'), getDirections);
-
-router.post('/geocode', validateRequest('map.geocode'), geocodeAddresses);
-
-router.get('/places/:placeId', validateRequest('map.placeDetails'), getPlaceDetails);
-
-// Protected routes
+// 🔐 Protected routes for authenticated users
 router.use(verifyJWT);
 
-router.get('/recent-searches', validateRequest('map.recentSearches'), getRecentSearches);
+// 📍 Find nearest donation centers (based on user location)
+router.get('/nearest-centers', findNearestCenters);
 
-router.delete('/recent-searches', validateRequest('map.clearSearches'), clearRecentSearches);
+// 🗺️ Get directions between two locations
+router.get('/directions', getDirections);
 
-// Error handler
-router.use((err, req, res, next) => {
-	console.error('Map Service Error:', err);
-	if (err.name === 'ValidationError') {
-		return res.status(400).json({
-			success: false,
-			message: err.message,
-		});
-	}
-	next(err);
-});
+// 🧭 Geocode an address to get lat/lng
+router.get('/geocode', geocodeAddresses);
+
+// 🏥 Get details of a place (e.g., a hospital or NGO center)
+router.get('/place-details', getPlaceDetails);
+
+// 📜 Get recently searched locations
+router.get('/recent-searches', getRecentSearches);
+
+// ❌ Clear recent searches
+router.delete('/recent-searches', clearRecentSearches);
 
 export default router;
