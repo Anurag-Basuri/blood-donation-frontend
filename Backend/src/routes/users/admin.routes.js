@@ -25,52 +25,53 @@ import {
 	getAllOrganRequests,
 	getAllPlasmaRequests,
 } from '../../controllers/users/admin.controller.js';
-import { verifyJWT } from '../../middleware/auth.middleware.js';
+import { verifyJWT, requireRoles } from '../../middleware/auth.middleware.js';
 import { validateRequest } from '../../middleware/validator.middleware.js';
 import { adminValidationRules } from '../../validations/admin.validations.js';
 
 const router = express.Router();
 
-// Auth routes with rate limiting
+// ✅ Public Admin Routes
 router.post('/register', validateRequest(adminValidationRules.register), registerAdmin);
-
 router.post('/login', validateRequest(adminValidationRules.login), loginAdmin);
 
-// Verification routes
-router.patch(
-	'/verify/hospital/:hospitalId',
-	verifyJWT,
-	validateRequest(adminValidationRules.verification),
-	verifyHospital,
+// 🔐 Protected Admin Routes
+router.use(verifyJWT, requireRoles(['admin']));
+
+// 🧑‍💼 Admin Profile
+router.get('/dashboard', getAdminDashboardData);
+router.get('/profile', getAdminProfile);
+router.put('/profile', validateRequest(adminValidationRules.updateProfile), updateAdminProfile);
+router.put(
+	'/change-password',
+	validateRequest(adminValidationRules.changePassword),
+	changeAdminPassword,
 );
+router.delete('/delete-account', deleteAdminAccount);
 
-router.patch(
-	'/verify/ngo/:ngoId',
-	verifyJWT,
-	validateRequest(adminValidationRules.verification),
-	verifyNGO,
-);
+// 👤 User Management
+router.put('/user/:userId/warn', warnUser);
+router.put('/user/:userId/deactivate', deactivateUserAccount);
+router.put('/user/:userId/reactivate', reactivateUserAccount);
 
-// Analytics routes
-router.get('/analytics', verifyJWT, getSystemAnalytics);
+// 🏥 Hospital Management
+router.put('/hospital/:hospitalId/warn', warnHospital);
+router.put('/hospital/:hospitalId/deactivate', deactivateHospitalAccount);
+router.put('/hospital/:hospitalId/reactivate', reactivateHospitalAccount);
+router.put('/hospital/:hospitalId/approve-docs', approveHospitalDocs);
+router.get('/hospital/:hospitalId/documents', getHospitalDocuments);
 
-// router.get("/activities", verifyJWT, getSystemActivities);
+// 🏢 NGO Management
+router.put('/ngo/:ngoId/warn', warnNGO);
+router.put('/ngo/:ngoId/deactivate', deactivateNGOAccount);
+router.put('/ngo/:ngoId/reactivate', reactivateNGOAccount);
+router.put('/ngo/:ngoId/approve-docs', approveNGODocs);
+router.get('/ngo/:ngoId/documents', getNGODocuments);
+router.get('/ngo/:ngoId/camps-and-centers', getNGOCampsAndCenters);
 
-// Optional: Advanced query routes
-router.get(
-	'/analytics/custom',
-	verifyJWT,
-	validateRequest(adminValidationRules.customAnalytics),
-	getSystemAnalytics,
-);
-
-// Health check route
-router.get('/health', verifyJWT, (req, res) => {
-	res.status(200).json({
-		status: 'healthy',
-		timestamp: new Date(),
-		version: process.env.API_VERSION || '1.0.0',
-	});
-});
+// 🩸 Donation Requests
+router.get('/blood-requests', getAllBloodRequests);
+router.get('/organ-requests', getAllOrganRequests);
+router.get('/plasma-requests', getAllPlasmaRequests);
 
 export default router;
