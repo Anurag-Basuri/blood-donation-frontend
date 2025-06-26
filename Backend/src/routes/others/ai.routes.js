@@ -12,37 +12,25 @@ import {
 
 const router = Router();
 
-// Protect all AI routes
+// 🔐 Protected routes — ensure authenticated access
 router.use(verifyJWT);
 
-// Donor matching routes
-router.post('/donors/match', validateRequest('ai.donorMatch'), findDonorMatches);
+// 🧠 Match donors based on AI logic
+router.post('/donor-matches', findDonorMatches);
 
-// Supply prediction routes
-router.get('/supply/:locationId/predict', validateRequest('ai.supplyPredict'), predictSupply);
+// 📈 Predict blood/organ/plasma supply based on past data
+router.get('/predict-supply', predictSupply);
 
-// Emergency optimization routes
-router.post('/emergency/optimize', validateRequest('ai.emergency'), optimizeEmergencyResponse);
+// 🚨 Emergency optimization (logistics, response time)
+router.post('/emergency-optimize', optimizeEmergencyResponse);
 
-// Donor retention analysis
-router.get('/donors/:donorId/retention', validateRequest('ai.retention'), analyzeDonorRetention);
+// 📊 Analyze how well donors are retained
+router.get('/donor-retention', analyzeDonorRetention);
 
-// Campaign insights
-router.get('/campaigns/:campaignId/insights', validateRequest('ai.campaign'), getCampaignInsights);
+// 📣 Evaluate success & insights of donation campaigns
+router.get('/campaign-insights', getCampaignInsights);
 
-// Health predictions
-router.get('/donors/:donorId/health', validateRequest('ai.health'), predictDonorHealth);
-
-// Error handler
-router.use((err, req, res, next) => {
-	console.error('AI Service Error:', err);
-	if (err.name === 'ValidationError') {
-		return res.status(400).json({
-			success: false,
-			message: err.message,
-		});
-	}
-	next(err);
-});
+// 🩺 Predict donor health trends (for future eligibility etc.)
+router.get('/predict-health', predictDonorHealth);
 
 export default router;
