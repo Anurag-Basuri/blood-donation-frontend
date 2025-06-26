@@ -391,7 +391,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
 });
 
 // Get Current User
-export const getCurrentUser = asyncHandler(async (req, res) => {
+const getCurrentUser = asyncHandler(async (req, res) => {
 	const userId = req.user?._id;
 
 	if (!userId) {
