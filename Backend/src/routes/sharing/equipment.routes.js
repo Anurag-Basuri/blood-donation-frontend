@@ -7,52 +7,44 @@ import {
 	addEquipment,
 	updateEquipmentStatus,
 	bookEquipment,
+	endBooking,
+	cancelBooking,
+	uploadEquipmentImage,
 	getEquipmentHistory,
-	EQUIPMENT_STATUS,
 } from '../../controllers/sharing/equipment.controller.js';
 
 const router = Router();
 
-// Configure file upload for equipment images and documents
-const equipmentUpload = uploadFields([
-	{ name: 'images', maxCount: 5 },
-	{ name: 'documents', maxCount: 3 },
-]);
+// 🧾 Public Route - List all available equipment
+router.get('/', listEquipment);
 
-// Public routes
-router.get('/', validateRequest('equipment.list'), listEquipment);
-
-// Protected routes
+// 🔐 Protected Routes (require login)
 router.use(verifyJWT);
 
+// ➕ Add new equipment
+router.post('/add', uploadFields([{ name: 'image', maxCount: 1 }]), handleMulterError, addEquipment);
+
+// 📸 Upload or update equipment image
 router.post(
-	'/',
-	equipmentUpload,
+	'/:equipmentId/upload-image',
+	uploadFields([{ name: 'image', maxCount: 1 }]),
 	handleMulterError,
-	validateRequest('equipment.add'),
-	addEquipment,
+	uploadEquipmentImage,
 );
 
-router.patch(
-	'/:equipmentId/status',
-	validateRequest('equipment.updateStatus'),
-	updateEquipmentStatus,
-);
+// ✅ Update equipment status (available, in-use, maintenance, etc.)
+router.put('/:equipmentId/status', updateEquipmentStatus);
 
-router.post('/:equipmentId/book', validateRequest('equipment.book'), bookEquipment);
+// 📅 Book equipment
+router.post('/:equipmentId/book', bookEquipment);
 
-router.get('/:equipmentId/history', validateRequest('equipment.history'), getEquipmentHistory);
+// 🛑 End an equipment booking session
+router.post('/:equipmentId/end-booking', endBooking);
 
-// Error handler
-router.use((err, req, res, next) => {
-	console.error('Equipment Error:', err);
-	if (err.name === 'ValidationError') {
-		return res.status(400).json({
-			success: false,
-			message: err.message,
-		});
-	}
-	next(err);
-});
+// ❌ Cancel an active or upcoming booking
+router.post('/:equipmentId/cancel-booking', cancelBooking);
+
+// 📜 Get history/logs of equipment usage
+router.get('/:equipmentId/history', getEquipmentHistory);
 
 export default router;
