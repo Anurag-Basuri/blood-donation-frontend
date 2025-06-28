@@ -149,6 +149,7 @@ organRequestSchema.methods.updateStatus = async function (newStatus, userId, not
 	return this.save();
 };
 
-const OrganRequest = mongoose.model('OrganRequest', organRequestSchema);
+const OrganRequest =
+	mongoose.models.OrganRequest || mongoose.model('OrganRequest', organRequestSchema);
 
 export { OrganRequest, ORGAN_TYPES, STATUS_TYPES, BLOOD_TYPES };

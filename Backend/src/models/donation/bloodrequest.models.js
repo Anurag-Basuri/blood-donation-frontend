@@ -237,7 +237,8 @@ bloodRequestSchema.statics = {
 	},
 };
 
-const BloodRequest = mongoose.model('BloodRequest', bloodRequestSchema);
+const BloodRequest =
+	mongoose.models.BloodRequest || mongoose.model('BloodRequest', BloodRequestSchema);
 export {
 	BloodRequest,
 	BLOOD_TYPES,
