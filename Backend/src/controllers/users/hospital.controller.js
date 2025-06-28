@@ -1,9 +1,9 @@
-import { Hospital } from '../../models/users/hospital.model.js';
+import { Hospital } from '../../models/users/hospital.models.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { uploadFile, deleteFile } from '../../utils/fileUpload.js';
-import { generateEmailVerificationToken } from '../utils/generateEmailToken.js';
+import { generateEmailVerificationToken } from '../../utils/generateEmailToken.js';
 import { sendMail } from '../utils/sendMail.js';
 
 // Generate access and refresh tokens
