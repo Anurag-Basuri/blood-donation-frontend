@@ -135,6 +135,7 @@ plasmaRequestSchema.methods.updateStatus = async function (newStatus, userId, no
 	return this.save();
 };
 
-const PlasmaRequest = mongoose.model('PlasmaRequest', plasmaRequestSchema);
+const PlasmaRequest =
+	mongoose.models.PlasmaRequest || mongoose.model('PlasmaRequest', plasmaRequestSchema);
 
 export { PlasmaRequest, BLOOD_TYPES, STATUS_TYPES, URGENCY_LEVELS };

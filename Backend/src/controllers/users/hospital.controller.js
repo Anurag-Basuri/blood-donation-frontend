@@ -4,7 +4,7 @@ import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { uploadFile, deleteFile } from '../../utils/fileUpload.js';
 import { generateEmailVerificationToken } from '../../utils/generateEmailToken.js';
-import { sendMail } from '../utils/sendMail.js';
+import { sendMail } from '../../services/email.service.js';
 
 // Generate access and refresh tokens
 const generateTokens = async hospitalId => {
