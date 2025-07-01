@@ -1,14 +1,23 @@
-import { useAuth } from '../hooks/useAuth.js';
-import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
-const ProtectedRoutes = () => {
+const ProtectedRoutes = ({ allowedRoles = [] }) => {
 	const { user, loading } = useAuth();
+	const location = useLocation();
 
 	if (loading) {
-		return <div>Loading...</div>;
+		return <div className="flex justify-center items-center h-screen text-lg">Loading...</div>;
 	}
 
-	return user ? <Outlet /> : <Navigate to="/login" />;
+	if (!user) {
+		return <Navigate to="/login" state={{ from: location }} replace />;
+	}
+
+	if (allowedRoles.length && !allowedRoles.includes(user.role)) {
+		return <Navigate to="/unauthorized" replace />;
+	}
+
+	return <Outlet />;
 };
 
 export default ProtectedRoutes;
