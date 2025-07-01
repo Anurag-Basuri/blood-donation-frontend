@@ -23,3 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+.prettierrc
+.cache
+.cache-loader
+.next
+.nuxt
+out
