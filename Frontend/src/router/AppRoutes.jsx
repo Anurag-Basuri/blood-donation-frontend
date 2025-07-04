@@ -1,10 +1,10 @@
 import { Routes, Route } from 'react-router-dom';
-import Auth from '../pages/auth/auth.jsx';
+import Login from '../pages/auth/login.jsx';
 
 const AppRoutes = () => {
 	return (
 		<Routes>
-			<Route path="/auth" element={<Auth />} />
+			<Route path="/login" element={<Login />} />
 		</Routes>
 	);
 };
