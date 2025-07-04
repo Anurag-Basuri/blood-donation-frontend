@@ -1,9 +1,18 @@
 import axios from 'axios';
+import { getToken, removeToken } from '../utils/storage';
+import { showError } from '../utils/toast'; // Optional
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+if (!API_BASE_URL) {
+	console.warn('⚠️ Warning: VITE_API_URL not defined. Falling back to http://localhost:8000');
+}
+
+const BASE_URL = API_BASE_URL || 'http://localhost:8000';
+
+// ✅ Authenticated Client
 const axiosInstance = axios.create({
-	baseURL: API_BASE_URL,
+	baseURL: BASE_URL,
 	timeout: 10000,
 	headers: {
 		'Content-Type': 'application/json',
@@ -12,9 +21,9 @@ const axiosInstance = axios.create({
 	withCredentials: true,
 });
 
-// Public client for requests that don't require authentication
+// ✅ Public Client (no token)
 const publicClient = axios.create({
-	baseURL: API_BASE_URL,
+	baseURL: BASE_URL,
 	timeout: 10000,
 	headers: {
 		'Content-Type': 'application/json',
@@ -23,35 +32,36 @@ const publicClient = axios.create({
 	withCredentials: true,
 });
 
-// Interceptor to add authentication token to requests
+// ✅ Request Interceptor: Add Token
 axiosInstance.interceptors.request.use(
-	(config) => {
-		const token = localStorage.getItem('authToken'); // Assuming you store the token in localStorage
+	config => {
+		const token = getToken();
 		if (token) {
 			config.headers.Authorization = `Bearer ${token}`;
 		}
 		return config;
 	},
-	(error) => {
-		// Handle request errors
-		return Promise.reject(error);
-	}
+	error => Promise.reject(error),
 );
 
-// Interceptor to handle errors globally
+// ✅ Response Interceptor: Global Error Handling
 axiosInstance.interceptors.response.use(
-	(response) => {
-		// If the response is successful, just return it
-		return response;
-	},
-	(error) => {
-		// Handle errors globally
+	response => response,
+	error => {
 		if (error.response) {
-			// You can customize this part based on your application's needs
-			console.error('API error occurred:', error.response.data);	
+			const { status, data } = error.response;
+
+			// Global toast (optional)
+			showError(data?.message || 'An unexpected error occurred.');
+
+			if (status === 401) {
+				removeToken();
+				window.location.href = '/login'; // Or use router redirect
+			}
 		}
 		return Promise.reject(error);
-	}
+	},
 );
 
 export { axiosInstance, publicClient };
+
