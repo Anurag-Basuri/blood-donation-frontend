@@ -254,6 +254,44 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 		);
 });
 
+// Upload or Update Profile Picture
+const uploadProfilePicture = asyncHandler(async (req, res) => {
+	if (!req.file) {
+		throw new ApiError(400, 'No file uploaded');
+	}
+
+	// If user already has a profile picture, delete it from Cloudinary
+	const user = await User.findById(req.user._id);
+	if (user.profilePicture) {
+		// Extract public_id from the URL
+		const publicIdMatch = user.profilePicture.match(/\/([^/]+)\.[a-zA-Z]+$/);
+		if (publicIdMatch) {
+			const publicId = publicIdMatch[1];
+			try {
+				// Assuming you have a deleteFromCloudinary helper
+				await deleteFromCloudinary(publicId);
+			} catch (err) {
+				// Log error but don't block upload
+				console.error('Failed to delete old profile picture:', err.message);
+			}
+		}
+	}
+	const result = await uploadToCloudinary(req.file);
+
+	// Update the user's profile picture URL
+	await User.findByIdAndUpdate(req.user._id, { profilePicture: result.secure_url });
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				{ profilePicture: result.secure_url },
+				'Profile picture uploaded successfully'
+			)
+		);
+});
+
 // PROFILE MANAGEMENT
 const updateProfile = asyncHandler(async (req, res) => {
 	const updates = Object.keys(req.body)
@@ -315,6 +353,7 @@ const getDonationHistory = asyncHandler(async (req, res) => {
 		.json(new ApiResponse(200, donations, 'Donation history fetched successfully'));
 });
 
+// Get User Activities
 const getUserActivities = asyncHandler(async (req, res) => {
 	const userId = req.user._id || req.params.id;
 	if (!userId) {
