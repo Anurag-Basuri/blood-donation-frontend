@@ -63,7 +63,18 @@ router.put(
 	validateRequest(hospitalValidationRules.changePassword),
 	changePassword,
 );
-router.put('/profile', validateRequest(hospitalValidationRules.update), updateHospitalProfile);
+router.put('/profile',
+	validateRequest(hospitalValidationRules.update),
+	updateHospitalProfile
+);
+
+router.put(
+	'/profile/picture',
+	uploadFields([{ name: 'profilePicture', maxCount: 1 }]),
+	handleMulterError,
+	updateHospitalProfile
+);
+
 router.get('/me', getCurrentHospital);
 
 // 📄 File Uploads
