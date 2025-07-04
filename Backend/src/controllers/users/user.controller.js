@@ -597,6 +597,7 @@ export {
 	loginUser,
 	logoutUser,
 	refreshAccessToken,
+	uploadProfilePicture,
 	updateProfile,
 	changePassword,
 	getDonationHistory,

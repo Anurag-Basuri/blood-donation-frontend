@@ -253,6 +253,49 @@ const uploadLogo = asyncHandler(async (req, res) => {
 	return res.status(200).json(new ApiResponse(200, ngo, 'Logo uploaded successfully'));
 });
 
+// Upload or update profile picture
+const uploadProfilePicture = asyncHandler(async (req, res) => {
+	const ngoId = req.ngo._id;
+	const ngo = await NGO.findById(ngoId);
+	if (!ngo) throw new ApiError(404, 'NGO not found');
+
+	// Check if file is present
+	const file = req.files?.profilePicture?.[0];
+	if (!file) {
+		throw new ApiError(400, 'Profile picture file is required');
+	}
+
+	// Delete existing profile picture from Cloudinary if present
+	if (ngo.profilePicture && ngo.profilePicture.publicId) {
+		try {
+			await deleteFromCloudinary(ngo.profilePicture.publicId);
+		} catch (err) {
+			console.error('Failed to delete old profile picture:', err.message);
+		}
+	}
+
+	// Upload new profile picture
+	const uploadedPicture = await uploadFile({
+		file,
+		folder: `ngo-profile-pictures`,
+	});
+
+	// Update NGO with new profile picture
+	ngo.profilePicture = uploadedPicture;
+
+	await ngo.save();
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				ngo,
+				'Profile picture uploaded successfully'
+			)
+		);
+});
+
 // Update NGO Profile
 const updateNGOProfile = asyncHandler(async (req, res) => {
 	const ngoId = req.ngo._id;
@@ -634,6 +677,7 @@ export {
 	changePassword,
 	uploadDocuments,
 	uploadLogo,
+	uploadProfilePicture,
 	updateNGOProfile,
 	manageBloodInventory,
 	getStatistics,
