@@ -10,6 +10,7 @@ import {
 	getUserActivities,
 	getNotifications,
 	markNotificationsRead,
+	uploadProfilePicture,
 	getUserProfile,
 	getCurrentUser,
 	deleteUserAccount,
@@ -18,7 +19,7 @@ import {
 	sendVerificationEmail,
 	verifyEmail,
 } from '../../controllers/users/user.controller.js';
-
+import { uploadFields } from '../../middleware/multer.middleware.js';
 import { verifyJWT, requireRoles } from '../../middleware/auth.middleware.js';
 import { validateRequest } from '../../middleware/validator.middleware.js';
 import { userValidationRules } from '../../validations/user.validations.js';
@@ -55,6 +56,14 @@ router.use(verifyJWT, requireRoles(['user'])); // Only allow users
 
 // Logout user
 router.post('/logout', logoutUser);
+
+// Upload profile picture
+router.post(
+	'/upload-profile-picture',
+	uploadFields([{ name: 'profilePicture', maxCount: 1 }]),
+	validateRequest(userValidationRules.uploadProfilePicture),
+	uploadProfilePicture,
+);
 
 // Verify phone number
 router.put('/profile', validateRequest(userValidationRules.profileUpdate), updateProfile);

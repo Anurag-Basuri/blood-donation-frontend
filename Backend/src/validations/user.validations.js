@@ -60,6 +60,14 @@ const userValidationRules = {
 			}),
 	}),
 
+	uploadProfilePicture: Joi.object({
+		profilePicture: Joi.object({
+			filename: Joi.string().required(),
+			mimetype: Joi.string().valid('image/jpeg', 'image/png', 'image/gif').required(),
+			size: Joi.number().max(5 * 1024 * 1024).required(), // Max 5MB
+		}).required(),
+	}),
+
 	getUserProfile: Joi.object({
 		userId: Joi.string().hex().length(24).required(),
 	}),
