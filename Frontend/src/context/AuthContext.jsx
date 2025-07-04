@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from 'react';
-import axiosInstance from '../services/api';
+import { axiosInstance } from '../services/api';
 
 export const AuthContext = createContext();
 
