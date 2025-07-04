@@ -73,6 +73,18 @@ const hospitalSchema = new mongoose.Schema(
 					'Password must include uppercase, lowercase, number, and special character',
 			},
 		},
+		profilePicture: {
+			type: String,
+			default: 'https://example.com/default-profile-picture.png',
+			validate: {
+				validator: function (url) {
+					return /^(https?:\/\/)?([\w-]+(\.[\w-]+)+(\/[\w- .\/?%&=]*)?)$/.test(url);
+				},
+				message: 'Invalid URL format for profile picture',
+			},
+		},
+
+		//logo
 		logo: {
 			url: String,
 			publicId: String,
@@ -81,6 +93,8 @@ const hospitalSchema = new mongoose.Schema(
 				default: Date.now,
 			},
 		},
+
+
 		isVerified: {
 			type: Boolean,
 			default: false,

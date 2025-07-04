@@ -51,6 +51,16 @@ const ngoSchema = new mongoose.Schema(
 				message: 'Password must contain uppercase, lowercase, number and special character',
 			},
 		},
+		profilePicture: {
+			type: String,
+			default: 'https://example.com/default-profile-picture.png',
+			validate: {
+				validator: function (url) {
+					return /^(https?:\/\/)?([\w-]+(\.[\w-]+)+(\/[\w- .\/?%&=]*)?)$/.test(url);
+				},
+				message: 'Invalid URL format for profile picture',
+			},
+		},
 
 		// logo
 		logo: {

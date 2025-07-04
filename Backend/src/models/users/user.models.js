@@ -62,6 +62,16 @@ const userSchema = new Schema(
 			},
 			select: false,
 		},
+		profilePicture: {
+			type: String,
+			default: 'https://example.com/default-profile-picture.png',
+			validate: {
+				validator: function (url) {
+					return /^(https?:\/\/)?([\w-]+(\.[\w-]+)+(\/[\w- .\/?%&=]*)?)$/.test(url);
+				},
+				message: 'Invalid URL format for profile picture',
+			},
+		},
 
 		// Authentication & Security
 		isEmailVerified: {
