@@ -230,6 +230,49 @@ const getHospitalProfile = asyncHandler(async (req, res) => {
 		));
 });
 
+// Upload or update profile picture
+const uploadProfilePicture = asyncHandler(async (req, res) => {
+	const hospitalId = req.hospital._id;
+	const hospital = await Hospital.findById(hospitalId);
+	if (!hospital) throw new ApiError(404, 'Hospital not found');
+
+	// Check if file is present
+	const file = req.files?.profilePicture?.[0];
+	if (!file) {
+		throw new ApiError(400, 'Profile picture file is required');
+	}
+
+	// Delete existing profile picture from Cloudinary if present
+	if (hospital.profilePicture && hospital.profilePicture.publicId) {
+		try {
+			await deleteFromCloudinary(hospital.profilePicture.publicId);
+		} catch (err) {
+			console.error('Failed to delete old profile picture:', err.message);
+		}
+	}
+
+	// Upload new profile picture
+	const uploadedPicture = await uploadFile({
+		file,
+		folder: `hospital-profile-pictures`,
+	});
+
+	// Update hospital with new profile picture
+	hospital.profilePicture = uploadedPicture;
+
+	await hospital.save();
+
+	return res
+		.status(200)
+		.json(
+			new ApiResponse(
+				200,
+				hospital,
+				'Profile picture uploaded successfully'
+			)
+		);
+});
+
 // Update hospital profile
 const updateHospitalProfile = asyncHandler(async (req, res) => {
 	const hospital = await Hospital.findById(req.hospital._id);
@@ -508,6 +551,7 @@ export {
 	uploadDocument,
 	getCurrentHospital,
 	getHospitalProfile,
+	uploadProfilePicture,
 	updateHospitalProfile,
 	uploadLogo,
 	searchHospitals,
