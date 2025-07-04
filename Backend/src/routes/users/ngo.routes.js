@@ -64,8 +64,24 @@ router.put('/change-password', validateRequest(ngoValidationRules.changePassword
 
 // 🧾 NGO Profile Management
 router.put('/profile', validateRequest(ngoValidationRules.update), updateNGOProfile);
-router.post('/upload-documents', uploadFields([{ name: 'documents', maxCount: 5 }]), handleMulterError, uploadDocuments);
-router.post('/upload-logo', uploadFields([{ name: 'logo', maxCount: 1 }]), handleMulterError, uploadLogo);
+router.put(
+	'/profile/picture',
+	uploadFields([{ name: 'profilePicture', maxCount: 1 }]),
+	handleMulterError,
+	updateNGOProfile,
+);
+router.post(
+	'/upload-documents',
+	uploadFields([{ name: 'documents', maxCount: 5 }]),
+	handleMulterError,
+	uploadDocuments,
+);
+router.post(
+	'/upload-logo',
+	uploadFields([{ name: 'logo', maxCount: 1 }]),
+	handleMulterError,
+	uploadLogo,
+);
 
 // 🔄 Blood Inventory
 router.put('/inventory', manageBloodInventory);

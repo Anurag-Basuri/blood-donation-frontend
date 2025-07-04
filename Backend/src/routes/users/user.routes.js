@@ -19,7 +19,7 @@ import {
 	sendVerificationEmail,
 	verifyEmail,
 } from '../../controllers/users/user.controller.js';
-import { uploadFields } from '../../middleware/multer.middleware.js';
+import { uploadFields, handleMulterError } from '../../middleware/multer.middleware.js';
 import { verifyJWT, requireRoles } from '../../middleware/auth.middleware.js';
 import { validateRequest } from '../../middleware/validator.middleware.js';
 import { userValidationRules } from '../../validations/user.validations.js';
@@ -62,6 +62,7 @@ router.post(
 	'/upload-profile-picture',
 	uploadFields([{ name: 'profilePicture', maxCount: 1 }]),
 	validateRequest(userValidationRules.uploadProfilePicture),
+	handleMulterError,
 	uploadProfilePicture,
 );
 
