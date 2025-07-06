@@ -63,7 +63,7 @@ router.post('/logout', logoutNGO);
 router.put('/change-password', validateRequest(ngoValidationRules.changePassword), changePassword);
 
 // 🧾 NGO Profile Management
-router.put('/profile', validateRequest(ngoValidationRules.update), updateNGOProfile);
+router.put('/update-profile', validateRequest(ngoValidationRules.update), updateNGOProfile);
 router.put(
 	'/profile/picture',
 	uploadFields([{ name: 'profilePicture', maxCount: 1 }]),

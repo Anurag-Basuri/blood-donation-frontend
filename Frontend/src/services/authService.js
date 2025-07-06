@@ -145,7 +145,7 @@ export const ngoLogout = async () => {
 
 // Function to get current user profile
 export const getCurrentUserProfile = async () => {
-    const response = await axiosInstance.get('/users/profile');
+    const response = await axiosInstance.get('/users/me');
     return response.data;
 };
 

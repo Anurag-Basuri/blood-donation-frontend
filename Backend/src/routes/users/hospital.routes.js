@@ -63,7 +63,7 @@ router.put(
 	validateRequest(hospitalValidationRules.changePassword),
 	changePassword,
 );
-router.put('/profile',
+router.put('/update-profile',
 	validateRequest(hospitalValidationRules.update),
 	updateHospitalProfile
 );
