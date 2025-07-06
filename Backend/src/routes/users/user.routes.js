@@ -61,8 +61,8 @@ router.post('/logout', logoutUser);
 router.post(
 	'/upload-profile-picture',
 	uploadFields([{ name: 'profilePicture', maxCount: 1 }]),
-	validateRequest(userValidationRules.uploadProfilePicture),
 	handleMulterError,
+	validateRequest(userValidationRules.uploadProfilePicture),
 	uploadProfilePicture,
 );
 
