@@ -188,3 +188,49 @@ export const uploadHospitalProfilePicture = async (file) => {
 
     return response.data; // Return updated hospital profile data
 };
+
+// Upload profile picture for NGO
+export const uploadNGOProfilePicture = async (file) => {
+    const formData = new FormData();
+    formData.append('profilePicture', file);
+
+    const response = await axiosInstance.post('/ngos/upload-profile-picture', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+
+    return response.data; // Return updated NGO profile data
+};
+
+// Upload NGO documents
+export const uploadNGODocuments = async (files) => {
+    const formData = new FormData();
+    files.forEach(file => {
+        formData.append('documents', file);
+    });
+
+    const response = await axiosInstance.post('/ngos/upload-documents', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+
+    return response.data; // Return updated NGO profile data
+};
+
+// Upload hospital documents
+export const uploadHospitalDocuments = async (files) => {
+    const formData = new FormData();
+    files.forEach(file => {
+        formData.append('documents', file);
+    });
+
+    const response = await axiosInstance.post('/hospitals/upload-documents', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+
+    return response.data; // Return updated hospital profile data
+};
