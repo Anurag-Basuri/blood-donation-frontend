@@ -154,3 +154,11 @@ export const getCurrentHospitalProfile = async () => {
     const response = await axiosInstance.get('/hospitals/me');
     return response.data;
 };
+
+// Function to get current NGO profile
+export const getCurrentNGOProfile = async () => {
+    const response = await axiosInstance.get('/ngos/me');
+    return response.data;
+};
+
+// 

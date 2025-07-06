@@ -66,7 +66,7 @@ router.post(
 	uploadProfilePicture,
 );
 
-// Verify phone number
+// Update user profile
 router.put('/update-profile', validateRequest(userValidationRules.profileUpdate), updateProfile);
 
 // Change password
