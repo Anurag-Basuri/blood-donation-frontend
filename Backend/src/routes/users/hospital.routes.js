@@ -69,7 +69,7 @@ router.put('/update-profile',
 );
 
 router.put(
-	'/profile/picture',
+	'/profile/upload-profile-picture',
 	uploadFields([{ name: 'profilePicture', maxCount: 1 }]),
 	handleMulterError,
 	updateHospitalProfile

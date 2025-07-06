@@ -161,4 +161,30 @@ export const getCurrentNGOProfile = async () => {
     return response.data;
 };
 
-// 
+// Upload profile picture for user
+export const uploadUserProfilePicture = async (file) => {
+    const formData = new FormData();
+    formData.append('profilePicture', file);
+
+    const response = await axiosInstance.post('/users/upload-profile-picture', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+
+    return response.data; // Return updated user profile data
+};
+
+// Upload profile picture for hospital
+export const uploadHospitalProfilePicture = async (file) => {
+    const formData = new FormData();
+    formData.append('profilePicture', file);
+
+    const response = await axiosInstance.post('/hospitals/upload-profile-picture', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+
+    return response.data; // Return updated hospital profile data
+};
