@@ -40,10 +40,10 @@ router.post('/login', validateRequest(userValidationRules.login), loginUser);
 router.post('/refresh-token', refreshAccessToken);
 
 // Verify phone number and OTP
-router.post('/verify-phone', verifyPhoneNumber);
+router.post('/send-verification-otp', verifyPhoneNumber);
 
 // Verify phone OTP
-router.post('/verify-phone-otp', verifyPhoneOTP);
+router.post('/verify-otp', verifyPhoneOTP);
 
 // Send verification email and verify email
 router.post('/send-verification-email', sendVerificationEmail);
@@ -85,7 +85,7 @@ router.get('/notifications', getNotifications);
 router.put('/notifications/mark-read', markNotificationsRead);
 
 // Get user profile details
-router.get('/profile', getUserProfile);
+router.get('/profile/:id', getUserProfile);
 
 // Get current user details
 router.get('/me', getCurrentUser);
