@@ -65,7 +65,7 @@ router.put('/change-password', validateRequest(ngoValidationRules.changePassword
 // 🧾 NGO Profile Management
 router.put('/update-profile', validateRequest(ngoValidationRules.update), updateNGOProfile);
 router.put(
-	'/profile/picture',
+	'/upload-profile-picture',
 	uploadFields([{ name: 'profilePicture', maxCount: 1 }]),
 	handleMulterError,
 	updateNGOProfile,
