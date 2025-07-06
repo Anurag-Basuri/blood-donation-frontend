@@ -67,7 +67,7 @@ router.post(
 );
 
 // Verify phone number
-router.put('/profile', validateRequest(userValidationRules.profileUpdate), updateProfile);
+router.put('/update-profile', validateRequest(userValidationRules.profileUpdate), updateProfile);
 
 // Change password
 router.put('/change-password', validateRequest(userValidationRules.passwordChange), changePassword);

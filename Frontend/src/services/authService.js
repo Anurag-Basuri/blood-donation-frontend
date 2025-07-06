@@ -33,6 +33,14 @@ export const isAuthenticated = () => {
     return !!token; // Returns true if token exists, false otherwise
 };
 
+// Function to refresh the authentication token
+export const refreshAuthToken = async () => {
+    const response = await axiosInstance.post('/users/refresh-token');
+    const { token } = response.data;
+    setToken(token);
+    return response.data;
+};
+
 // Function to register user
 export const userRegister = async (userName, fullName, email, phone, dateOfBirth, gender, bloodType, lastDonationDate, address, password) => {
     const response = await publicClient.post('/users/register', {userName, fullName, email, phone, dateOfBirth, gender, bloodType, lastDonationDate, address, password});
@@ -133,4 +141,16 @@ export const hospitalLogout = async () => {
 export const ngoLogout = async () => {
     await axiosInstance.post('/ngos/logout');
     removeToken();
+};
+
+// Function to get current user profile
+export const getCurrentUserProfile = async () => {
+    const response = await axiosInstance.get('/users/profile');
+    return response.data;
+};
+
+// Function to get current hospital profile
+export const getCurrentHospitalProfile = async () => {
+    const response = await axiosInstance.get('/hospitals/me');
+    return response.data;
 };
