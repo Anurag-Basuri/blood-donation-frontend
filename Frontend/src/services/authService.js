@@ -117,4 +117,20 @@ export const ngoLogin = async (email, password) => {
     return response.data; // Return NGO data or any other relevant info
 }
 
-// 
+// Function to logout user
+export const userLogout = async () => {
+    await axiosInstance.post('/users/logout');
+    removeToken();
+};
+
+// Function to logout hospital
+export const hospitalLogout = async () => {
+    await axiosInstance.post('/hospitals/logout');
+    removeToken();
+};
+
+// Function to logout NGO
+export const ngoLogout = async () => {
+    await axiosInstance.post('/ngos/logout');
+    removeToken();
+};
