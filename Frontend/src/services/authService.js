@@ -31,8 +31,7 @@ axiosInstance.interceptors.response.use(
 export const isAuthenticated = () => {
     const token = getToken();
     return !!token; // Returns true if token exists, false otherwise
-}
-
+};
 
 // Function to register user
 export const userRegister = async (userName, fullName, email, phone, dateOfBirth, gender, bloodType, lastDonationDate, address, password) => {
@@ -44,27 +43,22 @@ export const userRegister = async (userName, fullName, email, phone, dateOfBirth
 }
 
 // Function to register hospital
-export const hospitalRegister = async (name, email, phone, password, documents, logo) => {
+export const hospitalRegister = async (name, email, address, contactPerson, emergencyContact, specialties, registrationNumber) => {
     const formData = new FormData();
     formData.append('name', name);
     formData.append('email', email);
-    formData.append('phone', phone);
-    formData.append('password', password);
-    
-    if (documents) {
-        documents.forEach(doc => formData.append('documents', doc));
-    }
-    
-    if (logo) {
-        formData.append('logo', logo);
-    }
+    formData.append('address', address);
+    formData.append('contactPerson', contactPerson);
+    formData.append('emergencyContact', emergencyContact);
+    formData.append('specialties', specialties);
+    formData.append('registrationNumber', registrationNumber);
 
     const response = await publicClient.post('/hospitals/register', formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }
     });
-    
+
     const { token } = response.data;
 
     setToken(token);
@@ -72,20 +66,17 @@ export const hospitalRegister = async (name, email, phone, password, documents, 
 }
 
 // Function to register NGO
-export const ngoRegister = async (name, email, phone, password, documents, logo) => {
+export const ngoRegister = async (name, email, address, contactPerson, regNumber, affiliation, establishedYear, license, password) => {
     const formData = new FormData();
     formData.append('name', name);
     formData.append('email', email);
-    formData.append('phone', phone);
+    formData.append('address', address);
+    formData.append('contactPerson', contactPerson);
+    formData.append('regNumber', regNumber);
+    formData.append('affiliation', affiliation);
+    formData.append('establishedYear', establishedYear);
+    formData.append('license', license);
     formData.append('password', password);
-
-    if (documents) {
-        documents.forEach(doc => formData.append('documents', doc));
-    }
-
-    if (logo) {
-        formData.append('logo', logo);
-    }
 
     const response = await publicClient.post('/ngos/register', formData, {
         headers: {
