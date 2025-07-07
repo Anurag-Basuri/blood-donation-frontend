@@ -130,6 +130,7 @@ const Login = () => {
 					{/* Left - Enhanced Hero (Sticky) */}
 					<div className="hidden lg:block sticky top-0 h-[calc(100vh-2rem)] min-h-[600px] max-h-[1200px]">
 						<div className="flex flex-col justify-between h-full py-8 space-y-8 text-center lg:text-left px-2">
+							{/* Logo Section */}
 							<div>
 								<div className="flex justify-center lg:justify-start items-center space-x-4 mb-8">
 									<div className="relative group">
@@ -156,55 +157,61 @@ const Login = () => {
 								</div>
 							</div>
 
-							{/* Quote Carousel */}
-							<div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm border border-white/20 p-6">
-								{inspirationalQuotes.map((quote, index) => (
-									<div
-										key={index}
-										className={`absolute inset-0 p-6 transition-all duration-1000 ${
-											index === currentSlide
-												? 'opacity-100 translate-y-0'
-												: 'opacity-0 translate-y-8'
-										}`}
-									>
-										<div className="space-y-4 text-center">
-											<div className="text-4xl mb-2">{quote.icon}</div>
-											<h2 className="text-3xl lg:text-4xl font-bold text-white">
-												{quote.text}
-											</h2>
-											<p className="text-gray-300 text-lg">{quote.subtext}</p>
-										</div>
-									</div>
-								))}
-
-								{/* Slide Indicators */}
-								<div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
-									{inspirationalQuotes.map((_, index) => (
+							<div className="flex-1 flex flex-col justify-center">
+								{/* Quote Carousel */}
+								<div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm border border-white/20 p-6">
+									{inspirationalQuotes.map((quote, index) => (
 										<div
 											key={index}
-											className={`w-2 h-2 rounded-full transition-all ${
+											className={`absolute inset-0 p-6 transition-all duration-1000 ${
 												index === currentSlide
-													? 'bg-white w-6'
-													: 'bg-white/30'
+													? 'opacity-100 translate-y-0'
+													: 'opacity-0 translate-y-8'
 											}`}
-										></div>
+										>
+											<div className="space-y-4 text-center">
+												<div className="text-4xl mb-2">{quote.icon}</div>
+												<h2 className="text-3xl lg:text-4xl font-bold text-white">
+													{quote.text}
+												</h2>
+												<p className="text-gray-300 text-lg">
+													{quote.subtext}
+												</p>
+											</div>
+										</div>
 									))}
-								</div>
-							</div>
 
-							{/* Stats Section */}
-							<div className="grid grid-cols-3 gap-4 mt-8">
-								<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-									<div className="text-2xl font-bold text-red-400">10K+</div>
-									<div className="text-sm text-gray-300">Lives Saved</div>
+									{/* Slide Indicators */}
+									<div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
+										{inspirationalQuotes.map((_, index) => (
+											<div
+												key={index}
+												className={`w-2 h-2 rounded-full transition-all ${
+													index === currentSlide
+														? 'bg-white w-6'
+														: 'bg-white/30'
+												}`}
+											></div>
+										))}
+									</div>
 								</div>
-								<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-									<div className="text-2xl font-bold text-blue-400">500+</div>
-									<div className="text-sm text-gray-300">Hospitals</div>
-								</div>
-								<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-									<div className="text-2xl font-bold text-green-400">50K+</div>
-									<div className="text-sm text-gray-300">Donors</div>
+
+								{/* Stats Section */}
+								<div className="grid grid-cols-3 gap-4 mt-8">
+									<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
+										<div className="text-2xl font-bold text-red-400">10K+</div>
+										<div className="text-sm text-gray-300">Lives Saved</div>
+									</div>
+									<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
+										<div className="text-2xl font-bold text-blue-400">500+</div>
+										<div className="text-sm text-gray-300">Hospitals</div>
+									</div>
+									<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
+										<div className="text-2xl font-bold text-green-400">
+											50K+
+										</div>
+										<div className="text-sm text-gray-300">Donors</div>
+									</div>
 								</div>
 							</div>
 						</div>
