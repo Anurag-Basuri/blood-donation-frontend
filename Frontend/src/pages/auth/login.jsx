@@ -72,12 +72,24 @@ const Login = () => {
 		e.preventDefault();
 		setIsLoading(true);
 		setError('');
+
 		try {
-			// Simulate API calls
-			await new Promise(resolve => setTimeout(resolve, 1500));
-			alert(`Login successful! Welcome ${userType}`);
+			let response;
+			if (userType === 'user') {
+				response = await userLogin({ email, phone, userName, password });
+			} else if (userType === 'hospital') {
+				response = await hospitalLogin({ email, password });
+			} else if (userType === 'ngo') {
+				response = await ngoLogin({ email, password });
+			}
+
+			if (response.success) {
+				console.log('Login successful:', response.data);
+			} else {
+				setError(response.message || 'Login failed. Please try again.');
+			}
 		} catch (err) {
-			setError('Login failed. Please try again.');
+			setError(err.message || 'An error occurred during login.');
 		} finally {
 			setIsLoading(false);
 		}
