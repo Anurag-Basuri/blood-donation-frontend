@@ -1,41 +1,24 @@
 import { useState, useEffect } from 'react';
 import {
 	Heart,
-	Users,
-	Building2,
-	Mail,
-	Lock,
-	Eye,
-	EyeOff,
-	ArrowRight,
 	Droplets,
 	Plus,
-	Activity,
-	Phone,
-	User,
-	Sparkles,
 	UserPlus,
 	LogIn,
-	Calendar,
-	MapPin,
-	Shield,
+	ArrowRight,
+	Sparkles,
+	Eye,
+	EyeOff,
 } from 'lucide-react';
 
 const AdminAuth = () => {
 	const [isLogin, setIsLogin] = useState(true);
-	const [loginMethod, setLoginMethod] = useState('email');
 	const [formData, setFormData] = useState({
+		fullName: '',
 		email: '',
-		phone: '',
-		userName: '',
 		password: '',
 		confirmPassword: '',
-		fullName: '',
-		age: '',
-		bloodGroup: '',
-		address: '',
-		organizationName: '',
-		licenseNumber: '',
+		secretKey: '',
 	});
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -58,12 +41,45 @@ const AdminAuth = () => {
 		return () => clearInterval(interval);
 	}, []);
 
+	const handleChange = e => {
+		const { name, value } = e.target;
+		setFormData(prev => ({ ...prev, [name]: value }));
+		if (error) setError('');
+	};
+
 	const handleSubmit = async () => {
 		setIsLoading(true);
 		setError('');
+
 		try {
+			// Validation
+			if (isLogin) {
+				if (!formData.email || !formData.password || !formData.secretKey) {
+					setError('Email, password, and secret key are required.');
+					setIsLoading(false);
+					return;
+				}
+			} else {
+				if (
+					!formData.fullName ||
+					!formData.email ||
+					!formData.password ||
+					!formData.confirmPassword ||
+					!formData.secretKey
+				) {
+					setError('All fields are required.');
+					setIsLoading(false);
+					return;
+				}
+				if (formData.password !== formData.confirmPassword) {
+					setError('Passwords do not match.');
+					setIsLoading(false);
+					return;
+				}
+			}
+
 			await new Promise(resolve => setTimeout(resolve, 1500));
-			alert(`${isLogin ? 'Login' : 'Registration'} successful! Welcome ${userType}`);
+			alert(`${isLogin ? 'Login' : 'Registration'} successful!`);
 		} catch (err) {
 			setError(`${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
 		} finally {
@@ -71,10 +87,24 @@ const AdminAuth = () => {
 		}
 	};
 
-	const selectedType = userTypes.find(type => type.id === userType);
+	const resetForm = () => {
+		setFormData({
+			fullName: '',
+			email: '',
+			password: '',
+			confirmPassword: '',
+			secretKey: '',
+		});
+		setError('');
+	};
+
+	const toggleMode = () => {
+		setIsLogin(!isLogin);
+		resetForm();
+	};
 
 	return (
-		<div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+		<div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
 			{/* Enhanced Background */}
 			<div className="absolute inset-0">
 				<div className="absolute top-10 left-10 w-96 h-96 bg-gradient-to-r from-red-500/20 to-pink-500/20 rounded-full filter blur-3xl animate-pulse"></div>
@@ -82,7 +112,7 @@ const AdminAuth = () => {
 				<div className="absolute bottom-10 left-1/3 w-72 h-72 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-full filter blur-3xl animate-pulse delay-2000"></div>
 
 				{/* Floating Elements */}
-				{[...Array(20)].map((_, i) => (
+				{[...Array(15)].map((_, i) => (
 					<div
 						key={i}
 						className="absolute animate-bounce opacity-20"
@@ -101,27 +131,28 @@ const AdminAuth = () => {
 				))}
 			</div>
 
-			<div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-				<div className="w-full max-w-7xl grid lg:grid-cols-2 gap-12 items-center">
-					{/* Left - Hero Section */}
-					<div className="space-y-8 text-center lg:text-left">
-						<div className="flex justify-center lg:justify-start items-center space-x-4 mb-8">
+			<div className="relative z-10 h-screen flex">
+				{/* Left Side - Fixed Hero Section */}
+				<div className="hidden lg:flex lg:w-1/2 items-center justify-center p-8">
+					<div className="max-w-lg space-y-8 text-center">
+						{/* Logo */}
+						<div className="flex justify-center items-center space-x-4 mb-8">
 							<div className="relative group">
 								<div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-300"></div>
-								<div className="relative w-20 h-20 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl">
-									<Heart className="w-10 h-10 text-white animate-pulse" />
+								<div className="relative w-16 h-16 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl">
+									<Heart className="w-8 h-8 text-white animate-pulse" />
 								</div>
-								<div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center animate-spin">
-									<Plus className="w-4 h-4 text-white" />
+								<div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center animate-spin">
+									<Plus className="w-3 h-3 text-white" />
 								</div>
 							</div>
 							<div>
-								<h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-white via-red-200 to-pink-200 bg-clip-text text-transparent mb-2">
+								<h1 className="text-4xl font-bold bg-gradient-to-r from-white via-red-200 to-pink-200 bg-clip-text text-transparent mb-2">
 									LifeLink
 								</h1>
-								<div className="flex items-center justify-center lg:justify-start space-x-2">
+								<div className="flex items-center justify-center space-x-2">
 									<Sparkles className="w-4 h-4 text-yellow-400" />
-									<p className="text-gray-300 text-lg">
+									<p className="text-gray-300">
 										Connecting hearts • Saving lives
 									</p>
 									<Sparkles className="w-4 h-4 text-yellow-400" />
@@ -130,7 +161,7 @@ const AdminAuth = () => {
 						</div>
 
 						{/* Quote Carousel */}
-						<div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm border border-white/20 p-6">
+						<div className="relative h-32 overflow-hidden rounded-2xl bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm border border-white/20 p-6">
 							{inspirationalQuotes.map((quote, index) => (
 								<div
 									key={index}
@@ -140,12 +171,12 @@ const AdminAuth = () => {
 											: 'opacity-0 translate-y-8'
 									}`}
 								>
-									<div className="space-y-4 text-center">
-										<div className="text-4xl mb-2">{quote.icon}</div>
-										<h2 className="text-3xl lg:text-4xl font-bold text-white">
+									<div className="space-y-3 text-center">
+										<div className="text-3xl">{quote.icon}</div>
+										<h2 className="text-2xl font-bold text-white">
 											{quote.text}
 										</h2>
-										<p className="text-gray-300 text-lg">{quote.subtext}</p>
+										<p className="text-gray-300">{quote.subtext}</p>
 									</div>
 								</div>
 							))}
@@ -163,115 +194,233 @@ const AdminAuth = () => {
 						</div>
 
 						{/* Stats Section */}
-						<div className="grid grid-cols-3 gap-4 mt-8">
+						<div className="grid grid-cols-3 gap-4">
 							<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-								<div className="text-2xl font-bold text-red-400">10K+</div>
-								<div className="text-sm text-gray-300">Lives Saved</div>
+								<div className="text-xl font-bold text-red-400">10K+</div>
+								<div className="text-xs text-gray-300">Lives Saved</div>
 							</div>
 							<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-								<div className="text-2xl font-bold text-blue-400">500+</div>
-								<div className="text-sm text-gray-300">Hospitals</div>
+								<div className="text-xl font-bold text-blue-400">500+</div>
+								<div className="text-xs text-gray-300">Hospitals</div>
 							</div>
 							<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-								<div className="text-2xl font-bold text-green-400">50K+</div>
-								<div className="text-sm text-gray-300">Donors</div>
+								<div className="text-xl font-bold text-green-400">50K+</div>
+								<div className="text-xs text-gray-300">Donors</div>
 							</div>
 						</div>
 					</div>
+				</div>
 
-					{/* Right - Auth Form */}
-					<div className="relative">
-						<div className="relative bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl overflow-hidden">
-							{/* Login/Register Toggle */}
-							<div className="flex mb-8 bg-white/5 rounded-2xl p-2">
-								<button
-									onClick={() => setIsLogin(true)}
-									className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
-										isLogin
-											? `bg-gradient-to-r ${selectedType.color} text-white shadow-lg`
-											: 'text-gray-300 hover:text-white'
-									}`}
-								>
-									<LogIn className="inline-block w-5 h-5 mr-2" />
-									Login
-								</button>
-								<button
-									onClick={() => setIsLogin(false)}
-									className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
-										!isLogin
-											? `bg-gradient-to-r ${selectedType.color} text-white shadow-lg`
-											: 'text-gray-300 hover:text-white'
-									}`}
-								>
-									<UserPlus className="inline-block w-5 h-5 mr-2" />
-									Register
-								</button>
+				{/* Right Side - Scrollable Auth Form */}
+				<div className="w-full lg:w-1/2 h-screen overflow-y-auto">
+					<div className="min-h-full flex items-center justify-center p-4 lg:p-8">
+						<div className="w-full max-w-md">
+							{/* Mobile Logo */}
+							<div className="lg:hidden flex justify-center items-center space-x-3 mb-8">
+								<div className="relative">
+									<div className="w-12 h-12 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl">
+										<Heart className="w-6 h-6 text-white" />
+									</div>
+								</div>
+								<h1 className="text-3xl font-bold bg-gradient-to-r from-white via-red-200 to-pink-200 bg-clip-text text-transparent">
+									LifeLink
+								</h1>
 							</div>
 
-							{/* Form Header */}
-							<div className="text-center mb-8">
-								<div
-									className={`w-16 h-16 bg-gradient-to-r ${selectedType.color} rounded-full flex items-center justify-center mx-auto mb-4`}
-								>
-									{isLogin ? (
-										<LogIn className="w-8 h-8 text-white" />
-									) : (
-										<UserPlus className="w-8 h-8 text-white" />
-									)}
-								</div>
-								<h3 className="text-3xl font-bold text-white mb-2">
-									{isLogin ? 'Welcome Back' : 'Join LifeLink'}
-								</h3>
-								<p className="text-gray-300">
-									{isLogin
-										? 'Sign in to continue your journey'
-										: 'Create account to start saving lives'}
-								</p>
-							</div>
-
-							{error && (
-								<div className="text-red-300 text-sm bg-red-500/20 border border-red-500/30 p-3 rounded-xl backdrop-blur-sm mt-6">
-									{error}
-								</div>
-							)}
-
-							<button
-								onClick={handleSubmit}
-								disabled={isLoading}
-								className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-300 relative overflow-hidden mt-6 ${
-									isLoading
-										? 'bg-gray-600 cursor-not-allowed'
-										: `bg-gradient-to-r ${selectedType.color} hover:shadow-2xl hover:scale-105 active:scale-95`
-								}`}
-							>
-								{isLoading ? (
-									<div className="flex items-center justify-center space-x-2">
-										<div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-										<span>
-											{isLogin ? 'Logging in...' : 'Creating account...'}
-										</span>
-									</div>
-								) : (
-									<div className="flex items-center justify-center space-x-2">
-										<span>{isLogin ? 'Sign In' : 'Create Account'}</span>
-										<ArrowRight className="w-5 h-5" />
-									</div>
-								)}
-							</button>
-
-							{/* Switch Mode */}
-							<div className="text-center mt-6">
-								<p className="text-gray-300">
-									{isLogin
-										? "Don't have an account?"
-										: 'Already have an account?'}
+							<div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 lg:p-8 border border-white/20 shadow-2xl">
+								{/* Login/Register Toggle */}
+								<div className="flex mb-6 bg-white/5 rounded-2xl p-2">
 									<button
-										onClick={() => setIsLogin(!isLogin)}
-										className="text-white font-semibold ml-2 hover:underline"
+										onClick={toggleMode}
+										className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-300 ${
+											isLogin
+												? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg'
+												: 'text-gray-300 hover:text-white'
+										}`}
 									>
-										{isLogin ? 'Sign up' : 'Sign in'}
+										<LogIn className="inline-block w-4 h-4 mr-2" />
+										Login
 									</button>
-								</p>
+									<button
+										onClick={toggleMode}
+										className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-300 ${
+											!isLogin
+												? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg'
+												: 'text-gray-300 hover:text-white'
+										}`}
+									>
+										<UserPlus className="inline-block w-4 h-4 mr-2" />
+										Register
+									</button>
+								</div>
+
+								{/* Form Header */}
+								<div className="text-center mb-6">
+									<div className="w-12 h-12 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+										{isLogin ? (
+											<LogIn className="w-6 h-6 text-white" />
+										) : (
+											<UserPlus className="w-6 h-6 text-white" />
+										)}
+									</div>
+									<h3 className="text-2xl font-bold text-white mb-2">
+										{isLogin ? 'Welcome Back' : 'Join LifeLink'}
+									</h3>
+									<p className="text-gray-300 text-sm">
+										{isLogin
+											? 'Sign in to continue your journey'
+											: 'Create account to start saving lives'}
+									</p>
+								</div>
+
+								<div className="space-y-4">
+									{!isLogin && (
+										<div>
+											<label className="block text-white text-sm font-medium mb-2">
+												Full Name
+											</label>
+											<input
+												type="text"
+												name="fullName"
+												value={formData.fullName}
+												onChange={handleChange}
+												className="w-full px-4 py-3 rounded-xl bg-white/20 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-red-400 transition-all placeholder-gray-400"
+												placeholder="Enter your full name"
+											/>
+										</div>
+									)}
+
+									<div>
+										<label className="block text-white text-sm font-medium mb-2">
+											Email
+										</label>
+										<input
+											type="email"
+											name="email"
+											value={formData.email}
+											onChange={handleChange}
+											className="w-full px-4 py-3 rounded-xl bg-white/20 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-red-400 transition-all placeholder-gray-400"
+											placeholder="Enter your email"
+										/>
+									</div>
+
+									<div>
+										<label className="block text-white text-sm font-medium mb-2">
+											Secret Key
+										</label>
+										<input
+											type="password"
+											name="secretKey"
+											value={formData.secretKey}
+											onChange={handleChange}
+											className="w-full px-4 py-3 rounded-xl bg-white/20 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-red-400 transition-all placeholder-gray-400"
+											placeholder="Enter your secret key"
+										/>
+									</div>
+
+									<div className="relative">
+										<label className="block text-white text-sm font-medium mb-2">
+											Password
+										</label>
+										<input
+											type={showPassword ? 'text' : 'password'}
+											name="password"
+											value={formData.password}
+											onChange={handleChange}
+											className="w-full px-4 py-3 pr-12 rounded-xl bg-white/20 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-red-400 transition-all placeholder-gray-400"
+											placeholder="Enter your password"
+										/>
+										<button
+											type="button"
+											onClick={() => setShowPassword(!showPassword)}
+											className="absolute right-3 top-10 text-gray-400 hover:text-white transition-colors"
+										>
+											{showPassword ? (
+												<EyeOff className="w-5 h-5" />
+											) : (
+												<Eye className="w-5 h-5" />
+											)}
+										</button>
+									</div>
+
+									{!isLogin && (
+										<div className="relative">
+											<label className="block text-white text-sm font-medium mb-2">
+												Confirm Password
+											</label>
+											<input
+												type={showConfirmPassword ? 'text' : 'password'}
+												name="confirmPassword"
+												value={formData.confirmPassword}
+												onChange={handleChange}
+												className="w-full px-4 py-3 pr-12 rounded-xl bg-white/20 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-red-400 transition-all placeholder-gray-400"
+												placeholder="Confirm your password"
+											/>
+											<button
+												type="button"
+												onClick={() =>
+													setShowConfirmPassword(!showConfirmPassword)
+												}
+												className="absolute right-3 top-10 text-gray-400 hover:text-white transition-colors"
+											>
+												{showConfirmPassword ? (
+													<EyeOff className="w-5 h-5" />
+												) : (
+													<Eye className="w-5 h-5" />
+												)}
+											</button>
+										</div>
+									)}
+
+									{error && (
+										<div className="text-red-300 text-sm bg-red-500/20 border border-red-500/30 p-3 rounded-xl backdrop-blur-sm">
+											{error}
+										</div>
+									)}
+
+									<button
+										onClick={handleSubmit}
+										disabled={isLoading}
+										className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-300 relative overflow-hidden ${
+											isLoading
+												? 'bg-gray-600 cursor-not-allowed'
+												: 'bg-gradient-to-r from-red-500 to-pink-500 hover:shadow-2xl hover:scale-105 active:scale-95 shadow-lg'
+										}`}
+									>
+										{isLoading ? (
+											<div className="flex items-center justify-center space-x-2">
+												<div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+												<span>
+													{isLogin
+														? 'Logging in...'
+														: 'Creating account...'}
+												</span>
+											</div>
+										) : (
+											<div className="flex items-center justify-center space-x-2">
+												<span>
+													{isLogin ? 'Sign In' : 'Create Account'}
+												</span>
+												<ArrowRight className="w-5 h-5" />
+											</div>
+										)}
+									</button>
+								</div>
+
+								{/* Switch Mode */}
+								<div className="text-center mt-6">
+									<p className="text-gray-300 text-sm">
+										{isLogin
+											? "Don't have an account?"
+											: 'Already have an account?'}
+										<button
+											onClick={toggleMode}
+											className="text-white font-semibold ml-2 hover:underline transition-colors"
+										>
+											{isLogin ? 'Sign up' : 'Sign in'}
+										</button>
+									</p>
+								</div>
 							</div>
 						</div>
 					</div>
