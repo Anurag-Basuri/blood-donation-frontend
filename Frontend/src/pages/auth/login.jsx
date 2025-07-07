@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
 	Heart,
 	Users,
@@ -32,7 +33,7 @@ const Login = () => {
 	const userTypes = [
 		{
 			id: 'user',
-			label: 'Blood Donor',
+			label: 'Normal Users',
 			icon: Heart,
 			color: 'from-red-500 via-pink-500 to-rose-500',
 			bg: 'bg-red-500/10',
@@ -99,7 +100,7 @@ const Login = () => {
 
 	return (
 		<div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-			{/* Enhanced Background Effects */}
+			{/* Background Effects */}
 			<div className="absolute inset-0">
 				<div className="absolute top-10 left-10 w-96 h-96 bg-gradient-to-r from-red-500/20 to-pink-500/20 rounded-full filter blur-3xl animate-pulse"></div>
 				<div className="absolute top-20 right-10 w-80 h-80 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full filter blur-3xl animate-pulse delay-1000"></div>
@@ -152,7 +153,7 @@ const Login = () => {
 							</div>
 						</div>
 
-						{/* Enhanced Quote Carousel */}
+						{/* Quote Carousel */}
 						<div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm border border-white/20 p-6">
 							{inspirationalQuotes.map((quote, index) => (
 								<div
@@ -203,7 +204,7 @@ const Login = () => {
 						</div>
 					</div>
 
-					{/* Right - Enhanced Login Form */}
+					{/* Right - Login Form */}
 					<div className="relative">
 						<div className="relative bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl overflow-hidden">
 							{/* Form Header */}
@@ -215,7 +216,7 @@ const Login = () => {
 								<p className="text-gray-300">Sign in to continue your journey</p>
 							</div>
 
-							{/* Enhanced User Type Selection */}
+							{/* User Type Selection */}
 							<div className="mb-6 space-y-3">
 								{userTypes.map(type => {
 									const Icon = type.icon;
@@ -252,9 +253,6 @@ const Login = () => {
 															: 'Organize drives'}
 													</p>
 												</div>
-												{userType === type.id && (
-													<ArrowRight className="w-5 h-5" />
-												)}
 											</div>
 										</button>
 									);
@@ -360,6 +358,13 @@ const Login = () => {
 										</div>
 									)}
 								</button>
+
+								<div className="text-center text-gray-400 mt-4">
+									Don't have an account?{' '}
+									<nav className="inline-block text-white hover:underline">
+										<Link >Sign Up</Link>
+									</nav>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -369,7 +374,7 @@ const Login = () => {
 	);
 };
 
-// Enhanced Input Component
+// Input Component
 const Input = ({ label, type, icon: Icon, value, setValue, toggleIcon: ToggleIcon, onToggle }) => (
 	<div className="relative group">
 		<label className="block text-sm font-medium text-gray-200 mb-3">{label}</label>
