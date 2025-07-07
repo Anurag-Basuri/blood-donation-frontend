@@ -128,28 +128,30 @@ const Login = () => {
 			<div className="relative z-10 min-h-screen flex items-center justify-center p-4">
 				<div className="w-full max-w-7xl grid lg:grid-cols-2 gap-12 items-stretch">
 					{/* Left - Enhanced Hero (Sticky) */}
-					<div className="hidden lg:block sticky top-0 h-screen min-h-screen">
-						<div className="flex flex-col justify-center h-full space-y-8 text-center lg:text-left px-2">
-							<div className="flex justify-center lg:justify-start items-center space-x-4 mb-8">
-								<div className="relative group">
-									<div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-300"></div>
-									<div className="relative w-20 h-20 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl">
-										<Heart className="w-10 h-10 text-white animate-pulse" />
+					<div className="hidden lg:block sticky top-0 h-[calc(100vh-2rem)] min-h-[600px] max-h-[1200px]">
+						<div className="flex flex-col justify-between h-full py-8 space-y-8 text-center lg:text-left px-2">
+							<div>
+								<div className="flex justify-center lg:justify-start items-center space-x-4 mb-8">
+									<div className="relative group">
+										<div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-300"></div>
+										<div className="relative w-20 h-20 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl">
+											<Heart className="w-10 h-10 text-white animate-pulse" />
+										</div>
+										<div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center animate-spin">
+											<Plus className="w-4 h-4 text-white" />
+										</div>
 									</div>
-									<div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center animate-spin">
-										<Plus className="w-4 h-4 text-white" />
-									</div>
-								</div>
-								<div>
-									<h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-white via-red-200 to-pink-200 bg-clip-text text-transparent mb-2">
-										LifeLink
-									</h1>
-									<div className="flex items-center justify-center lg:justify-start space-x-2">
-										<Sparkles className="w-4 h-4 text-yellow-400" />
-										<p className="text-gray-300 text-lg">
-											Connecting hearts • Saving lives
-										</p>
-										<Sparkles className="w-4 h-4 text-yellow-400" />
+									<div>
+										<h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-white via-red-200 to-pink-200 bg-clip-text text-transparent mb-2">
+											LifeLink
+										</h1>
+										<div className="flex items-center justify-center lg:justify-start space-x-2">
+											<Sparkles className="w-4 h-4 text-yellow-400" />
+											<p className="text-gray-300 text-lg">
+												Connecting hearts • Saving lives
+											</p>
+											<Sparkles className="w-4 h-4 text-yellow-400" />
+										</div>
 									</div>
 								</div>
 							</div>
