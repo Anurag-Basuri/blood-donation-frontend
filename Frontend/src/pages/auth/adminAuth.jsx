@@ -10,6 +10,7 @@ import {
 	Eye,
 	EyeOff,
 } from 'lucide-react';
+import { axiosInstance } from '../../services/api.js';
 
 const AdminAuth = () => {
 	const [isLogin, setIsLogin] = useState(true);
@@ -39,7 +40,7 @@ const AdminAuth = () => {
 			4000,
 		);
 		return () => clearInterval(interval);
-	}, []);
+	}, [inspirationalQuotes.length]);
 
 	const handleChange = e => {
 		const { name, value } = e.target;
@@ -59,6 +60,14 @@ const AdminAuth = () => {
 					setIsLoading(false);
 					return;
 				}
+
+				const response = await axiosInstance.post('/admin/login', formData);
+				if (response.status !== 200) {
+					setError('Login failed. Please check your credentials.');
+					setIsLoading(false);
+					return;
+				}
+				console.log('Login successful:', response.data);
 			} else {
 				if (
 					!formData.fullName ||
@@ -80,7 +89,7 @@ const AdminAuth = () => {
 
 			await new Promise(resolve => setTimeout(resolve, 1500));
 			alert(`${isLogin ? 'Login' : 'Registration'} successful!`);
-		} catch (err) {
+		} catch {
 			setError(`${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
 		} finally {
 			setIsLoading(false);
