@@ -85,6 +85,14 @@ const AdminAuth = () => {
 					setIsLoading(false);
 					return;
 				}
+
+				const response = await axiosInstance.post('/admin/register', formData);
+				if (response.status !== 201) {
+					setError('Registration failed. Please try again.');
+					setIsLoading(false);
+					return;
+				}
+				console.log('Registration successful:', response.data);
 			}
 
 			await new Promise(resolve => setTimeout(resolve, 1500));
