@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
-import { FormContext } from '../../context/FormContext';
-import { userRegister } from '../../services/authService';
+import { FormContext } from '../../context/FormContext.jsx';
+import { userRegister } from '../../services/authService.js';
 import PropTypes from 'prop-types';
 
 export function RegisterUser({ next }) {
