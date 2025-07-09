@@ -151,59 +151,56 @@ const AdminAuth = () => {
 			<div className="relative z-10 h-screen flex">
 				{/* Left Side - Fixed Hero Section */}
 				<div className="hidden lg:flex lg:w-1/2 items-center justify-center p-8">
-					<div className="max-w-lg space-y-8 text-center">
-						{/* Logo */}
-						<div className="flex justify-center items-center space-x-4 mb-8">
-							<div className="relative group">
-								<div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition duration-300"></div>
-								<div className="relative w-16 h-16 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl">
-									<Heart className="w-8 h-8 text-white animate-pulse" />
+					<div className="max-w-lg w-full space-y-10 text-center">
+						{/* Logo & Tagline */}
+						<div className="flex flex-col items-center mb-10">
+							<div className="relative group mb-4">
+								<div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 rounded-full blur-lg opacity-70 group-hover:opacity-100 transition duration-300"></div>
+								<div className="relative w-20 h-20 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl">
+									<Heart className="w-10 h-10 text-white animate-pulse" />
 								</div>
-								<div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center animate-spin">
-									<Plus className="w-3 h-3 text-white" />
+								<div className="absolute -top-3 -right-3 w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center animate-spin">
+									<Plus className="w-4 h-4 text-white" />
 								</div>
 							</div>
-							<div>
-								<h1 className="text-4xl font-bold bg-gradient-to-r from-white via-red-200 to-pink-200 bg-clip-text text-transparent mb-2">
-									LifeLink
-								</h1>
-								<div className="flex items-center justify-center space-x-2">
-									<Sparkles className="w-4 h-4 text-yellow-400" />
-									<p className="text-gray-300">
-										Connecting hearts • Saving lives
-									</p>
-									<Sparkles className="w-4 h-4 text-yellow-400" />
-								</div>
+							<h1 className="text-5xl font-extrabold bg-gradient-to-r from-white via-red-200 to-pink-200 bg-clip-text text-transparent mb-2 tracking-tight drop-shadow-lg">
+								LifeLink
+							</h1>
+							<div className="flex items-center justify-center space-x-2">
+								<Sparkles className="w-5 h-5 text-yellow-400 animate-pulse" />
+								<p className="text-gray-200 font-medium text-lg">
+									Connecting hearts • Saving lives
+								</p>
+								<Sparkles className="w-5 h-5 text-yellow-400 animate-pulse" />
 							</div>
 						</div>
 
 						{/* Quote Carousel */}
-						<div className="relative h-32 overflow-hidden rounded-2xl bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm border border-white/20 p-6">
+						<div className="relative h-36 overflow-hidden rounded-2xl bg-gradient-to-r from-white/10 to-white/20 backdrop-blur-md border border-white/20 p-8 shadow-xl">
 							{inspirationalQuotes.map((quote, index) => (
 								<div
 									key={index}
-									className={`absolute inset-0 p-6 transition-all duration-1000 ${
+									className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 ${
 										index === currentSlide
 											? 'opacity-100 translate-y-0'
-											: 'opacity-0 translate-y-8'
+											: 'opacity-0 translate-y-8 pointer-events-none'
 									}`}
 								>
-									<div className="space-y-3 text-center">
-										<div className="text-3xl">{quote.icon}</div>
-										<h2 className="text-2xl font-bold text-white">
-											{quote.text}
-										</h2>
-										<p className="text-gray-300">{quote.subtext}</p>
-									</div>
+									<div className="text-4xl mb-2">{quote.icon}</div>
+									<h2 className="text-2xl font-bold text-white drop-shadow">
+										{quote.text}
+									</h2>
+									<p className="text-gray-200 text-base">{quote.subtext}</p>
 								</div>
 							))}
-
-							<div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
+							<div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-2">
 								{inspirationalQuotes.map((_, index) => (
 									<div
 										key={index}
-										className={`w-2 h-2 rounded-full transition-all ${
-											index === currentSlide ? 'bg-white w-6' : 'bg-white/30'
+										className={`h-2 rounded-full transition-all duration-300 ${
+											index === currentSlide
+												? 'bg-white w-6'
+												: 'bg-white/30 w-2'
 										}`}
 									></div>
 								))}
@@ -211,18 +208,24 @@ const AdminAuth = () => {
 						</div>
 
 						{/* Stats Section */}
-						<div className="grid grid-cols-3 gap-4">
-							<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-								<div className="text-xl font-bold text-red-400">10K+</div>
-								<div className="text-xs text-gray-300">Lives Saved</div>
+						<div className="grid grid-cols-3 gap-4 mt-6">
+							<div className="text-center p-5 bg-white/10 rounded-xl backdrop-blur border border-white/10 shadow">
+								<div className="text-2xl font-bold text-red-400 drop-shadow">
+									10K+
+								</div>
+								<div className="text-xs text-gray-200">Lives Saved</div>
 							</div>
-							<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-								<div className="text-xl font-bold text-blue-400">500+</div>
-								<div className="text-xs text-gray-300">Hospitals</div>
+							<div className="text-center p-5 bg-white/10 rounded-xl backdrop-blur border border-white/10 shadow">
+								<div className="text-2xl font-bold text-blue-400 drop-shadow">
+									500+
+								</div>
+								<div className="text-xs text-gray-200">Hospitals</div>
 							</div>
-							<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
-								<div className="text-xl font-bold text-green-400">50K+</div>
-								<div className="text-xs text-gray-300">Donors</div>
+							<div className="text-center p-5 bg-white/10 rounded-xl backdrop-blur border border-white/10 shadow">
+								<div className="text-2xl font-bold text-green-400 drop-shadow">
+									50K+
+								</div>
+								<div className="text-xs text-gray-200">Donors</div>
 							</div>
 						</div>
 					</div>
