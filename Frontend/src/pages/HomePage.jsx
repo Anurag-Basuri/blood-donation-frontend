@@ -11,6 +11,7 @@ import {
   Globe
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getToken, removeToken } from '../utils/storage';
 
 const Homepage = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const Homepage = () => {
 
   // Check login status
   useEffect(() => {
-    const token = localStorage.getItem('lifelink_token');
+    const token = getToken();
     setIsLoggedIn(!!token);
   }, []);
 
@@ -60,7 +61,7 @@ const Homepage = () => {
   const handleRegister = () => navigate('/register');
   const handleDashboard = () => navigate('/dashboard');
   const handleLogout = () => {
-    localStorage.removeItem('lifelink_token');
+    removeToken();
     setIsLoggedIn(false);
   };
 
