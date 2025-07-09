@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { FormProvider } from './context/FormContext';
-import AccountTypeStep from './components/AccountTypeStep';
-import UserRegistration from './registerUser.jsx'
-import NGORegistration from './components/NGORegistration';
-import HospitalRegistration from './components/HospitalRegistration';
-import SuccessStep from './components/SuccessStep';
+import { useState, useEffect } from 'react';
+import { RegisterUser } from './registerUser.jsx';
+import { RegisterNGO } from './registerNGO.jsx';
+import { RegisterHospital } from './registerHospital.jsx';
+import { FormProvider } from '../../context/FormContext';
 import {
 	Heart,
 	Building2,
@@ -14,14 +12,36 @@ import {
 	Sparkles,
 	Droplets,
 	Plus,
-	ChevronLeft,
 } from 'lucide-react';
 
-const Register = () => {
+const roles = [
+	{
+		id: 'user',
+		label: 'Normal User',
+		icon: Heart,
+		color: 'from-red-500 via-pink-500 to-rose-500',
+		description: 'Register to donate blood and save lives',
+	},
+	{
+		id: 'ngo',
+		label: 'NGO',
+		icon: Users,
+		color: 'from-green-500 via-emerald-500 to-teal-500',
+		description: 'Register your organization to organize blood drives',
+	},
+	{
+		id: 'hospital',
+		label: 'Hospital',
+		icon: Building2,
+		color: 'from-blue-500 via-cyan-500 to-teal-500',
+		description: 'Register your hospital to connect with donors',
+	},
+];
+
+export default function Register() {
 	const [step, setStep] = useState(0);
 	const [role, setRole] = useState('user');
 	const [currentQuote, setCurrentQuote] = useState(0);
-	const [isAnimating, setIsAnimating] = useState(false);
 
 	const quotes = [
 		'Every drop counts. Be a hero today.',
@@ -30,21 +50,8 @@ const Register = () => {
 		'The gift of blood is the gift of life.',
 	];
 
-	const next = () => {
-		setIsAnimating(true);
-		setTimeout(() => {
-			setStep(s => s + 1);
-			setIsAnimating(false);
-		}, 300);
-	};
-
-	const prev = () => {
-		setIsAnimating(true);
-		setTimeout(() => {
-			setStep(s => s - 1);
-			setIsAnimating(false);
-		}, 300);
-	};
+	const next = () => setStep(s => s + 1);
+	const prev = () => setStep(s => s - 1);
 
 	useEffect(() => {
 		const interval = setInterval(() => {
@@ -82,7 +89,7 @@ const Register = () => {
 				</div>
 
 				<div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-					<div className="w-full max-w-6xl grid lg:grid-cols-2 gap-12">
+					<div className="w-full max-w-4xl grid lg:grid-cols-2 gap-12">
 						{/* Left Side - Hero Section */}
 						<div className="hidden lg:block">
 							<div className="flex flex-col justify-center h-full space-y-8">
@@ -111,12 +118,10 @@ const Register = () => {
 								</div>
 
 								{/* Quote Section */}
-								<div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm border border-white/20 p-6 transition-all duration-1000">
+								<div className="relative h-32 overflow-hidden rounded-2xl bg-gradient-to-r from-white/5 to-white/10 backdrop-blur-sm border border-white/20 p-6">
 									<div className="space-y-4 text-center">
-										<div className="text-4xl mb-2 transition-all duration-1000 transform rotate-12 scale-110">
-											💖
-										</div>
-										<h2 className="text-3xl font-bold text-white transition-all duration-1000">
+										<div className="text-4xl mb-2">💖</div>
+										<h2 className="text-3xl font-bold text-white">
 											{quotes[currentQuote]}
 										</h2>
 									</div>
@@ -124,15 +129,15 @@ const Register = () => {
 
 								{/* Stats Section */}
 								<div className="grid grid-cols-3 gap-4">
-									<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 cursor-pointer">
+									<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
 										<div className="text-2xl font-bold text-red-400">10K+</div>
 										<div className="text-sm text-gray-300">Lives Saved</div>
 									</div>
-									<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 cursor-pointer">
+									<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
 										<div className="text-2xl font-bold text-blue-400">500+</div>
 										<div className="text-sm text-gray-300">Hospitals</div>
 									</div>
-									<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 cursor-pointer">
+									<div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10">
 										<div className="text-2xl font-bold text-green-400">
 											50K+
 										</div>
@@ -143,63 +148,123 @@ const Register = () => {
 						</div>
 
 						{/* Right Side - Registration Form */}
-						<div
-							className={`bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl overflow-hidden transition-all duration-300 ${
-								isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
-							}`}
-						>
-							{/* Step Progress */}
-							<div className="flex items-center justify-between mb-8">
-								<div className="flex items-center">
-									{step > 0 && (
-										<button
-											onClick={prev}
-											className="mr-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all"
-										>
-											<ChevronLeft className="w-5 h-5 text-white" />
-										</button>
-									)}
-									<h2 className="text-2xl font-bold text-white">
-										{step === 0
-											? 'Create Account'
-											: step === 1
-											? 'Registration'
-											: 'Success!'}
-									</h2>
-								</div>
-								<div className="flex items-center">
-									{[0, 1, 2].map(s => (
-										<div
-											key={s}
-											className={`w-3 h-3 rounded-full mx-1 transition-all duration-300 ${
-												step === s
-													? 'bg-white w-6'
-													: step > s
-													? 'bg-green-500'
-													: 'bg-white/30'
-											}`}
-										></div>
-									))}
-								</div>
-							</div>
+						<div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl">
+							{step === 0 && (
+								<div className="space-y-8">
+									<div className="text-center">
+										<div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+											<Users className="w-8 h-8 text-white" />
+										</div>
+										<h2 className="text-3xl font-bold text-white mb-2">
+											Create Your Account
+										</h2>
+										<p className="text-gray-300">
+											Join our lifesaving community today
+										</p>
+									</div>
 
-							{step === 0 && <AccountTypeStep setRole={setRole} next={next} />}
+									<div className="space-y-4">
+										<h3 className="text-xl font-semibold text-white mb-4">
+											Select Account Type
+										</h3>
+										<div className="grid grid-cols-1 gap-4">
+											{roles.map(r => (
+												<button
+													key={r.id}
+													onClick={() => {
+														setRole(r.id);
+														next();
+													}}
+													className={`p-6 rounded-xl border-2 transition-all duration-300 group relative overflow-hidden text-left ${
+														role === r.id
+															? `bg-gradient-to-r ${r.color} text-white shadow-lg border-transparent`
+															: `border-white/20 hover:border-white/40 bg-white/5 text-gray-200 hover:scale-102`
+													}`}
+												>
+													<div className="flex items-center space-x-4 relative z-10">
+														<div
+															className={`w-14 h-14 rounded-full flex items-center justify-center ${
+																role === r.id
+																	? 'bg-white/20'
+																	: 'bg-white/10'
+															}`}
+														>
+															<r.icon className="w-7 h-7" />
+														</div>
+														<div>
+															<p className="font-semibold text-lg">
+																{r.label}
+															</p>
+															<p className="text-sm opacity-80">
+																{r.description}
+															</p>
+														</div>
+													</div>
+												</button>
+											))}
+										</div>
+									</div>
+								</div>
+							)}
+
 							{step === 1 && role === 'user' && (
-								<UserRegistration next={next} prev={prev} />
+								<RegisterUser next={next} prev={prev} />
 							)}
 							{step === 1 && role === 'ngo' && (
-								<NGORegistration next={next} prev={prev} />
+								<RegisterNGO next={next} prev={prev} />
 							)}
 							{step === 1 && role === 'hospital' && (
-								<HospitalRegistration next={next} prev={prev} />
+								<RegisterHospital next={next} prev={prev} />
 							)}
-							{step === 2 && <SuccessStep />}
+
+							{step === 2 && (
+								<div className="text-center py-12">
+									<div className="w-24 h-24 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+										<CheckCircle2 className="w-12 h-12 text-white" />
+									</div>
+									<h2 className="text-3xl font-bold text-white mb-4">
+										Registration Complete!
+									</h2>
+									<p className="text-gray-300 mb-8">
+										Please check your email to verify your account
+									</p>
+									<div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-sm border border-green-500/30 rounded-xl p-6">
+										<h3 className="text-xl font-semibold text-white mb-2">
+											What's Next?
+										</h3>
+										<ul className="text-gray-300 space-y-2 text-left max-w-xs mx-auto">
+											<li className="flex items-center">
+												<span className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mr-2">
+													1
+												</span>
+												Verify your email address
+											</li>
+											<li className="flex items-center">
+												<span className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mr-2">
+													2
+												</span>
+												Complete your profile
+											</li>
+											<li className="flex items-center">
+												<span className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mr-2">
+													3
+												</span>
+												Start saving lives!
+											</li>
+										</ul>
+									</div>
+									<button
+										onClick={() => setStep(0)}
+										className="mt-8 w-full py-3 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:shadow-xl transition-all"
+									>
+										Back to Login
+									</button>
+								</div>
+							)}
 						</div>
 					</div>
 				</div>
 			</div>
 		</FormProvider>
 	);
-};
-
-export default Register;
+}
