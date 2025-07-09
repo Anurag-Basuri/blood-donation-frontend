@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RegisterUser } from './registerUser.jsx';
 import { RegisterNGO } from './registerNGO.jsx';
 import { RegisterHospital } from './registerHospital.jsx';

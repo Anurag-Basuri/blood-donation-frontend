@@ -2,7 +2,7 @@ import { useContext, useState } from 'react';
 import { FormContext } from '../../context/FormContext.jsx';
 import { userRegister } from '../../services/authService.js';
 import PropTypes from 'prop-types';
-import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, ArrowRight } from 'lucide-react';
 
 export function RegisterUser({ next, prev }) {
 	const { update } = useContext(FormContext);
