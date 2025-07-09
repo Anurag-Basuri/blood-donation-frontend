@@ -1,12 +1,8 @@
-import { useContext, useState } from 'react';
-import { FormContext } from '../../context/FormContext.jsx';
-import { userRegister } from '../../services/authService.js';
-import PropTypes from 'prop-types';
-import { Eye, EyeOff, ArrowLeft, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
-export function RegisterUser({ next, prev }) {
-	const { update } = useContext(FormContext);
-	const [local, setLocal] = useState({
+const UserRegistration = ({ next, prev }) => {
+	const [formData, setFormData] = useState({
 		userName: '',
 		fullName: '',
 		email: '',
@@ -23,34 +19,22 @@ export function RegisterUser({ next, prev }) {
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-	const handle = k => e => setLocal({ ...local, [k]: e.target.value });
+	const handleChange = e => {
+		const { name, value } = e.target;
+		setFormData(prev => ({ ...prev, [name]: value }));
+		if (error) setError('');
+	};
 
-	const submit = async e => {
+	const handleSubmit = e => {
 		e.preventDefault();
-
-		if (local.password !== local.confirmPassword) {
+		if (formData.password !== formData.confirmPassword) {
 			setError('Passwords do not match');
 			return;
 		}
-
-		update(local);
-		try {
-			await userRegister(
-				local.userName,
-				local.fullName,
-				local.email,
-				local.phone,
-				local.dob,
-				local.gender,
-				local.bloodType,
-				local.lastDonation,
-				local.address,
-				local.password,
-			);
+		// Simulate API call
+		setTimeout(() => {
 			next();
-		} catch (err) {
-			setError(err.response?.data?.message || 'Registration failed');
-		}
+		}, 800);
 	};
 
 	const fields = [
@@ -89,7 +73,7 @@ export function RegisterUser({ next, prev }) {
 					<ArrowLeft className="w-5 h-5 mr-1" /> Back
 				</button>
 				<h2 className="text-2xl font-bold text-white">Donor Registration</h2>
-				<div className="w-6"></div> {/* Spacer for alignment */}
+				<div className="w-6"></div>
 			</div>
 
 			{error && (
@@ -98,7 +82,7 @@ export function RegisterUser({ next, prev }) {
 				</div>
 			)}
 
-			<form onSubmit={submit} className="space-y-4">
+			<form onSubmit={handleSubmit} className="space-y-4">
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					{fields.map(field => (
 						<div key={field.key} className="relative group">
@@ -108,8 +92,9 @@ export function RegisterUser({ next, prev }) {
 							<div className="relative">
 								<input
 									required
-									value={local[field.key]}
-									onChange={handle(field.key)}
+									name={field.key}
+									value={formData[field.key]}
+									onChange={handleChange}
 									type={field.type}
 									className="w-full pl-4 pr-10 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 backdrop-blur-sm focus:ring-2 focus:ring-white/40 focus:border-white/50 transition-all duration-200 hover:bg-white/15"
 									placeholder={`Enter ${field.label.toLowerCase()}`}
@@ -138,17 +123,15 @@ export function RegisterUser({ next, prev }) {
 					</button>
 					<button
 						type="submit"
-						className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-red-500 to-pink-500 hover:shadow-xl transition-all flex items-center"
+						className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-red-500 to-pink-500 hover:shadow-xl transition-all flex items-center group"
 					>
-						Complete Registration <ArrowRight className="w-5 h-5 ml-2" />
+						<span>Complete Registration</span>
+						<ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
 					</button>
 				</div>
 			</form>
 		</div>
 	);
-}
-
-RegisterUser.propTypes = {
-	next: PropTypes.func.isRequired,
-	prev: PropTypes.func.isRequired,
 };
+
+export default UserRegistration;

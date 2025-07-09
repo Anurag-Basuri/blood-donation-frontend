@@ -1,151 +1,83 @@
-import { useContext, useState } from 'react';
-import { FormContext } from '../../context/FormContext.jsx';
-import { ngoRegister } from '../../services/authService.js';
-import PropTypes from 'prop-types';
-import { Eye, EyeOff, ArrowLeft, ArrowRight } from 'lucide-react';
+import React from 'react';
+import { Heart, Users, Building2 } from 'lucide-react';
 
-export function RegisterNGO({ next, prev }) {
-	const { update } = useContext(FormContext);
-	const [local, setLocal] = useState({
-		name: '',
-		email: '',
-		contactPerson: '',
-		address: '',
-		regNumber: '',
-		affiliation: '',
-		establishedYear: '',
-		license: '',
-		password: '',
-		confirmPassword: '',
-	});
-	const [error, setError] = useState('');
-	const [showPassword, setShowPassword] = useState(false);
-	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-	const handle = k => e => setLocal({ ...local, [k]: e.target.value });
-
-	const submit = async e => {
-		e.preventDefault();
-
-		if (local.password !== local.confirmPassword) {
-			setError('Passwords do not match');
-			return;
-		}
-
-		update(local);
-		try {
-			await ngoRegister(
-				local.name,
-				local.email,
-				local.address,
-				local.contactPerson,
-				local.regNumber,
-				local.affiliation,
-				local.establishedYear,
-				local.license,
-				local.password,
-			);
-			next();
-		} catch (err) {
-			setError(err.response?.data?.message || 'Registration failed');
-		}
-	};
-
-	const fields = [
-		{ key: 'name', label: 'Organization Name', type: 'text' },
-		{ key: 'email', label: 'Email Address', type: 'email' },
-		{ key: 'contactPerson', label: 'Contact Person', type: 'text' },
-		{ key: 'address', label: 'Full Address', type: 'text' },
-		{ key: 'regNumber', label: 'Registration Number', type: 'text' },
-		{ key: 'affiliation', label: 'Affiliation', type: 'text' },
-		{ key: 'establishedYear', label: 'Established Year', type: 'number' },
-		{ key: 'license', label: 'License Number', type: 'text' },
+const AccountTypeStep = ({ setRole, next }) => {
+	const roles = [
 		{
-			key: 'password',
-			label: 'Password',
-			type: showPassword ? 'text' : 'password',
-			icon: showPassword ? EyeOff : Eye,
-			onIconClick: () => setShowPassword(!showPassword),
+			id: 'user',
+			label: 'Normal User',
+			icon: Heart,
+			color: 'from-red-500 via-pink-500 to-rose-500',
+			description: 'Register to donate blood and save lives',
 		},
 		{
-			key: 'confirmPassword',
-			label: 'Confirm Password',
-			type: showConfirmPassword ? 'text' : 'password',
-			icon: showConfirmPassword ? EyeOff : Eye,
-			onIconClick: () => setShowConfirmPassword(!showConfirmPassword),
+			id: 'ngo',
+			label: 'NGO',
+			icon: Users,
+			color: 'from-green-500 via-emerald-500 to-teal-500',
+			description: 'Register your organization to organize blood drives',
+		},
+		{
+			id: 'hospital',
+			label: 'Hospital',
+			icon: Building2,
+			color: 'from-blue-500 via-cyan-500 to-teal-500',
+			description: 'Register your hospital to connect with donors',
 		},
 	];
 
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between mb-6">
-				<button
-					onClick={prev}
-					className="flex items-center text-gray-300 hover:text-white transition-colors"
-				>
-					<ArrowLeft className="w-5 h-5 mr-1" /> Back
-				</button>
-				<h2 className="text-2xl font-bold text-white">NGO Registration</h2>
-				<div className="w-6"></div> {/* Spacer for alignment */}
+		<div className="space-y-8">
+			<div className="text-center">
+				<div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+					<Users className="w-8 h-8 text-white" />
+				</div>
+				<h2 className="text-3xl font-bold text-white mb-2">Create Your Account</h2>
+				<p className="text-gray-300">Join our lifesaving community today</p>
 			</div>
 
-			{error && (
-				<div className="text-red-300 text-sm bg-red-500/20 border border-red-500/30 p-3 rounded-xl backdrop-blur-sm">
-					{error}
-				</div>
-			)}
-
-			<form onSubmit={submit} className="space-y-4">
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					{fields.map(field => (
-						<div key={field.key} className="relative group">
-							<label className="block text-sm font-medium text-gray-200 mb-1">
-								{field.label}
-							</label>
-							<div className="relative">
-								<input
-									required
-									value={local[field.key]}
-									onChange={handle(field.key)}
-									type={field.type}
-									className="w-full pl-4 pr-10 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 backdrop-blur-sm focus:ring-2 focus:ring-white/40 focus:border-white/50 transition-all duration-200 hover:bg-white/15"
-									placeholder={`Enter ${field.label.toLowerCase()}`}
-								/>
-								{field.icon && (
-									<button
-										type="button"
-										onClick={field.onIconClick}
-										className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-									>
-										<field.icon className="h-5 w-5" />
-									</button>
-								)}
+			<div className="space-y-4">
+				<h3 className="text-xl font-semibold text-white mb-4">Select Account Type</h3>
+				<div className="grid grid-cols-1 gap-4">
+					{roles.map(r => (
+						<button
+							key={r.id}
+							onClick={() => {
+								setRole(r.id);
+								setTimeout(next, 300);
+							}}
+							className={`p-6 rounded-xl border-2 transition-all duration-300 group relative overflow-hidden text-left hover:scale-[1.02] ${
+								r.id === 'user'
+									? `border-white/20 hover:border-white/40 bg-gradient-to-r ${r.color}/10 hover:${r.color}/20`
+									: `border-white/20 hover:border-white/40 bg-white/5`
+							}`}
+						>
+							<div className="flex items-center space-x-4 relative z-10">
+								<div
+									className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
+										r.id === 'user'
+											? 'bg-gradient-to-r from-red-500 to-pink-500'
+											: r.id === 'ngo'
+											? 'bg-gradient-to-r from-green-500 to-teal-500'
+											: 'bg-gradient-to-r from-blue-500 to-cyan-500'
+									}`}
+								>
+									<r.icon className="w-7 h-7 text-white" />
+								</div>
+								<div>
+									<p className="font-semibold text-lg text-white">{r.label}</p>
+									<p className="text-sm text-gray-300">{r.description}</p>
+								</div>
 							</div>
-						</div>
+							<div
+								className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 bg-gradient-to-r ${r.color}`}
+							></div>
+						</button>
 					))}
 				</div>
-
-				<div className="flex justify-between pt-4">
-					<button
-						type="button"
-						onClick={prev}
-						className="px-6 py-3 rounded-xl font-medium text-white bg-white/10 hover:bg-white/20 transition-colors"
-					>
-						Back
-					</button>
-					<button
-						type="submit"
-						className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-green-500 to-teal-500 hover:shadow-xl transition-all flex items-center"
-					>
-						Complete Registration <ArrowRight className="w-5 h-5 ml-2" />
-					</button>
-				</div>
-			</form>
+			</div>
 		</div>
 	);
-}
-
-RegisterNGO.propTypes = {
-	next: PropTypes.func.isRequired,
-	prev: PropTypes.func.isRequired,
 };
+
+export default AccountTypeStep;
