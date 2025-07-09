@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { RegisterUser, RegisterNGO, RegisterHospital } from './';
+import { RegisterUser } from './registerUser.jsx';
+import { RegisterNGO } from './registerNGO.jsx';
+import { RegisterHospital } from './registerHospital.jsx';
 import { FormProvider } from '../../context/FormContext';
 
 const roles = ['user', 'ngo', 'hospital'];
