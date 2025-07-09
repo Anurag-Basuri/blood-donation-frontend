@@ -22,28 +22,15 @@ export function RegisterNGO({ next, prev }) {
 	const [error, setError] = useState('');
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-	const [focusedFields, setFocusedFields] = useState({});
 
 	const handle = k => e => setLocal({ ...local, [k]: e.target.value });
 
-	const handleFocus = field => () => {
-		setFocusedFields(prev => ({ ...prev, [field]: true }));
-	};
-
-	const handleBlur = field => () => {
-		if (!local[field]) {
-			setFocusedFields(prev => ({ ...prev, [field]: false }));
-		}
-	};
-
 	const submit = async e => {
 		e.preventDefault();
-
 		if (local.password !== local.confirmPassword) {
 			setError('Passwords do not match');
 			return;
 		}
-
 		update(local);
 		try {
 			await ngoRegister(
@@ -63,38 +50,8 @@ export function RegisterNGO({ next, prev }) {
 		}
 	};
 
-	const fields = [
-		{ key: 'name', label: 'Organization Name', type: 'text' },
-		{ key: 'email', label: 'Email Address', type: 'email' },
-		{ key: 'contactPerson', label: 'Contact Person', type: 'text' },
-		{ key: 'address', label: 'Full Address', type: 'text' },
-		{ key: 'regNumber', label: 'Registration Number', type: 'text' },
-		{ key: 'affiliation', label: 'Affiliation', type: 'text' },
-		{ key: 'establishedYear', label: 'Established Year', type: 'number' },
-		{ key: 'license', label: 'License Number', type: 'text' },
-		{
-			key: 'password',
-			label: 'Password',
-			type: showPassword ? 'text' : 'password',
-			icon: showPassword ? EyeOff : Eye,
-			onIconClick: () => setShowPassword(!showPassword),
-		},
-		{
-			key: 'confirmPassword',
-			label: 'Confirm Password',
-			type: showConfirmPassword ? 'text' : 'password',
-			icon: showConfirmPassword ? EyeOff : Eye,
-			onIconClick: () => setShowConfirmPassword(!showConfirmPassword),
-		},
-	];
-
 	return (
-		<motion.div
-			className="space-y-6"
-			initial={{ opacity: 0 }}
-			animate={{ opacity: 1 }}
-			transition={{ duration: 0.3 }}
-		>
+		<motion.div className="space-y-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
 			<div className="flex items-center justify-between mb-6">
 				<motion.button
 					onClick={prev}
@@ -120,47 +77,61 @@ export function RegisterNGO({ next, prev }) {
 
 			<form onSubmit={submit} className="space-y-4">
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					{fields.map((field, index) => (
-						<motion.div
-							key={field.key}
-							className="relative group"
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ delay: index * 0.1 }}
-						>
-							<div className="relative">
-								<input
-									required
-									value={local[field.key]}
-									onChange={handle(field.key)}
-									onFocus={handleFocus(field.key)}
-									onBlur={handleBlur(field.key)}
-									type={field.type}
-									className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-white/40 focus:border-white/50 transition-all duration-200 peer"
-								/>
-								<label
-									className={`absolute left-4 transition-all duration-200 ${
-										focusedFields[field.key] || local[field.key]
-											? 'top-1 text-xs text-gray-300'
-											: 'top-1/2 -translate-y-1/2 text-gray-400'
-									} pointer-events-none`}
-								>
-									{field.label}
-								</label>
-								{field.icon && (
-									<button
-										type="button"
-										onClick={field.onIconClick}
-										className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-									>
-										<field.icon className="h-5 w-5" />
-									</button>
-								)}
-							</div>
-						</motion.div>
-					))}
+					<Input label="Organization Name" value={local.name} onChange={handle('name')} />
+					<Input
+						label="Email Address"
+						type="email"
+						value={local.email}
+						onChange={handle('email')}
+					/>
+					<Input
+						label="Contact Person"
+						value={local.contactPerson}
+						onChange={handle('contactPerson')}
+					/>
+					<Input
+						label="Full Address"
+						value={local.address}
+						onChange={handle('address')}
+					/>
+					<Input
+						label="Registration Number"
+						value={local.regNumber}
+						onChange={handle('regNumber')}
+					/>
+					<Input
+						label="Affiliation"
+						value={local.affiliation}
+						onChange={handle('affiliation')}
+					/>
+					<Input
+						label="Established Year"
+						type="number"
+						value={local.establishedYear}
+						onChange={handle('establishedYear')}
+					/>
+					<Input
+						label="License Number"
+						value={local.license}
+						onChange={handle('license')}
+					/>
+					<Input
+						label="Password"
+						type={showPassword ? 'text' : 'password'}
+						value={local.password}
+						onChange={handle('password')}
+						icon={showPassword ? EyeOff : Eye}
+						onIconClick={() => setShowPassword(v => !v)}
+					/>
+					<Input
+						label="Confirm Password"
+						type={showConfirmPassword ? 'text' : 'password'}
+						value={local.confirmPassword}
+						onChange={handle('confirmPassword')}
+						icon={showConfirmPassword ? EyeOff : Eye}
+						onIconClick={() => setShowConfirmPassword(v => !v)}
+					/>
 				</div>
-
 				<div className="flex justify-between pt-4">
 					<motion.button
 						type="button"
@@ -182,6 +153,37 @@ export function RegisterNGO({ next, prev }) {
 				</div>
 			</form>
 		</motion.div>
+	);
+}
+
+function Input({ label, type = 'text', value, onChange, icon: Icon, onIconClick }) {
+	return (
+		<div className="relative group">
+			<input
+				required
+				type={type}
+				value={value}
+				onChange={onChange}
+				className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-white/40 focus:border-white/50 transition-all duration-200 peer"
+				placeholder={label}
+			/>
+			<label
+				className={`absolute left-4 transition-all duration-200 ${
+					value ? 'top-1 text-xs text-gray-300' : 'top-1/2 -translate-y-1/2 text-gray-400'
+				} pointer-events-none`}
+			>
+				{label}
+			</label>
+			{Icon && (
+				<button
+					type="button"
+					onClick={onIconClick}
+					className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+				>
+					<Icon className="h-5 w-5" />
+				</button>
+			)}
+		</div>
 	);
 }
 
