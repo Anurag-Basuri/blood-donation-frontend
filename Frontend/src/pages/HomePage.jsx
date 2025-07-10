@@ -89,6 +89,7 @@ const Homepage = () => {
       // Redirect to homepage after logout
       navigate('/');
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Logout failed:', error);
       showToast('Logout failed. Please try again.', 'error');
     }
@@ -105,6 +106,7 @@ const Homepage = () => {
           ? 'bg-red-600 text-white shadow-lg shadow-red-500/30 hover:bg-red-700'
           : 'bg-white text-red-600 border-2 border-red-600 hover:bg-red-50'
       } ${className}`}
+      type="button"
     >
       {children}
     </motion.button>
@@ -128,88 +130,125 @@ const Homepage = () => {
       </AnimatePresence>
 
       {/* Hero Section */}
-      <section className="min-h-screen flex flex-col justify-center items-center text-center px-6 relative overflow-hidden">
-        {/* Animated background elements */}
+      <section className="relative min-h-screen flex flex-col justify-center items-center text-center px-4 sm:px-6 overflow-hidden">
+        {/* Video or SVG Pattern Background */}
         <div className="absolute inset-0 z-0">
-          {[...Array(15)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full bg-red-200 opacity-20"
-              style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                width: `${Math.random() * 100 + 20}px`,
-                height: `${Math.random() * 100 + 20}px`,
-              }}
-              animate={{
-                scale: [1, 1.5, 1],
-                opacity: [0.2, 0.4, 0.2],
-              }}
-              transition={{
-                duration: Math.random() * 4 + 4,
-                repeat: Infinity,
-                delay: Math.random() * 2,
-              }}
-            />
-          ))}
+          {/* Example: SVG Pattern (replace with <video> if you have a video asset) */}
+          <svg
+            className="w-full h-full object-cover"
+            viewBox="0 0 1440 900"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <radialGradient id="redGlow" cx="50%" cy="40%" r="80%" fx="50%" fy="40%">
+                <stop offset="0%" stopColor="#f87171" stopOpacity="0.7" />
+                <stop offset="100%" stopColor="#be123c" stopOpacity="0.3" />
+              </radialGradient>
+            </defs>
+            <rect width="1440" height="900" fill="url(#redGlow)" />
+            <circle cx="400" cy="300" r="220" fill="#f87171" fillOpacity="0.18" />
+            <circle cx="1200" cy="700" r="180" fill="#be123c" fillOpacity="0.12" />
+            <circle cx="900" cy="200" r="120" fill="#f43f5e" fillOpacity="0.10" />
+          </svg>
+          {/* Red-tinted overlay for contrast */}
+          <div className="absolute inset-0 bg-gradient-to-br from-red-700/60 via-pink-700/40 to-red-900/70 mix-blend-multiply"></div>
+          {/* Optional: subtle parallax floating hearts */}
+          <div className="absolute inset-0 pointer-events-none">
+            {[...Array(8)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute"
+                style={{
+                  left: `${10 + Math.random() * 80}%`,
+                  top: `${10 + Math.random() * 80}%`,
+                  zIndex: 1,
+                }}
+                initial={{ y: 0, opacity: 0.25 + Math.random() * 0.25 }}
+                animate={{
+                  y: [0, -30 - Math.random() * 20, 0],
+                  opacity: [0.25, 0.4, 0.25],
+                }}
+                transition={{
+                  duration: 6 + Math.random() * 3,
+                  repeat: Infinity,
+                  delay: Math.random() * 2,
+                }}
+              >
+                <Heart className="w-8 h-8 text-white/30 drop-shadow-lg blur-[1.5px]" />
+              </motion.div>
+            ))}
+          </div>
         </div>
 
-        <div className="relative z-10 max-w-4xl">
+        {/* Hero Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center min-h-[70vh] w-full">
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight"
+            initial={{ opacity: 0, y: 40, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 1, ease: 'easeOut' }}
+            className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-4 text-white drop-shadow-xl"
+            style={{ textShadow: '0 4px 32px #be123c44' }}
           >
-            <span className="bg-gradient-to-r from-red-600 to-pink-600 text-transparent bg-clip-text">
-              Connecting Blood Donors
-            </span>
-            <br />
-            to Save Lives
+            Give Blood, <span className="text-pink-200">Save Lives</span>
           </motion.h1>
-
+          <motion.p
+            initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 1, delay: 0.2, ease: 'easeOut' }}
+            className="text-lg sm:text-xl md:text-2xl text-pink-100 font-medium mb-2"
+          >
+            Every 2 Seconds, Someone Needs Blood
+          </motion.p>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-xl max-w-2xl text-gray-700 mb-10"
+            transition={{ duration: 1, delay: 0.4 }}
+            className="text-base sm:text-lg text-white/90 max-w-xl mx-auto mb-8"
           >
-            LifeLink bridges the gap between donors, hospitals, and NGOs—ensuring the right blood
-            reaches the right person at the right time.
+            Join LifeLink and become the lifeline for someone in need. Your donation can be the
+            difference between hope and heartbreak.
           </motion.p>
-
+          <div className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto">
+            <motion.button
+              whileHover={{
+                scale: 1.07,
+                boxShadow: '0 8px 32px 0 #be123c55',
+                filter: 'blur(0px)',
+              }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleRegister}
+              className="px-8 py-3 rounded-full bg-gradient-to-r from-red-600 via-pink-600 to-red-700 text-white font-bold text-lg shadow-lg shadow-red-500/30 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-400/40"
+              type="button"
+            >
+              Donate Now
+            </motion.button>
+            <motion.button
+              whileHover={{
+                scale: 1.05,
+                backgroundColor: '#fff',
+                color: '#be123c',
+                borderColor: '#be123c',
+              }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => missionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+              className="px-8 py-3 rounded-full border-2 border-white text-white font-semibold text-lg bg-white/10 hover:bg-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/40"
+              type="button"
+            >
+              Learn More
+            </motion.button>
+          </div>
+          {/* Optional: quick stat or urgency badge */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="flex flex-wrap justify-center gap-4"
+            transition={{ duration: 1, delay: 0.7 }}
+            className="mt-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white/90 text-sm backdrop-blur-md shadow"
           >
-            {isLoggedIn ? (
-              <>
-                <Button primary onClick={handleDashboard}>
-                  Go to Dashboard
-                </Button>
-                <Button onClick={handleLogout}>Logout</Button>
-              </>
-            ) : (
-              <>
-                <Button primary onClick={handleRegister}>
-                  Join Now
-                </Button>
-                <Button onClick={handleLogin}>Login</Button>
-              </>
-            )}
+            <Heart className="w-5 h-5 text-pink-200 animate-pulse" />
+            <span>1 donation can save up to 3 lives</span>
           </motion.div>
-
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="mt-16 animate-bounce"
-            onClick={() => missionRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          >
-            <ArrowRight className="h-8 w-8 text-red-600 rotate-90 mx-auto" />
-          </motion.button>
         </div>
       </section>
 
