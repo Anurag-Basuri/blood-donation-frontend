@@ -31,3 +31,13 @@ export const getDecodedToken = () => {
   }
   return null;
 };
+
+export const getUserRole = () => {
+  const decodedToken = getDecodedToken();
+  return decodedToken?.role || null;
+};
+
+export const getUserId = () => {
+  const decodedToken = getDecodedToken();
+  return decodedToken ? decodedToken.userId : null;
+};
