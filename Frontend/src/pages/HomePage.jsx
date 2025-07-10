@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Users, Building2, Shield, ArrowRight, Menu, X, Zap, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getToken, removeToken } from '../utils/storage';
+import { getToken, removeToken, getUserRole } from '../utils/storage';
 import { userLogout, hospitalLogin, ngoLogout } from '../services/authService.js';
 
 const Homepage = () => {
