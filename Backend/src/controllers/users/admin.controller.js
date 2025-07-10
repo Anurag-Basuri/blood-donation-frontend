@@ -61,11 +61,19 @@ const registerAdmin = asyncHandler(async (req, res) => {
 
 	const newAdmin = await Admin.create({ fullName, email, password });
 
+	const { accessToken, refreshToken } = await generateTokens(newAdmin._id, 'admin');
+
 	return res
 		.status(201)
 		.json(
 			new ApiResponse(
-				'Admin registered successfully', newAdmin
+				'Admin registered successfully', {
+					admin: newAdmin,
+					tokens: {
+						accessToken,
+						refreshToken
+					}
+				}
 			)
 		);
 });
@@ -90,7 +98,10 @@ const loginAdmin = asyncHandler(async (req, res) => {
 		.json(
 			new ApiResponse(
 				'Admin logged in successfully',
-				{ token, admin }
+				{
+					admin,
+					tokens
+				}
 			)
 		);
 });

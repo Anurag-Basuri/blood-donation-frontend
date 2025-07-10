@@ -58,12 +58,26 @@ const registerHospital = asyncHandler(async (req, res) => {
 		registrationNumber
 	});
 
+	const { accessToken, refreshToken } = await generateTokens(hospital._id, 'hospital');
+
 	return res
 		.status(201)
 		.json(
 			new ApiResponse(
 				201,
-				{ id: hospital._id },
+				{
+					hospital: {
+						_id: hospital._id,
+						name: hospital.name,
+						email: hospital.email,
+						isVerified: hospital.isVerified,
+						isPublic: hospital.isPublic
+					},
+					tokens: {
+						accessToken,
+						refreshToken
+					}
+				},
 				'Hospital registered'
 			)
 		);
@@ -88,7 +102,10 @@ const loginHospital = asyncHandler(async (req, res) => {
 		.json(
 			new ApiResponse(
 				200,
-				{ hospital, ...tokens },
+				{
+					hospital,
+					...tokens
+				},
 				'Login successful'
 			)
 		);
