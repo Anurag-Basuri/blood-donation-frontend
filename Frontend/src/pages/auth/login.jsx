@@ -378,7 +378,7 @@ const Login = () => {
                   <div className="text-center text-gray-400 mt-4">
                     Don't have an account?{' '}
                     <nav className="inline-block text-white hover:underline">
-                      <Link>Sign Up</Link>
+                      <Link to="/register">Sign Up</Link>
                     </nav>
                   </div>
                 </form>

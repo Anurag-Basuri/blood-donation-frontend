@@ -14,6 +14,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {Link} from 'react-router-dom';
 
 const roles = [
   {
@@ -475,6 +476,16 @@ export default function Register() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              <div>
+                <div className="mt-6 text-center">
+                  <p className="text-gray-300">
+                    Already have an account?{' '}
+                    <Link to="/login" className="text-white-400 hover:underline font-semibold">
+                      Login here
+                    </Link>
+                  </p>
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
