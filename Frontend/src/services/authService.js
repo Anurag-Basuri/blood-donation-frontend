@@ -46,7 +46,7 @@ export const userRegister = async (userName, fullName, email, phone, dateOfBirth
     const response = await publicClient.post('/users/register', {userName, fullName, email, phone, dateOfBirth, gender, bloodType, lastDonationDate, address, password});
     const { tokens } = response.data;
 
-    setToken(tokens);
+    setToken(tokens.accessToken);
     return response.data; // Return user data or any other relevant info
 }
 
@@ -69,7 +69,7 @@ export const hospitalRegister = async (name, email, address, contactPerson, emer
 
     const { tokens } = response.data;
 
-    setToken(tokens);
+    setToken(tokens.accessToken);
     return response.data; // Return hospital data or any other relevant info
 }
 
@@ -94,7 +94,7 @@ export const ngoRegister = async (name, email, address, contactPerson, regNumber
 
     const { tokens } = response.data;
 
-    setToken(tokens);
+    setToken(tokens.accessToken);
     return response.data; // Return NGO data or any other relevant info
 }
 
@@ -103,7 +103,7 @@ export const userLogin = async (userName, email, phone, password) => {
     const response = await publicClient.post('/users/login', { userName, email, phone, password });
     const { tokens } = response.data;
 
-    setToken(tokens);
+    setToken(tokens.accessToken);
     return response.data; // Return user data or any other relevant info
 }
 
@@ -112,7 +112,7 @@ export const hospitalLogin = async (email, password) => {
     const response = await publicClient.post('/hospitals/login', { email, password });
     const { tokens } = response.data;
 
-    setToken(tokens);
+    setToken(tokens.accessToken);
     return response.data; // Return hospital data or any other relevant info
 }
 
@@ -121,7 +121,7 @@ export const ngoLogin = async (email, password) => {
     const response = await publicClient.post('/ngos/login', { email, password });
     const { tokens } = response.data;
 
-    setToken(tokens);
+    setToken(tokens.accessToken);
     return response.data; // Return NGO data or any other relevant info
 }
 
