@@ -5,14 +5,14 @@ import AdminAuth from '../pages/auth/adminAuth.jsx';
 import Homepage from '../pages/HomePage.jsx';
 
 const AppRoutes = () => {
-	return (
-		<Routes>
-			<Route path="/login" element={<Login />} />
-			<Route path="/" element={<Homepage />} />
-			<Route path="/register" element={<Register />} />
-			<Route path="/admin/auth" element={<AdminAuth />} />
-		</Routes>
-	);
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<Homepage />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/admin/auth" element={<AdminAuth />} />
+    </Routes>
+  );
 };
 
 export default AppRoutes;

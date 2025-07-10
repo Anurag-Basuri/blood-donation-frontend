@@ -1,24 +1,33 @@
-const getToken = () => {
+import jwtDecode from 'jwt-decode';
+
+export const getToken = () => {
   if (typeof window !== 'undefined') {
     return localStorage.getItem('token');
   }
   return null;
-}
+};
 
-const setToken = (tokens) => {
+export const setToken = tokens => {
   if (typeof window !== 'undefined') {
     localStorage.setItem('token', tokens);
   }
-}
+};
 
-const removeToken = () => {
+export const removeToken = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('token');
   }
-}
+};
 
-export {
-    getToken,
-    setToken,
-    removeToken
+export const getDecodedToken = () => {
+  const token = getToken();
+  if (token) {
+    try {
+      return jwtDecode(token);
+    } catch (error) {
+      console.error('Invalid token:', error);
+      return null;
+    }
+  }
+  return null;
 };

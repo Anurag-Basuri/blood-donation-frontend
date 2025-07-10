@@ -1,29 +1,29 @@
 import { useEffect, useRef } from 'react';
 
 const AdvancedMarker = ({ position, map, content, onClick }) => {
-	const markerRef = useRef(null);
+  const markerRef = useRef(null);
 
-	useEffect(() => {
-		if (!map || !position) return;
+  useEffect(() => {
+    if (!map || !position) return;
 
-		const marker = new google.maps.marker.AdvancedMarkerElement({
-			position,
-			map,
-			content,
-		});
+    const marker = new google.maps.marker.AdvancedMarkerElement({
+      position,
+      map,
+      content,
+    });
 
-		if (onClick) {
-			marker.addListener('click', onClick);
-		}
+    if (onClick) {
+      marker.addListener('click', onClick);
+    }
 
-		markerRef.current = marker;
+    markerRef.current = marker;
 
-		return () => {
-			marker.map = null;
-		};
-	}, [map, position, content, onClick]);
+    return () => {
+      marker.map = null;
+    };
+  }, [map, position, content, onClick]);
 
-	return null;
+  return null;
 };
 
 export default AdvancedMarker;

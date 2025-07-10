@@ -7,11 +7,7 @@ export const FormProvider = ({ children }) => {
   const [form, setForm] = useState({});
   const update = data => setForm(prev => ({ ...prev, ...data }));
 
-  return (
-    <FormContext.Provider value={{ form, update }}>
-      {children}
-    </FormContext.Provider>
-  );
+  return <FormContext.Provider value={{ form, update }}>{children}</FormContext.Provider>;
 };
 
 FormProvider.propTypes = {
