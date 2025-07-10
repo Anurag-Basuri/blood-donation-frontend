@@ -117,6 +117,8 @@ const registerNGO = asyncHandler(async (req, res) => {
 		},
 	});
 
+	const { accessToken, refreshToken } = await generateTokens(ngo._id, 'ngo');
+
 	return res.status(201).json(
 		new ApiResponse(
 			201,
@@ -126,6 +128,10 @@ const registerNGO = asyncHandler(async (req, res) => {
 					name: ngo.name,
 					email: ngo.email,
 					status: ngo.isVerified ? 'Verified' : 'Pending Verification',
+				},
+				tokens: {
+					accessToken,
+					refreshToken,
 				},
 			},
 			'NGO registration submitted for verification',
@@ -152,7 +158,16 @@ const loginNGO = asyncHandler(async (req, res) => {
 
 	const tokens = await generateTokens(ngo._id, 'ngo');
 
-	return res.status(200).json(new ApiResponse(200, { ngo, ...tokens }, 'Login successful'));
+	return res.status(200).json(
+		new ApiResponse(
+			200,
+			{
+				ngo,
+				...tokens,
+			},
+			'Login successful',
+		),
+	);
 });
 
 // Logout

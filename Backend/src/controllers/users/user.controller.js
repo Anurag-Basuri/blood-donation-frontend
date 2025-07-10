@@ -25,6 +25,29 @@ const ALLOWED_PROFILE_UPDATES = [
 	'address',
 ];
 
+// Generate Tokens Helper
+const generateTokens = async (userId, role) => {
+	try {
+		const user = await User.findById(userId);
+		const accessToken = jwt.sign(
+			{ _id: user._id, role }, // include role here
+			process.env.ACCESS_TOKEN_SECRET,
+			{ expiresIn: '1d' },
+		);
+		const refreshToken = jwt.sign({ _id: user._id, role }, process.env.REFRESH_TOKEN_SECRET, {
+			expiresIn: '7d',
+		});
+
+		user.refreshToken = refreshToken;
+		user.lastLogin = new Date();
+		await user.save({ validateBeforeSave: false });
+
+		return { accessToken, refreshToken };
+	} catch (error) {
+		throw new ApiError(500, 'Token generation failed');
+	}
+};
+
 // AUTH CONTROLLERS
 const registerUser = asyncHandler(async (req, res) => {
 	const {
@@ -128,6 +151,8 @@ const registerUser = asyncHandler(async (req, res) => {
 		},
 	});
 
+	const { accessToken, refreshToken } = await generateTokens(user._id, 'user');
+
 	return res.status(201).json(
 		new ApiResponse(
 			201,
@@ -138,34 +163,15 @@ const registerUser = asyncHandler(async (req, res) => {
 					email: user.email,
 					donorStatus: user.donorStatus,
 				},
+				tokens: {
+					accessToken,
+					refreshToken
+				},
 			},
 			'Registration successful. Please verify your email.',
 		),
 	);
 });
-
-// Generate Tokens Helper
-const generateTokens = async (userId, role) => {
-	try {
-		const user = await User.findById(userId);
-		const accessToken = jwt.sign(
-			{ _id: user._id, role }, // include role here
-			process.env.ACCESS_TOKEN_SECRET,
-			{ expiresIn: '1d' },
-		);
-		const refreshToken = jwt.sign({ _id: user._id, role }, process.env.REFRESH_TOKEN_SECRET, {
-			expiresIn: '7d',
-		});
-
-		user.refreshToken = refreshToken;
-		user.lastLogin = new Date();
-		await user.save({ validateBeforeSave: false });
-
-		return { accessToken, refreshToken };
-	} catch (error) {
-		throw new ApiError(500, 'Token generation failed');
-	}
-};
 
 // Login Controller
 const loginUser = asyncHandler(async (req, res) => {
@@ -211,7 +217,10 @@ const loginUser = asyncHandler(async (req, res) => {
 		.json(
 			new ApiResponse(
 				200,
-				{ user, tokens: { accessToken, refreshToken } },
+				{
+					user,
+					tokens: { accessToken, refreshToken }
+				},
 				'Login successful',
 			),
 		);
