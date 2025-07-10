@@ -10,6 +10,11 @@ import {
   Droplet,
   Activity,
   PhoneCall,
+  MapPin,
+  Clock,
+  Star,
+  Award,
+  ChevronRight,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -89,31 +94,13 @@ const Homepage = () => {
       // Redirect to homepage after logout
       navigate('/');
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('Logout failed:', error);
       showToast('Logout failed. Please try again.', 'error');
     }
   };
 
-  // Button component with animations
-  const Button = ({ children, primary, onClick, className = '' }) => (
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick}
-      className={`px-8 py-3 rounded-full font-medium transition-all duration-300 ${
-        primary
-          ? 'bg-red-600 text-white shadow-lg shadow-red-500/30 hover:bg-red-700'
-          : 'bg-white text-red-600 border-2 border-red-600 hover:bg-red-50'
-      } ${className}`}
-      type="button"
-    >
-      {children}
-    </motion.button>
-  );
-
   return (
-    <div className="text-gray-800 overflow-x-hidden">
+    <div className="text-gray-800 overflow-x-hidden bg-gradient-to-b from-red-50 via-white to-pink-50 min-h-screen">
       <AnimatePresence>
         {toast.show && (
           <motion.div
@@ -129,57 +116,59 @@ const Homepage = () => {
         )}
       </AnimatePresence>
 
-      {/* Hero Section */}
+      {/* HERO SECTION */}
       <section className="relative min-h-screen flex flex-col justify-center items-center text-center px-4 sm:px-6 overflow-hidden">
-        {/* Video or SVG Pattern Background */}
+        {/* Animated Particle Background */}
         <div className="absolute inset-0 z-0">
-          {/* Example: SVG Pattern (replace with <video> if you have a video asset) */}
-          <svg
-            className="w-full h-full object-cover"
-            viewBox="0 0 1440 900"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            preserveAspectRatio="none"
-          >
-            <defs>
-              <radialGradient id="redGlow" cx="50%" cy="40%" r="80%" fx="50%" fy="40%">
-                <stop offset="0%" stopColor="#f87171" stopOpacity="0.7" />
-                <stop offset="100%" stopColor="#be123c" stopOpacity="0.3" />
-              </radialGradient>
-            </defs>
-            <rect width="1440" height="900" fill="url(#redGlow)" />
-            <circle cx="400" cy="300" r="220" fill="#f87171" fillOpacity="0.18" />
-            <circle cx="1200" cy="700" r="180" fill="#be123c" fillOpacity="0.12" />
-            <circle cx="900" cy="200" r="120" fill="#f43f5e" fillOpacity="0.10" />
-          </svg>
-          {/* Red-tinted overlay for contrast */}
-          <div className="absolute inset-0 bg-gradient-to-br from-red-700/60 via-pink-700/40 to-red-900/70 mix-blend-multiply"></div>
-          {/* Optional: subtle parallax floating hearts */}
-          <div className="absolute inset-0 pointer-events-none">
-            {[...Array(8)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute"
-                style={{
-                  left: `${10 + Math.random() * 80}%`,
-                  top: `${10 + Math.random() * 80}%`,
-                  zIndex: 1,
-                }}
-                initial={{ y: 0, opacity: 0.25 + Math.random() * 0.25 }}
-                animate={{
-                  y: [0, -30 - Math.random() * 20, 0],
-                  opacity: [0.25, 0.4, 0.25],
-                }}
-                transition={{
-                  duration: 6 + Math.random() * 3,
-                  repeat: Infinity,
-                  delay: Math.random() * 2,
-                }}
-              >
-                <Heart className="w-8 h-8 text-white/30 drop-shadow-lg blur-[1.5px]" />
-              </motion.div>
-            ))}
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-br from-red-700/60 via-pink-700/40 to-red-900/70"></div>
+          
+          {/* Floating Particles */}
+          {[...Array(30)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full bg-white/20"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                width: `${Math.random() * 20 + 5}px`,
+                height: `${Math.random() * 20 + 5}px`,
+              }}
+              animate={{
+                y: [0, -30 - Math.random() * 50, 0],
+                opacity: [0.1, 0.4, 0.1],
+              }}
+              transition={{
+                duration: 8 + Math.random() * 10,
+                repeat: Infinity,
+                delay: Math.random() * 3,
+              }}
+            />
+          ))}
+          
+          {/* Floating Hearts */}
+          {[...Array(12)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute"
+              style={{
+                left: `${10 + Math.random() * 80}%`,
+                top: `${10 + Math.random() * 80}%`,
+                zIndex: 1,
+              }}
+              initial={{ y: 0, opacity: 0.15 + Math.random() * 0.15 }}
+              animate={{
+                y: [0, -40 - Math.random() * 30, 0],
+                opacity: [0.15, 0.4, 0.15],
+              }}
+              transition={{
+                duration: 7 + Math.random() * 4,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+              }}
+            >
+              <Heart className="w-8 h-8 text-white/40" />
+            </motion.div>
+          ))}
         </div>
 
         {/* Hero Content */}
@@ -187,69 +176,94 @@ const Homepage = () => {
           <motion.h1
             initial={{ opacity: 0, y: 40, filter: 'blur(6px)' }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            transition={{ duration: 1, ease: 'easeOut' }}
-            className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-4 text-white drop-shadow-xl"
-            style={{ textShadow: '0 4px 32px #be123c44' }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-4 text-white drop-shadow-2xl"
+            style={{ textShadow: '0 4px 32px #be123c88' }}
           >
-            Give Blood, <span className="text-pink-200">Save Lives</span>
+            <span className="bg-gradient-to-r from-pink-200 via-white to-pink-300 bg-clip-text text-transparent">
+              Give Blood,
+            </span>{' '}
+            <span className="text-pink-200">Save Lives</span>
           </motion.h1>
+          
           <motion.p
             initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            transition={{ duration: 1, delay: 0.2, ease: 'easeOut' }}
-            className="text-lg sm:text-xl md:text-2xl text-pink-100 font-medium mb-2"
+            transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+            className="text-lg sm:text-2xl md:text-3xl text-pink-100 font-semibold mb-2 tracking-wide"
           >
-            Every 2 Seconds, Someone Needs Blood
+            Every <span className="font-bold text-white">2 Seconds</span>, Someone Needs Blood
           </motion.p>
+          
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.4 }}
-            className="text-base sm:text-lg text-white/90 max-w-xl mx-auto mb-8"
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8"
           >
-            Join LifeLink and become the lifeline for someone in need. Your donation can be the
-            difference between hope and heartbreak.
+            Be the hope. Join LifeLink and become the lifeline for someone in need. Your donation
+            can be the difference between hope and heartbreak.
           </motion.p>
+          
           <div className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto">
             <motion.button
               whileHover={{
-                scale: 1.07,
-                boxShadow: '0 8px 32px 0 #be123c55',
-                filter: 'blur(0px)',
+                scale: 1.09,
+                boxShadow: '0 8px 32px 0 #be123c99',
               }}
               whileTap={{ scale: 0.97 }}
               onClick={handleRegister}
-              className="px-8 py-3 rounded-full bg-gradient-to-r from-red-600 via-pink-600 to-red-700 text-white font-bold text-lg shadow-lg shadow-red-500/30 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-400/40"
+              className="px-10 py-4 rounded-full bg-gradient-to-r from-red-600 via-pink-600 to-red-700 text-white font-bold text-lg shadow-xl shadow-red-500/40 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-400/50"
               type="button"
             >
               Donate Now
             </motion.button>
+            
             <motion.button
               whileHover={{
                 scale: 1.05,
                 backgroundColor: '#fff',
                 color: '#be123c',
-                borderColor: '#be123c',
               }}
               whileTap={{ scale: 0.97 }}
               onClick={() => missionRef.current?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-8 py-3 rounded-full border-2 border-white text-white font-semibold text-lg bg-white/10 hover:bg-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/40"
+              className="px-10 py-4 rounded-full border-2 border-white text-white font-semibold text-lg bg-white/10 hover:bg-white/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/50"
               type="button"
             >
               Learn More
             </motion.button>
           </div>
-          {/* Optional: quick stat or urgency badge */}
+          
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.7 }}
-            className="mt-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white/90 text-sm backdrop-blur-md shadow"
+            className="mt-10 inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/10 border border-white/20 text-white/90 text-base backdrop-blur-sm shadow-lg"
           >
             <Heart className="w-5 h-5 text-pink-200 animate-pulse" />
             <span>1 donation can save up to 3 lives</span>
           </motion.div>
         </div>
+        
+        {/* Animated Scroll Indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+          className="absolute bottom-10 left-1/2 transform -translate-x-1/2"
+        >
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="w-8 h-14 rounded-full border-2 border-white/50 flex justify-center"
+          >
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.3 }}
+              className="w-2 h-2 bg-white rounded-full mt-2"
+            />
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Mission Section */}
@@ -263,9 +277,19 @@ const Homepage = () => {
               viewport={{ once: true }}
             >
               <div className="relative">
-                <div className="absolute -top-6 -left-6 w-32 h-32 bg-red-200 rounded-full opacity-50"></div>
-                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-pink-200 rounded-full opacity-50"></div>
-                <div className="relative bg-white rounded-2xl shadow-xl p-8 border border-red-100">
+                {/* Decorative Elements */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="absolute -top-6 -left-6 w-32 h-32 bg-red-200 rounded-full opacity-20"
+                ></motion.div>
+                
+                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-pink-200 rounded-full opacity-20"></div>
+                
+                <div className="relative bg-white rounded-2xl shadow-xl p-8 border border-red-100 overflow-hidden">
+                  {/* Floating Dot Pattern */}
+                  <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-red-100/30 blur-xl"></div>
+                  
                   <Heart className="h-12 w-12 text-red-600 mb-4" />
                   <h2 className="text-3xl font-bold mb-4">Our Mission</h2>
                   <p className="text-lg text-gray-700 mb-6">
@@ -273,9 +297,19 @@ const Homepage = () => {
                     2 seconds someone needs blood, and LifeLink ensures donors are always available
                     when emergencies strike.
                   </p>
-                  <div className="flex items-center text-red-600 font-medium">
-                    <span>Join the movement</span>
-                    <ArrowRight className="h-5 w-5 ml-2" />
+                  
+                  <div className="mt-8 grid grid-cols-2 gap-4">
+                    {[
+                      { icon: MapPin, text: '500+ locations' },
+                      { icon: Clock, text: '24/7 availability' },
+                      { icon: Star, text: '98% success rate' },
+                      { icon: Award, text: 'Trusted by hospitals' },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-2 text-red-600">
+                        <item.icon className="h-5 w-5" />
+                        <span className="font-medium">{item.text}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -310,14 +344,17 @@ const Homepage = () => {
                   desc: '1 donation can save up to 3 lives',
                 },
               ].map((item, i) => (
-                <div
+                <motion.div
                   key={i}
+                  whileHover={{ y: -5, boxShadow: '0 10px 25px -10px rgba(190, 18, 60, 0.2)' }}
                   className="bg-white rounded-xl p-6 shadow-md border border-red-50 hover:border-red-200 transition-all"
                 >
-                  <item.icon className="h-8 w-8 text-red-600 mb-3" />
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                    <item.icon className="h-6 w-6 text-red-600" />
+                  </div>
                   <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
                   <p className="text-gray-600 text-sm">{item.desc}</p>
-                </div>
+                </motion.div>
               ))}
             </motion.div>
           </div>
@@ -325,8 +362,28 @@ const Homepage = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-gradient-to-b from-red-50 to-white">
-        <div className="max-w-6xl mx-auto px-4">
+      <section className="py-20 bg-gradient-to-b from-red-50 to-white relative">
+        {/* Decorative Wave */}
+        <div className="absolute top-0 left-0 w-full h-24 -translate-y-24 overflow-hidden">
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-full">
+            <path 
+              d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" 
+              opacity="0.25" 
+              className="fill-red-100"
+            ></path>
+            <path 
+              d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" 
+              opacity="0.5" 
+              className="fill-red-100"
+            ></path>
+            <path 
+              d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" 
+              className="fill-red-50"
+            ></path>
+          </svg>
+        </div>
+        
+        <div className="max-w-6xl mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
@@ -349,8 +406,15 @@ const Homepage = () => {
           </div>
 
           <div className="relative">
-            {/* Timeline */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-red-200 hidden md:block"></div>
+            {/* Animated Timeline */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-red-500 to-pink-500 hidden md:block">
+              <motion.div 
+                initial={{ height: 0 }}
+                whileInView={{ height: '100%' }}
+                transition={{ duration: 2, ease: "easeInOut" }}
+                className="w-full bg-red-500"
+              />
+            </div>
 
             <div className="grid md:grid-cols-3 gap-10">
               {[
@@ -359,35 +423,41 @@ const Homepage = () => {
                   title: '1. Register as Donor',
                   desc: 'Create your donor profile with blood type and availability',
                   delay: 0,
+                  color: 'from-red-500 to-pink-500',
                 },
                 {
                   icon: Building2,
                   title: '2. Hospital Requests',
                   desc: 'Hospitals post urgent blood needs in real-time',
                   delay: 0.2,
+                  color: 'from-pink-500 to-purple-500',
                 },
                 {
                   icon: Shield,
                   title: '3. Match & Donate',
                   desc: 'Get matched to nearby requests and save lives',
                   delay: 0.4,
+                  color: 'from-purple-500 to-indigo-500',
                 },
-              ].map(({ icon: Icon, title, desc, delay }, i) => (
+              ].map(({ icon: Icon, title, desc, delay, color }, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay }}
                   viewport={{ once: true }}
-                  className="relative bg-white rounded-2xl shadow-lg p-8 border-t-4 border-red-600 text-center"
+                  className="relative bg-white rounded-2xl shadow-xl p-8 border-t-4 border-red-600 text-center group"
                 >
-                  <div className="w-20 h-20 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-6">
-                    <Icon className="h-10 w-10 text-red-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-3">{title}</h3>
-                  <p className="text-gray-600">{desc}</p>
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold">
-                    {i + 1}
+                  <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl z-0"></div>
+                  <div className="relative z-10">
+                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-red-100 to-pink-100 rounded-full flex items-center justify-center mb-6">
+                      <Icon className="h-10 w-10 text-red-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3">{title}</h3>
+                    <p className="text-gray-600">{desc}</p>
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-gradient-to-r from-red-600 to-pink-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                      {i + 1}
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -397,8 +467,31 @@ const Homepage = () => {
       </section>
 
       {/* Impact */}
-      <section className="py-20 bg-gradient-to-r from-red-600 to-pink-600 text-white">
-        <div className="max-w-6xl mx-auto px-4">
+      <section className="py-20 bg-gradient-to-r from-red-600 to-pink-600 text-white relative overflow-hidden">
+        {/* Floating Particles */}
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-white/10"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              width: `${Math.random() * 30 + 10}px`,
+              height: `${Math.random() * 30 + 10}px`,
+            }}
+            animate={{
+              y: [0, -20 - Math.random() * 30, 0],
+              opacity: [0.1, 0.3, 0.1],
+            }}
+            transition={{
+              duration: 6 + Math.random() * 6,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
+        
+        <div className="max-w-6xl mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
@@ -432,9 +525,9 @@ const Homepage = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 text-center border border-white/20"
+                className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 text-center border border-white/20 group"
               >
-                <div className="w-20 h-20 mx-auto bg-white/20 rounded-full mb-6 flex items-center justify-center">
+                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-white/20 to-white/30 rounded-full mb-6 flex items-center justify-center">
                   <Icon className="h-10 w-10 text-white" />
                 </div>
                 <div className="text-5xl font-bold mb-2">
@@ -442,6 +535,13 @@ const Homepage = () => {
                   <span className="text-red-300">+</span>
                 </div>
                 <div className="text-xl">{label}</div>
+                
+                <motion.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: '80%' }}
+                  transition={{ duration: 2, delay: 0.3 }}
+                  className="h-1 bg-gradient-to-r from-red-300 to-pink-300 mx-auto mt-4 rounded-full"
+                />
               </motion.div>
             ))}
           </div>
@@ -451,7 +551,7 @@ const Homepage = () => {
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
             viewport={{ once: true }}
-            className="mt-16 bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20"
+            className="mt-16 bg-gradient-to-r from-white/10 to-white/20 backdrop-blur-sm rounded-2xl p-8 border border-white/20 overflow-hidden"
           >
             <div className="flex flex-col md:flex-row items-center">
               <div className="flex-1 mb-6 md:mb-0">
@@ -461,9 +561,15 @@ const Homepage = () => {
                 </p>
               </div>
               <div>
-                <Button primary onClick={isLoggedIn ? handleDashboard : handleRegister}>
+                <motion.button
+                  whileHover={{ scale: 1.05, boxShadow: '0 8px 32px 0 #ffffff33' }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={isLoggedIn ? handleDashboard : handleRegister}
+                  className="px-8 py-3 rounded-full bg-gradient-to-r from-white to-pink-100 text-red-600 font-bold shadow-lg transition-all duration-300"
+                >
                   {isLoggedIn ? 'Find Donation Requests' : 'Join Now'}
-                </Button>
+                  <ChevronRight className="inline ml-2 h-5 w-5" />
+                </motion.button>
               </div>
             </div>
           </motion.div>
@@ -471,8 +577,12 @@ const Homepage = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
+      <section className="py-20 bg-white relative">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-1/3 -right-1/4 w-full h-full bg-red-50 rounded-full opacity-20 blur-3xl"></div>
+        </div>
+        
+        <div className="max-w-6xl mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
@@ -517,16 +627,19 @@ const Homepage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: testimonial.delay }}
                 viewport={{ once: true }}
-                className="bg-gradient-to-br from-red-50 to-white rounded-2xl shadow-lg p-8 border border-red-100"
+                className="bg-gradient-to-br from-red-50 to-white rounded-2xl shadow-lg p-8 border border-red-100 relative overflow-hidden"
               >
+                {/* Decorative Quote */}
+                <div className="absolute -top-10 -right-5 text-red-100/10 text-9xl font-serif">"</div>
+                
                 <div className="flex items-start mb-4">
-                  <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
+                  <div className="bg-gradient-to-br from-red-100 to-pink-100 border-2 border-white rounded-xl w-16 h-16 shadow-sm"></div>
                   <div className="ml-4">
                     <h4 className="font-bold text-lg">{testimonial.name}</h4>
                     <p className="text-red-600">{testimonial.role}</p>
                   </div>
                 </div>
-                <p className="text-gray-700 italic">"{testimonial.content}"</p>
+                <p className="text-gray-700 italic relative z-10">"{testimonial.content}"</p>
                 <div className="flex mt-4">
                   {[...Array(5)].map((_, i) => (
                     <svg
@@ -546,8 +659,31 @@ const Homepage = () => {
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 bg-gradient-to-br from-red-600 to-pink-700 text-white">
-        <div className="max-w-4xl mx-auto px-4 text-center">
+      <section className="py-24 bg-gradient-to-br from-red-600 to-pink-700 text-white relative overflow-hidden">
+        {/* Floating Particles */}
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-white/10"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              width: `${Math.random() * 40 + 20}px`,
+              height: `${Math.random() * 40 + 20}px`,
+            }}
+            animate={{
+              y: [0, -20 - Math.random() * 30, 0],
+              opacity: [0.05, 0.2, 0.05],
+            }}
+            transition={{
+              duration: 6 + Math.random() * 6,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
+        
+        <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -575,19 +711,56 @@ const Homepage = () => {
             viewport={{ once: true }}
             className="flex flex-wrap justify-center gap-6"
           >
-            <Button primary onClick={isLoggedIn ? handleDashboard : handleRegister}>
+            <motion.button
+              whileHover={{ scale: 1.05, boxShadow: '0 8px 32px 0 #ffffff33' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={isLoggedIn ? handleDashboard : handleRegister}
+              className="px-8 py-4 rounded-full bg-gradient-to-r from-white to-pink-100 text-red-600 font-bold shadow-lg transition-all duration-300"
+            >
               {isLoggedIn ? 'Find Donation Opportunities' : "Join Now - It's Free"}
-            </Button>
-            <Button onClick={handleLogin}>
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ 
+                scale: 1.05, 
+                backgroundColor: '#fff',
+                color: '#be123c',
+              }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogin}
+              className="px-8 py-4 rounded-full border-2 border-white text-white font-semibold bg-white/10 hover:bg-white/20 transition-all duration-300"
+            >
               {isLoggedIn ? 'Account Settings' : 'Login to Dashboard'}
-            </Button>
+            </motion.button>
           </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-6xl mx-auto px-4">
+      <footer className="bg-gray-900 text-white py-12 relative overflow-hidden">
+        {/* Floating Particles */}
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-white/5"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              width: `${Math.random() * 30 + 10}px`,
+              height: `${Math.random() * 30 + 10}px`,
+            }}
+            animate={{
+              y: [0, -20 - Math.random() * 30, 0],
+            }}
+            transition={{
+              duration: 8 + Math.random() * 8,
+              repeat: Infinity,
+              delay: Math.random() * 3,
+            }}
+          />
+        ))}
+        
+        <div className="max-w-6xl mx-auto px-4 relative z-10">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <h3 className="text-xl font-bold mb-4">LifeLink</h3>
@@ -596,12 +769,17 @@ const Homepage = () => {
               </p>
               <div className="flex space-x-4">
                 {['twitter', 'facebook', 'instagram', 'linkedin'].map(platform => (
-                  <a key={platform} href="#" className="text-gray-400 hover:text-white transition">
+                  <motion.a
+                    key={platform}
+                    whileHover={{ y: -5 }}
+                    href="#"
+                    className="text-gray-400 hover:text-white transition"
+                  >
                     <span className="sr-only">{platform}</span>
-                    <div className="bg-gray-700 w-10 h-10 rounded-full flex items-center justify-center">
+                    <div className="bg-gray-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">
                       {platform.charAt(0).toUpperCase()}
                     </div>
-                  </a>
+                  </motion.a>
                 ))}
               </div>
             </div>
@@ -630,9 +808,14 @@ const Homepage = () => {
                 <ul className="space-y-2">
                   {section.links.map((link, j) => (
                     <li key={j}>
-                      <a href="#" className="text-gray-400 hover:text-white transition">
+                      <motion.a 
+                        whileHover={{ x: 5 }} 
+                        href="#" 
+                        className="text-gray-400 hover:text-white transition flex items-center gap-2"
+                      >
+                        <ChevronRight className="h-4 w-4 text-red-500" />
                         {link}
-                      </a>
+                      </motion.a>
                     </li>
                   ))}
                 </ul>
