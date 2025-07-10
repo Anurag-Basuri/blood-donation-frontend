@@ -5,9 +5,9 @@ const getToken = () => {
   return null;
 }
 
-const setToken = (token) => {
+const setToken = (tokens) => {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('token', token);
+    localStorage.setItem('token', tokens);
   }
 }
 

@@ -44,9 +44,9 @@ export const refreshAuthToken = async () => {
 // Function to register user
 export const userRegister = async (userName, fullName, email, phone, dateOfBirth, gender, bloodType, lastDonationDate, address, password) => {
     const response = await publicClient.post('/users/register', {userName, fullName, email, phone, dateOfBirth, gender, bloodType, lastDonationDate, address, password});
-    const { token } = response.data;
+    const { tokens } = response.data;
 
-    setToken(token);
+    setToken(tokens);
     return response.data; // Return user data or any other relevant info
 }
 
@@ -67,9 +67,9 @@ export const hospitalRegister = async (name, email, address, contactPerson, emer
         }
     });
 
-    const { token } = response.data;
+    const { tokens } = response.data;
 
-    setToken(token);
+    setToken(tokens);
     return response.data; // Return hospital data or any other relevant info
 }
 
@@ -92,36 +92,36 @@ export const ngoRegister = async (name, email, address, contactPerson, regNumber
         }
     });
 
-    const { token } = response.data;
+    const { tokens } = response.data;
 
-    setToken(token);
+    setToken(tokens);
     return response.data; // Return NGO data or any other relevant info
 }
 
 // Function to login user
 export const userLogin = async (userName, email, phone, password) => {
     const response = await publicClient.post('/users/login', { userName, email, phone, password });
-    const { token } = response.data;
+    const { tokens } = response.data;
 
-    setToken(token);
+    setToken(tokens);
     return response.data; // Return user data or any other relevant info
 }
 
 // Function to login hospital
 export const hospitalLogin = async (email, password) => {
     const response = await publicClient.post('/hospitals/login', { email, password });
-    const { token } = response.data;
+    const { tokens } = response.data;
 
-    setToken(token);
+    setToken(tokens);
     return response.data; // Return hospital data or any other relevant info
 }
 
 // Function to login NGO
 export const ngoLogin = async (email, password) => {
     const response = await publicClient.post('/ngos/login', { email, password });
-    const { token } = response.data;
+    const { tokens } = response.data;
 
-    setToken(token);
+    setToken(tokens);
     return response.data; // Return NGO data or any other relevant info
 }
 
