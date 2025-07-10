@@ -13,11 +13,13 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getToken, removeToken } from '../utils/storage';
+import { getToken, removeToken, getUserRole } from '../utils/storage';
+import { userLogout, hospitalLogout, ngoLogout } from '../services/authService.js';
 
 const Homepage = () => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
   const [animatedStats, setAnimatedStats] = useState({
     lives: 0,
     donors: 0,
@@ -53,12 +55,43 @@ const Homepage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: '' }), 3000);
+  };
+
   const handleLogin = () => navigate('/login');
   const handleRegister = () => navigate('/register');
   const handleDashboard = () => navigate('/dashboard');
-  const handleLogout = () => {
-    removeToken();
-    setIsLoggedIn(false);
+
+  // Enhanced role-based logout logic
+  const handleLogout = async () => {
+    try {
+      const role = getUserRole();
+
+      switch (role) {
+        case 'hospital':
+          await hospitalLogout();
+          break;
+        case 'ngo':
+          await ngoLogout();
+          break;
+        case 'user':
+        default:
+          await userLogout();
+      }
+
+      removeToken();
+      setIsLoggedIn(false);
+
+      showToast('You have been logged out successfully');
+
+      // Redirect to homepage after logout
+      navigate('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      showToast('Logout failed. Please try again.', 'error');
+    }
   };
 
   // Button component with animations
@@ -79,7 +112,22 @@ const Homepage = () => {
 
   return (
     <div className="text-gray-800 overflow-x-hidden">
-      {/* Hero Section with animated background */}
+      <AnimatePresence>
+        {toast.show && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed top-4 right-4 px-6 py-4 rounded-md shadow-lg text-white z-50 ${
+              toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'
+            }`}
+          >
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Hero Section */}
       <section className="min-h-screen flex flex-col justify-center items-center text-center px-6 relative overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 z-0">
