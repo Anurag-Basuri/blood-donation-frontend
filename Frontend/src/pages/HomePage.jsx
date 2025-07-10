@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getToken, removeToken } from '../utils/storage';
+import { userLogout, hospitalLogin, ngoLogout } from '../services/authService.js';
 
 const Homepage = () => {
   const navigate = useNavigate();

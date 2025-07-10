@@ -145,11 +145,17 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 // Generate Tokens Helper
-const generateTokens = async userId => {
+const generateTokens = async (userId, role) => {
 	try {
 		const user = await User.findById(userId);
-		const accessToken = user.generateAccessToken();
-		const refreshToken = user.generateRefreshToken();
+		const accessToken = jwt.sign(
+			{ _id: user._id, role }, // include role here
+			process.env.ACCESS_TOKEN_SECRET,
+			{ expiresIn: '1d' },
+		);
+		const refreshToken = jwt.sign({ _id: user._id, role }, process.env.REFRESH_TOKEN_SECRET, {
+			expiresIn: '7d',
+		});
 
 		user.refreshToken = refreshToken;
 		user.lastLogin = new Date();
