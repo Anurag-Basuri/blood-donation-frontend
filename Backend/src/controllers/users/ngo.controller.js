@@ -25,15 +25,28 @@ export const FACILITY_OPERATIONS = {
 };
 
 // Helper: Generate tokens for NGO
-const generateTokens = async ngoId => {
-	const ngo = await NGO.findById(ngoId);
-	const accessToken = ngo.generateAccessToken();
-	const refreshToken = ngo.generateRefreshToken();
+const generateTokens = async (ngoId, role) => {
+	try {
+		const ngo = await NGO.findById(ngoId);
+		const accessToken = jwt.sign(
+			{ _id: ngo._id, role },
+			process.env.ACCESS_TOKEN_SECRET,
+			{ expiresIn: '1d' }
+		);
+		const refreshToken = jwt.sign(
+			{ _id: ngo._id, role: 'NGO' },
+			process.env.REFRESH_TOKEN_SECRET,
+			{ expiresIn: '7d' }
+		);
 
-	ngo.refreshToken = refreshToken;
-	ngo.lastLogin = new Date();
-	await ngo.save({ validateBeforeSave: false });
-	return { accessToken, refreshToken };
+		ngo.refreshToken = refreshToken;
+		ngo.lastLogin = new Date();
+		await ngo.save({ validateBeforeSave: false });
+
+		return { accessToken, refreshToken };
+	} catch (error) {
+		throw new ApiError(500, 'Token generation failed');
+	}
 };
 
 // Registration
@@ -137,7 +150,7 @@ const loginNGO = asyncHandler(async (req, res) => {
 	const isMatch = await ngo.comparePassword(password);
 	if (!isMatch) throw new ApiError(401, 'Invalid credentials');
 
-	const tokens = await generateTokens(ngo._id);
+	const tokens = await generateTokens(ngo._id, 'ngo');
 
 	return res.status(200).json(new ApiResponse(200, { ngo, ...tokens }, 'Login successful'));
 });

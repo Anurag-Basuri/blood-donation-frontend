@@ -17,6 +17,31 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 
+// Generate access and refresh tokens
+const generateTokens = async (adminId, role) => {
+	try {
+		const admin = await Admin.findById(adminId);
+		const accessToken = jwt.sign(
+			{ _id: admin._id, role },
+			process.env.ACCESS_TOKEN_SECRET,
+			{ expiresIn: '1d' }
+		);
+		const refreshToken = jwt.sign(
+			{ _id: admin._id, role },
+			process.env.REFRESH_TOKEN_SECRET,
+			{ expiresIn: '7d' }
+		);
+
+		admin.refreshToken = refreshToken;
+		admin.lastLogin = new Date();
+		await admin.save({ validateBeforeSave: false });
+
+		return { accessToken, refreshToken };
+	} catch (error) {
+		throw new ApiError(500, 'Token generation failed');
+	}
+};
+
 // Register a new admin
 const registerAdmin = asyncHandler(async (req, res) => {
 	const { fullName, email, password, secret } = req.body;
@@ -58,7 +83,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
 		throw new ApiError(401, 'Invalid email or password');
 	}
 
-	const token = await admin.generateAuthToken();
+	const tokens = await generateTokens(admin._id, 'admin');
 
 	return res
 		.status(200)

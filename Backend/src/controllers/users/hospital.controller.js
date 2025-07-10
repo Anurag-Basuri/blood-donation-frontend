@@ -7,10 +7,18 @@ import { generateEmailVerificationToken } from '../../utils/generateEmailToken.j
 import { sendMail } from '../../services/email.service.js';
 
 // Generate access and refresh tokens
-const generateTokens = async hospitalId => {
+const generateTokens = async (hospitalId, role) => {
 	const hospital = await Hospital.findById(hospitalId);
-	const accessToken = hospital.generateAccessToken();
-	const refreshToken = hospital.generateRefreshToken();
+	const accessToken = jwt.sign(
+		{ _id: hospital._id, role },
+		process.env.ACCESS_TOKEN_SECRET,
+		{ expiresIn: '1d' }
+	);
+	const refreshToken = jwt.sign(
+		{ _id: hospital._id, role },
+		process.env.REFRESH_TOKEN_SECRET,
+		{ expiresIn: '7d' }
+	);
 
 	hospital.refreshToken = refreshToken;
 	hospital.lastLogin = new Date();
@@ -73,7 +81,7 @@ const loginHospital = asyncHandler(async (req, res) => {
 	const isMatch = await hospital.comparePassword(password);
 	if (!isMatch) throw new ApiError(401, 'Invalid credentials');
 
-	const tokens = await generateTokens(hospital._id);
+	const tokens = await generateTokens(hospital._id, 'hospital');
 
 	return res
 		.status(200)
