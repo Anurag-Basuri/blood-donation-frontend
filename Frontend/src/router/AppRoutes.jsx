@@ -4,6 +4,7 @@ import Register from '../pages/auth/register.jsx';
 import AdminAuth from '../pages/auth/adminAuth.jsx';
 import Homepage from '../pages/HomePage.jsx';
 import UserDashboard from '../pages/dashboards/userDashboard.jsx';
+import HospitalDashboard from '../pages/dashboards/hospitalDashboard.jsx';
 
 const AppRoutes = () => {
   return (
@@ -14,6 +15,7 @@ const AppRoutes = () => {
       <Route path="/admin/auth" element={<AdminAuth />} />
 
       <Route path="/user/dashboard" element={<UserDashboard />} />
+      <Route path="/hospital/dashboard" element={<HospitalDashboard />} />
     </Routes>
   );
 };

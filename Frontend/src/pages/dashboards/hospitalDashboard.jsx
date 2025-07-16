@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Heart,
   Users,
@@ -15,11 +15,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
 
-const bloodGroups = [
-  'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'
-];
-
-// Mock data
+// --- MOCK DATA: Replace with backend API calls ---
+const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 const mockInventory = [
   { group: 'A+', units: 12 },
   { group: 'A-', units: 3 },
@@ -30,18 +27,15 @@ const mockInventory = [
   { group: 'AB+', units: 5 },
   { group: 'AB-', units: 0 },
 ];
-
 const mockAppointments = [
   { id: 1, donor: 'John Doe', group: 'O+', time: '2025-07-18 10:00', status: 'Scheduled' },
   { id: 2, donor: 'Priya Singh', group: 'A-', time: '2025-07-18 11:30', status: 'Confirmed' },
   { id: 3, donor: 'Carlos Mendez', group: 'B+', time: '2025-07-18 13:00', status: 'Scheduled' },
 ];
-
 const mockRequests = [
   { id: 1, group: 'O-', units: 4, status: 'Active', urgency: 'High', created: '2h ago' },
   { id: 2, group: 'A-', units: 2, status: 'Active', urgency: 'Medium', created: '1d ago' },
 ];
-
 const hospitalProfile = {
   name: 'City Hospital',
   verified: true,
@@ -50,6 +44,7 @@ const hospitalProfile = {
   address: '123 Main St, Metropolis',
 };
 
+// --- UTILS ---
 const getLowStockGroups = (inventory, threshold = 3) =>
   inventory.filter(item => item.units <= threshold);
 
@@ -75,30 +70,58 @@ const DashboardCard = ({ icon, label, value, color, tooltip }) => (
   </motion.div>
 );
 
+// --- MAIN DASHBOARD ---
 const HospitalDashboard = () => {
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: 'alert', message: 'Low stock: O-, AB-', icon: <AlertCircle className="text-red-500" /> },
-    { id: 2, type: 'info', message: '3 new donor appointments today', icon: <Bell className="text-blue-500" /> },
-  ]);
-  const [requests, setRequests] = useState(mockRequests);
+  // --- STATE ---
+  const [notifications, setNotifications] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [profile, setProfile] = useState(hospitalProfile);
 
-  // Edit/cancel handlers (mock)
+  // --- FETCH DATA FROM BACKEND ---
+  useEffect(() => {
+    // TODO: Replace with real API calls
+    setInventory(mockInventory);
+    setAppointments(mockAppointments);
+    setRequests(mockRequests);
+    setProfile(hospitalProfile);
+
+    // Example: Show notification if low stock
+    const lowStock = getLowStockGroups(mockInventory);
+    const notif = [];
+    if (lowStock.length > 0) {
+      notif.push({
+        id: 1,
+        type: 'alert',
+        message: `Low stock: ${lowStock.map(i => i.group).join(', ')}`,
+        icon: <AlertCircle className="text-red-500" />,
+      });
+    }
+    notif.push({
+      id: 2,
+      type: 'info',
+      message: `${mockAppointments.length} donor appointments today`,
+      icon: <Bell className="text-blue-500" />,
+    });
+    setNotifications(notif);
+  }, []);
+
+  // --- HANDLERS ---
   const handleEditRequest = id => {
-    // Implement edit logic/modal
+    // TODO: Open modal or route to edit request
     alert(`Edit request ${id}`);
   };
   const handleCancelRequest = id => {
     setRequests(requests.filter(r => r.id !== id));
   };
 
-  // Stats
-  const totalStock = mockInventory.reduce((sum, item) => sum + item.units, 0);
-  const pendingConfirmations = mockAppointments.filter(a => a.status === 'Scheduled').length;
+  // --- STATS ---
+  const totalStock = inventory.reduce((sum, item) => sum + item.units, 0);
+  const pendingConfirmations = appointments.filter(a => a.status === 'Scheduled').length;
   const totalRequests = requests.length;
 
-  // Low stock alerts
-  const lowStockGroups = getLowStockGroups(mockInventory);
-
+  // --- RENDER ---
   return (
     <main className="bg-gradient-to-br from-red-50 via-white to-pink-50 min-h-screen px-2 sm:px-6 py-6">
       {/* Notifications */}
@@ -166,7 +189,7 @@ const HospitalDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {mockInventory.map(item => (
+              {inventory.map(item => (
                 <tr key={item.group} className={item.units <= 3 ? 'bg-red-50' : ''}>
                   <td className="py-2 px-4 font-bold">{item.group}</td>
                   <td className="py-2 px-4">{item.units}</td>
@@ -208,7 +231,7 @@ const HospitalDashboard = () => {
           Incoming Donor Appointments
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {mockAppointments.map(app => (
+          {appointments.map(app => (
             <motion.div
               key={app.id}
               initial={{ opacity: 0, y: 20 }}
@@ -336,7 +359,7 @@ const HospitalDashboard = () => {
         <h2 id="profile-heading" className="text-xl font-bold mb-4 flex items-center gap-2">
           <Users className="text-blue-500" aria-label="Hospital Profile" />
           Hospital Profile
-          {hospitalProfile.verified && (
+          {profile.verified && (
             <span className="ml-2 px-2 py-1 rounded bg-green-100 text-green-700 text-xs font-semibold flex items-center gap-1">
               <BadgeCheck className="w-4 h-4" aria-label="Verified" />
               Verified
@@ -344,15 +367,15 @@ const HospitalDashboard = () => {
           )}
         </h2>
         <div className="bg-white rounded-lg shadow border p-4 flex flex-col gap-2">
-          <div className="font-bold text-lg">{hospitalProfile.name}</div>
-          <div className="text-sm text-gray-600">{hospitalProfile.address}</div>
+          <div className="font-bold text-lg">{profile.name}</div>
+          <div className="text-sm text-gray-600">{profile.address}</div>
           <div className="text-sm text-gray-600 flex items-center gap-2">
             <Bell className="w-4 h-4 text-blue-400" aria-label="Contact" />
-            {hospitalProfile.contact}
+            {profile.contact}
           </div>
           <div className="text-sm text-gray-600 flex items-center gap-2">
             <Info className="w-4 h-4 text-blue-400" aria-label="Phone" />
-            {hospitalProfile.phone}
+            {profile.phone}
           </div>
         </div>
       </motion.section>
