@@ -5,6 +5,7 @@ import AdminAuth from '../pages/auth/adminAuth.jsx';
 import Homepage from '../pages/HomePage.jsx';
 import UserDashboard from '../pages/dashboards/userDashboard.jsx';
 import HospitalDashboard from '../pages/dashboards/hospitalDashboard.jsx';
+import NgoDashboard from '../pages/dashboards/ngoDashboard.jsx';
 
 const AppRoutes = () => {
   return (
@@ -16,6 +17,10 @@ const AppRoutes = () => {
 
       <Route path="/user/dashboard" element={<UserDashboard />} />
       <Route path="/hospital/dashboard" element={<HospitalDashboard />} />
+      <Route path="/ngo/dashboard" element={<NgoDashboard />} />
+
+      {/* Add more routes as needed */}
+      {/* Example: <Route path="/profile" element={<UserProfile />} /> */}
     </Routes>
   );
 };

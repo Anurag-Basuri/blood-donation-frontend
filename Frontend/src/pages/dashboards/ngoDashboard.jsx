@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   HeartHandshake,
   Users,
@@ -15,81 +15,48 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
 
-// --- MOCK DATA ---
-const statCards = [
-  {
-    label: 'Total Drives Hosted',
-    value: 42,
-    icon: <CalendarDays className="text-red-500" aria-label="Total Drives" />,
-    color: 'border-red-500',
-  },
-  {
-    label: 'Units Collected',
-    value: 1280,
-    icon: <HeartHandshake className="text-pink-500" aria-label="Units Collected" />,
-    color: 'border-pink-500',
-  },
-  {
-    label: 'Active Volunteers',
-    value: 67,
-    icon: <Users className="text-indigo-500" aria-label="Active Volunteers" />,
-    color: 'border-indigo-500',
-  },
-  {
-    label: 'Donors Reached',
-    value: 950,
-    icon: <Award className="text-yellow-500" aria-label="Donors Reached" />,
-    color: 'border-yellow-500',
-  },
-];
+// --- API ENDPOINTS (based on backend structure) ---
+const API_BASE = '/api/v1/ngos';
 
-const upcomingDrives = [
-  {
-    id: 1,
-    title: 'Summer Blood Drive',
-    date: '2025-07-22',
-    location: 'Community Hall',
-    status: 'Upcoming',
-    volunteers: 12,
-    unitsGoal: 100,
-  },
-  {
-    id: 2,
-    title: 'Metro Mall Drive',
-    date: '2025-08-05',
-    location: 'Metro Mall',
-    status: 'Upcoming',
-    volunteers: 8,
-    unitsGoal: 80,
-  },
-];
+const fetchDashboardStats = async () => {
+  const res = await fetch(`${API_BASE}/analytics`, { credentials: 'include' });
+  const data = await res.json();
+  return data?.data?.stats || {};
+};
 
-const driveAnalytics = [
-  { name: 'Jan', units: 120 },
-  { name: 'Feb', units: 95 },
-  { name: 'Mar', units: 140 },
-  { name: 'Apr', units: 110 },
-  { name: 'May', units: 180 },
-  { name: 'Jun', units: 160 },
-];
+const fetchUpcomingDrives = async () => {
+  // If camps are DonationCamp model, use virtual 'upcomingCamps'
+  const res = await fetch(`${API_BASE}/profile/me`, { credentials: 'include' });
+  const data = await res.json();
+  return data?.data?.upcomingCamps || [];
+};
 
-const volunteers = [
-  { id: 1, name: 'Aisha Patel', role: 'Coordinator', drives: 15 },
-  { id: 2, name: 'Mark Lee', role: 'Volunteer', drives: 8 },
-  { id: 3, name: 'Sara Gomez', role: 'Lead', drives: 20 },
-];
+const fetchVolunteers = async () => {
+  // If volunteers are part of connectedHospitals or a separate model, adjust accordingly
+  const res = await fetch(`${API_BASE}/profile/me`, { credentials: 'include' });
+  const data = await res.json();
+  return data?.data?.volunteers || [];
+};
 
-const topDonors = [
-  { id: 1, name: 'Priya Singh', donations: 12 },
-  { id: 2, name: 'John Doe', donations: 10 },
-  { id: 3, name: 'Carlos Mendez', donations: 9 },
-];
+const fetchTopDonors = async () => {
+  // If leaderboard is part of analytics or a separate endpoint
+  const res = await fetch(`${API_BASE}/analytics`, { credentials: 'include' });
+  const data = await res.json();
+  return data?.data?.topDonors || [];
+};
 
-const resources = [
-  { id: 1, name: 'Drive Poster Template', type: 'PDF', url: '#' },
-  { id: 2, name: 'Volunteer Signup Sheet', type: 'Excel', url: '#' },
-  { id: 3, name: 'Social Media Kit', type: 'ZIP', url: '#' },
-];
+const fetchNotifications = async () => {
+  const res = await fetch(`/api/v1/notifications`, { credentials: 'include' });
+  const data = await res.json();
+  return data?.data || [];
+};
+
+const fetchResources = async () => {
+  // If resources/templates are served from a resource endpoint
+  const res = await fetch(`/api/v1/resources?type=ngo`, { credentials: 'include' });
+  const data = await res.json();
+  return data?.data?.resources || [];
+};
 
 // --- COMPONENTS ---
 const StatCard = ({ icon, label, value, color }) => (
@@ -110,31 +77,74 @@ const StatCard = ({ icon, label, value, color }) => (
 );
 
 const NgoDashboard = () => {
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'info',
-      message: 'Next drive: Summer Blood Drive on July 22',
-      icon: <Bell className="text-blue-500" />,
-    },
-    {
-      id: 2,
-      type: 'alert',
-      message: 'Metro Mall Drive needs more volunteers!',
-      icon: <Bell className="text-red-500" />,
-    },
-  ]);
+  // --- STATE ---
+  const [stats, setStats] = useState({});
+  const [upcomingDrives, setUpcomingDrives] = useState([]);
+  const [volunteers, setVolunteers] = useState([]);
+  const [topDonors, setTopDonors] = useState([]);
+  const [resources, setResources] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [driveAnalytics, setDriveAnalytics] = useState([]);
+
+  // --- FETCH DATA FROM BACKEND ---
+  useEffect(() => {
+    fetchDashboardStats().then(s => {
+      setStats(s);
+      // Example analytics for chart
+      setDriveAnalytics(
+        (s.monthlyStats || []).map((m, idx) => ({
+          name: new Date(m.month).toLocaleString('default', { month: 'short' }),
+          units: m.donationsCollected,
+        }))
+      );
+    });
+    fetchUpcomingDrives().then(setUpcomingDrives);
+    fetchVolunteers().then(setVolunteers);
+    fetchTopDonors().then(setTopDonors);
+    fetchResources().then(setResources);
+    fetchNotifications().then(setNotifications);
+  }, []);
 
   // --- HANDLERS ---
   const handleEditDrive = id => {
+    // TODO: Open modal or route to edit drive
     alert(`Edit drive ${id}`);
   };
   const handlePromoteDrive = id => {
+    // TODO: Integrate with backend/share API
     alert(`Promote drive ${id}`);
   };
   const handleDownloadResource = url => {
-    alert(`Download resource from ${url}`);
+    window.open(url, '_blank');
   };
+
+  // --- STAT CARDS ---
+  const statCards = [
+    {
+      label: 'Total Drives Hosted',
+      value: stats.totalCamps || 0,
+      icon: <CalendarDays className="text-red-500" aria-label="Total Drives" />,
+      color: 'border-red-500',
+    },
+    {
+      label: 'Units Collected',
+      value: stats.totalDonations || 0,
+      icon: <HeartHandshake className="text-pink-500" aria-label="Units Collected" />,
+      color: 'border-pink-500',
+    },
+    {
+      label: 'Active Volunteers',
+      value: stats.activeVolunteers || volunteers.length,
+      icon: <Users className="text-indigo-500" aria-label="Active Volunteers" />,
+      color: 'border-indigo-500',
+    },
+    {
+      label: 'Donors Reached',
+      value: stats.donorsReached || topDonors.reduce((sum, d) => sum + (d.donations || 0), 0),
+      icon: <Award className="text-yellow-500" aria-label="Donors Reached" />,
+      color: 'border-yellow-500',
+    },
+  ];
 
   // --- RENDER ---
   return (
@@ -143,7 +153,7 @@ const NgoDashboard = () => {
       <AnimatePresence>
         {notifications.map(note => (
           <motion.div
-            key={note.id}
+            key={note._id || note.id}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -154,8 +164,8 @@ const NgoDashboard = () => {
             role="alert"
             aria-live="polite"
           >
-            {note.icon}
-            <span>{note.message}</span>
+            <Bell className={note.type === 'alert' ? 'text-red-500' : 'text-blue-500'} />
+            <span>{note.message || note.content}</span>
           </motion.div>
         ))}
       </AnimatePresence>
@@ -182,7 +192,7 @@ const NgoDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {upcomingDrives.map(drive => (
             <motion.div
-              key={drive.id}
+              key={drive._id || drive.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: drive.id * 0.1 }}
@@ -200,38 +210,38 @@ const NgoDashboard = () => {
               <div className="text-sm text-gray-600">{drive.location}</div>
               <div className="flex gap-2 text-xs">
                 <span className="px-2 py-1 rounded bg-indigo-100 text-indigo-700 font-semibold">
-                  {drive.volunteers} Volunteers
+                  {drive.volunteers || drive.volunteerCount || 0} Volunteers
                 </span>
                 <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-700 font-semibold">
-                  Goal: {drive.unitsGoal} units
+                  Goal: {drive.unitsGoal || drive.goalUnits || 0} units
                 </span>
               </div>
               <div className="flex gap-2 mt-2">
                 <motion.button
                   whileHover={{ scale: 1.07 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => handleEditDrive(drive.id)}
+                  onClick={() => handleEditDrive(drive._id || drive.id)}
                   className="px-3 py-1 rounded bg-blue-100 text-blue-700 font-semibold flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   aria-label="Edit Drive"
                   tabIndex={0}
-                  data-tooltip-id={`edit-drive-${drive.id}`}
+                  data-tooltip-id={`edit-drive-${drive._id || drive.id}`}
                 >
                   <Edit className="w-4 h-4" aria-label="Edit" />
                   Edit
-                  <Tooltip id={`edit-drive-${drive.id}`} place="top" content="Edit drive" />
+                  <Tooltip id={`edit-drive-${drive._id || drive.id}`} place="top" content="Edit drive" />
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.07 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => handlePromoteDrive(drive.id)}
+                  onClick={() => handlePromoteDrive(drive._id || drive.id)}
                   className="px-3 py-1 rounded bg-pink-100 text-pink-700 font-semibold flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-pink-400"
                   aria-label="Promote Drive"
                   tabIndex={0}
-                  data-tooltip-id={`promote-drive-${drive.id}`}
+                  data-tooltip-id={`promote-drive-${drive._id || drive.id}`}
                 >
                   <Share2 className="w-4 h-4" aria-label="Promote" />
                   Promote
-                  <Tooltip id={`promote-drive-${drive.id}`} place="top" content="Promote drive" />
+                  <Tooltip id={`promote-drive-${drive._id || drive.id}`} place="top" content="Promote drive" />
                 </motion.button>
               </div>
             </motion.div>
@@ -291,7 +301,7 @@ const NgoDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {volunteers.map(vol => (
             <motion.div
-              key={vol.id}
+              key={vol._id || vol.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: vol.id * 0.1 }}
@@ -334,7 +344,7 @@ const NgoDashboard = () => {
             </thead>
             <tbody>
               {topDonors.map((donor, idx) => (
-                <tr key={donor.id} className={idx === 0 ? 'bg-yellow-50' : ''}>
+                <tr key={donor._id || donor.id} className={idx === 0 ? 'bg-yellow-50' : ''}>
                   <td className="py-2 px-4 font-bold flex items-center gap-2">
                     <Award className="text-yellow-500 w-4 h-4" aria-label="Donor" />
                     {donor.name}
@@ -362,7 +372,7 @@ const NgoDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {resources.map(res => (
             <motion.div
-              key={res.id}
+              key={res._id || res.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: res.id * 0.1 }}
@@ -382,11 +392,11 @@ const NgoDashboard = () => {
                 className="mt-2 px-3 py-1 rounded bg-blue-100 text-blue-700 font-semibold flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 aria-label="Download Resource"
                 tabIndex={0}
-                data-tooltip-id={`download-resource-${res.id}`}
+                data-tooltip-id={`download-resource-${res._id || res.id}`}
               >
                 <Download className="w-4 h-4" aria-label="Download" />
                 Download
-                <Tooltip id={`download-resource-${res.id}`} place="top" content="Download resource" />
+                <Tooltip id={`download-resource-${res._id || res.id}`} place="top" content="Download resource" />
               </motion.button>
             </motion.div>
           ))}
@@ -415,3 +425,10 @@ const NgoDashboard = () => {
           aria-label="Invite Volunteers"
         >
           Invite Volunteers
+        </motion.button>
+      </motion.section>
+    </main>
+  );
+};
+
+export default NgoDashboard;
