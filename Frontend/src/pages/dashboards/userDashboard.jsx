@@ -133,7 +133,7 @@ const Confetti = ({ show }) => (
   </AnimatePresence>
 );
 
-const DonorDashboard = () => {
+const UserDashboard = () => {
   // Mock data
   const eligibility = { eligible: true, nextDate: '2025-08-10' };
   const urgentRequests = [
@@ -507,4 +507,4 @@ const DonorDashboard = () => {
   );
 };
 
-export default DonorDashboard;
+export default UserDashboard;
