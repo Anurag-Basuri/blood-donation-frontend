@@ -1,561 +1,510 @@
 import React, { useState } from 'react';
-import { 
-  Calendar, 
-  Clock, 
-  Heart, 
-  Users, 
-  MapPin, 
-  Bell, 
-  Award, 
-  Share2, 
-  BookOpen, 
-  Filter,
-  ChevronDown,
-  Copy,
-  Eye,
-  List,
-  CheckCircle,
+import {
+  Heart,
   AlertCircle,
-  XCircle,
-  Trophy,
-  Star,
+  CalendarDays,
   Gift,
-  Droplets,
-  Phone,
-  ExternalLink
+  Users,
+  Star,
+  ClipboardCheck,
+  Share2,
+  ChevronDown,
+  ChevronUp,
+  Info,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Tooltip } from 'react-tooltip'; // Or use your preferred tooltip lib
 
-const BloodDonorDashboard = () => {
-  const [radiusFilter, setRadiusFilter] = useState('10km');
-  const [viewMode, setViewMode] = useState('list');
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [copiedReferral, setCopiedReferral] = useState(false);
+// Theme system example
+const theme = {
+  urgent: {
+    bg: 'bg-red-100',
+    border: 'border-red-500',
+    text: 'text-red-700',
+    icon: <AlertCircle className="text-red-500" aria-label="Urgent" />,
+  },
+  normal: {
+    bg: 'bg-yellow-50',
+    border: 'border-yellow-400',
+    text: 'text-yellow-700',
+    icon: <AlertCircle className="text-yellow-400" aria-label="Normal" />,
+  },
+  info: {
+    bg: 'bg-blue-50',
+    border: 'border-blue-400',
+    text: 'text-blue-700',
+    icon: <Info className="text-blue-400" aria-label="Info" />,
+  },
+};
 
-  // Mock user data
-  const userData = {
-    firstName: 'Sarah',
-    bloodType: 'O+',
-    isEligible: true,
-    lastDonation: '2024-05-15',
-    totalDonations: 12,
-    nextEligibleDate: '2024-08-15',
-    referralCode: 'SARAH2024',
-    successfulReferrals: 3
-  };
+// Reusable grid component
+const GridSection = ({
+  items,
+  direction = 'row',
+  gap = 'gap-4',
+  renderItem,
+  ariaLabel,
+  ...props
+}) => (
+  <div
+    className={`grid ${direction === 'row' ? 'grid-cols-2 md:grid-cols-4' : 'grid-rows-2'} ${gap}`}
+    role="list"
+    aria-label={ariaLabel}
+    {...props}
+  >
+    {items.map((item, idx) => (
+      <motion.div
+        key={item.id || idx}
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: idx * 0.1 }}
+        role="listitem"
+        tabIndex={0}
+        aria-label={item.ariaLabel}
+        className="focus:outline-none focus:ring-2 focus:ring-red-400"
+      >
+        {renderItem(item)}
+      </motion.div>
+    ))}
+  </div>
+);
 
-  const handleCopyReferral = () => {
-    navigator.clipboard.writeText(userData.referralCode);
-    setCopiedReferral(true);
-    setTimeout(() => setCopiedReferral(false), 2000);
-  };
-
-  const calculateDaysUntilEligible = () => {
-    const today = new Date();
-    const eligibleDate = new Date(userData.nextEligibleDate);
-    const diffTime = eligibleDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays : 0;
-  };
-
-  const mockUrgentRequests = [
-    {
-      id: 1,
-      hospital: 'City General Hospital',
-      location: 'Downtown District',
-      bloodType: 'O+',
-      urgency: 'high',
-      distance: '2.3km',
-      unitsNeeded: 5,
-      contact: '+1-555-0123'
-    },
-    {
-      id: 2,
-      hospital: 'St. Mary Medical Center',
-      location: 'West Side',
-      bloodType: 'A-',
-      urgency: 'medium',
-      distance: '5.7km',
-      unitsNeeded: 3,
-      contact: '+1-555-0456'
-    },
-    {
-      id: 3,
-      hospital: 'Emergency Care Unit',
-      location: 'North End',
-      bloodType: 'AB+',
-      urgency: 'low',
-      distance: '8.1km',
-      unitsNeeded: 2,
-      contact: '+1-555-0789'
-    }
-  ];
-
-  const mockUpcomingDrives = [
-    {
-      id: 1,
-      title: 'Community Blood Drive',
-      date: '2024-07-20',
-      time: '9:00 AM - 4:00 PM',
-      location: 'Community Center Hall',
-      organizer: 'Red Cross Society',
-      registered: false
-    },
-    {
-      id: 2,
-      title: 'Corporate Donation Day',
-      date: '2024-07-25',
-      time: '10:00 AM - 2:00 PM',
-      location: 'Tech Park Building A',
-      organizer: 'Local Blood Bank',
-      registered: true
-    },
-    {
-      id: 3,
-      title: 'University Health Fair',
-      date: '2024-08-01',
-      time: '11:00 AM - 5:00 PM',
-      location: 'State University Campus',
-      organizer: 'Student Health Services',
-      registered: false
-    }
-  ];
-
-  const mockDonationHistory = [
-    {
-      id: 1,
-      date: '2024-05-15',
-      location: 'City Blood Bank',
-      status: 'completed',
-      thankYouNote: 'Your donation helped save 3 lives!',
-      badge: 'Emergency Hero'
-    },
-    {
-      id: 2,
-      date: '2024-02-10',
-      location: 'Hospital Drive',
-      status: 'completed',
-      thankYouNote: 'Thank you for your generous contribution.',
-      badge: null
-    },
-    {
-      id: 3,
-      date: '2023-11-05',
-      location: 'Community Center',
-      status: 'completed',
-      thankYouNote: 'Your blood type was in high demand!',
-      badge: 'Lifesaver'
-    }
-  ];
-
-  const mockNotifications = [
-    {
-      id: 1,
-      type: 'urgent',
-      message: 'New urgent request for O+ blood in your area',
-      time: '2 hours ago',
-      read: false
-    },
-    {
-      id: 2,
-      type: 'reminder',
-      message: 'You\'re eligible to donate again in 5 days',
-      time: '1 day ago',
-      read: false
-    },
-    {
-      id: 3,
-      type: 'achievement',
-      message: 'Congratulations! You\'ve earned the "Dozen Donor" badge',
-      time: '3 days ago',
-      read: true
-    }
-  ];
-
-  const mockBadges = [
-    { id: 1, name: 'First Timer', description: 'First donation completed', unlocked: true, icon: '🩸' },
-    { id: 2, name: 'Lifesaver', description: '5 donations completed', unlocked: true, icon: '💝' },
-    { id: 3, name: 'Dozen Donor', description: '12 donations completed', unlocked: true, icon: '🏆' },
-    { id: 4, name: 'Emergency Hero', description: 'Responded to urgent request', unlocked: true, icon: '🚨' },
-    { id: 5, name: 'Community Champion', description: '20 donations completed', unlocked: false, icon: '👑' },
-    { id: 6, name: 'Platinum Donor', description: '50 donations completed', unlocked: false, icon: '💎' }
-  ];
-
-  const mockResources = [
-    { id: 1, title: 'What to eat before donating', category: 'Preparation', readTime: '3 min' },
-    { id: 2, title: 'Myths about blood donation', category: 'Education', readTime: '5 min' },
-    { id: 3, title: 'Recovery tips after donation', category: 'Aftercare', readTime: '4 min' },
-    { id: 4, title: 'Understanding blood types', category: 'Education', readTime: '6 min' }
-  ];
-
-  const SummaryCard = ({ icon: Icon, title, value, subtitle, color = 'blue' }) => (
-    <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-          {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
-        </div>
-        <div className={`p-3 rounded-full bg-${color}-100`}>
-          <Icon className={`w-6 h-6 text-${color}-600`} />
-        </div>
-      </div>
-    </div>
-  );
-
-  const UrgencyBadge = ({ urgency }) => {
-    const colors = {
-      high: 'bg-red-100 text-red-800',
-      medium: 'bg-yellow-100 text-yellow-800',
-      low: 'bg-green-100 text-green-800'
-    };
-    
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[urgency]}`}>
-        {urgency.toUpperCase()}
-      </span>
-    );
-  };
-
-  const StatusIcon = ({ status }) => {
-    if (status === 'completed') return <CheckCircle className="w-5 h-5 text-green-500" />;
-    if (status === 'pending') return <Clock className="w-5 h-5 text-yellow-500" />;
-    return <XCircle className="w-5 h-5 text-red-500" />;
-  };
-
+// Accordion for mobile
+const Accordion = ({ title, children, defaultOpen = false }) => {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Droplets className="w-8 h-8 text-red-500 mr-2" />
-              <h1 className="text-xl font-bold text-gray-900">Blood Donor Dashboard</h1>
-            </div>
-            
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
-              >
-                <Bell className="w-6 h-6" />
-                {mockNotifications.filter(n => !n.read).length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-                )}
-              </button>
-              
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-50">
-                  <div className="p-4 border-b">
-                    <h3 className="font-semibold text-gray-900">Notifications</h3>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    {mockNotifications.map(notification => (
-                      <div key={notification.id} className={`p-3 border-b hover:bg-gray-50 ${!notification.read ? 'bg-blue-50' : ''}`}>
-                        <p className="text-sm text-gray-900">{notification.message}</p>
-                        <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-red-500 to-pink-600 rounded-lg p-8 text-white mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">Welcome back, {userData.firstName}!</h2>
-              <p className="text-lg opacity-90 mb-4">You're a lifesaver today!</p>
-              <div className="flex items-center space-x-4">
-                <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm">
-                  Blood Type: {userData.bloodType}
-                </span>
-                <span className={`px-3 py-1 rounded-full text-sm flex items-center ${userData.isEligible ? 'bg-green-500 bg-opacity-20' : 'bg-yellow-500 bg-opacity-20'}`}>
-                  {userData.isEligible ? <CheckCircle className="w-4 h-4 mr-1" /> : <Clock className="w-4 h-4 mr-1" />}
-                  {userData.isEligible ? 'Eligible to Donate' : 'Not Eligible Yet'}
-                </span>
-              </div>
-            </div>
-            <Heart className="w-24 h-24 opacity-30" />
-          </div>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <SummaryCard
-            icon={Calendar}
-            title="Last Donation"
-            value={new Date(userData.lastDonation).toLocaleDateString()}
-            subtitle="3 months ago"
-          />
-          <SummaryCard
-            icon={Clock}
-            title="Eligible Again In"
-            value={`${calculateDaysUntilEligible()} days`}
-            subtitle="Based on last donation"
-            color="green"
-          />
-          <SummaryCard
-            icon={Droplets}
-            title="Total Donations"
-            value={userData.totalDonations}
-            subtitle="Since joining"
-            color="red"
-          />
-          <SummaryCard
-            icon={Heart}
-            title="Estimated Lives Saved"
-            value={userData.totalDonations * 3}
-            subtitle="Each donation saves ~3 lives"
-            color="pink"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Urgent Requests */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
-                  Urgent Requests Nearby
-                </h3>
-                <div className="flex items-center space-x-2">
-                  <Filter className="w-4 h-4 text-gray-400" />
-                  <select
-                    value={radiusFilter}
-                    onChange={(e) => setRadiusFilter(e.target.value)}
-                    className="border rounded px-2 py-1 text-sm"
-                  >
-                    <option value="5km">5km</option>
-                    <option value="10km">10km</option>
-                    <option value="20km">20km</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                {mockUrgentRequests.map(request => (
-                  <div key={request.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h4 className="font-medium text-gray-900">{request.hospital}</h4>
-                          <UrgencyBadge urgency={request.urgency} />
-                        </div>
-                        <div className="flex items-center text-sm text-gray-600 space-x-4">
-                          <span className="flex items-center">
-                            <MapPin className="w-4 h-4 mr-1" />
-                            {request.location} ({request.distance})
-                          </span>
-                          <span className="flex items-center">
-                            <Droplets className="w-4 h-4 mr-1" />
-                            {request.bloodType} - {request.unitsNeeded} units needed
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">
-                          View Details
-                        </button>
-                        <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-                          <Phone className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Upcoming Drives */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Upcoming Donation Drives</h3>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('calendar')}
-                    className={`p-2 rounded ${viewMode === 'calendar' ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}
-                  >
-                    <Calendar className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                {mockUpcomingDrives.map(drive => (
-                  <div key={drive.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 mb-1">{drive.title}</h4>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          <p className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-2" />
-                            {new Date(drive.date).toLocaleDateString()} • {drive.time}
-                          </p>
-                          <p className="flex items-center">
-                            <MapPin className="w-4 h-4 mr-2" />
-                            {drive.location}
-                          </p>
-                          <p className="flex items-center">
-                            <Users className="w-4 h-4 mr-2" />
-                            {drive.organizer}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        {drive.registered ? (
-                          <span className="px-3 py-1 text-sm bg-green-100 text-green-800 rounded">
-                            Registered
-                          </span>
-                        ) : (
-                          <button className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600">
-                            Register
-                          </button>
-                        )}
-                        <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-                          Remind Me
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Donation History */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Donation History</h3>
-              <div className="space-y-4">
-                {mockDonationHistory.map(donation => (
-                  <div key={donation.id} className="flex items-start space-x-4 p-4 border rounded-lg">
-                    <StatusIcon status={donation.status} />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-medium text-gray-900">{donation.location}</h4>
-                        <span className="text-sm text-gray-500">{new Date(donation.date).toLocaleDateString()}</span>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{donation.thankYouNote}</p>
-                      {donation.badge && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          <Award className="w-3 h-3 mr-1" />
-                          {donation.badge}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-8">
-            {/* Badges */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Award className="w-5 h-5 mr-2" />
-                Achievements
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {mockBadges.map(badge => (
-                  <div
-                    key={badge.id}
-                    className={`p-3 rounded-lg border text-center ${badge.unlocked ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200 opacity-60'}`}
-                  >
-                    <div className="text-2xl mb-1">{badge.icon}</div>
-                    <h4 className="font-medium text-xs text-gray-900">{badge.name}</h4>
-                    <p className="text-xs text-gray-600 mt-1">{badge.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Referral Widget */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Share2 className="w-5 h-5 mr-2" />
-                Refer Friends
-              </h3>
-              <div className="space-y-4">
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-2">Your referral code:</p>
-                  <div className="flex items-center space-x-2">
-                    <code className="bg-gray-100 px-3 py-2 rounded text-sm font-mono flex-1 text-center">
-                      {userData.referralCode}
-                    </code>
-                    <button
-                      onClick={handleCopyReferral}
-                      className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                  </div>
-                  {copiedReferral && (
-                    <p className="text-green-600 text-sm mt-2">Code copied!</p>
-                  )}
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-gray-600">
-                    Successful referrals: <span className="font-semibold">{userData.successfulReferrals}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Resource Center */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <BookOpen className="w-5 h-5 mr-2" />
-                Resource Center
-              </h3>
-              <div className="space-y-3">
-                {mockResources.map(resource => (
-                  <div key={resource.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm text-gray-900">{resource.title}</h4>
-                      <p className="text-xs text-gray-600">{resource.category} • {resource.readTime}</p>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* CTA Section */}
-        <div className="mt-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-8 text-white text-center">
-          <h2 className="text-2xl font-bold mb-4">Ready to Save Lives?</h2>
-          <p className="text-lg opacity-90 mb-6">Every donation can help save up to 3 lives. Check for urgent requests in your area.</p>
-          <div className="flex justify-center space-x-4">
-            <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors">
-              Find Urgent Requests
-            </button>
-            <button className="border border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:text-blue-600 transition-colors">
-              Schedule Donation
-            </button>
-            <button className="border border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:text-blue-600 transition-colors">
-              Volunteer at Events
-            </button>
-          </div>
-        </div>
-      </div>
+    <div className="border rounded-lg mb-2 bg-white/70">
+      <button
+        className="w-full flex justify-between items-center px-4 py-3 font-semibold text-lg focus:outline-none"
+        onClick={() => setOpen(v => !v)}
+        aria-expanded={open}
+        aria-controls={`panel-${title}`}
+      >
+        {title}
+        {open ? <ChevronUp /> : <ChevronDown />}
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            id={`panel-${title}`}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="px-4 pb-4"
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-export default BloodDonorDashboard;
+// Confetti animation (simple)
+const Confetti = ({ show }) => (
+  <AnimatePresence>
+    {show && (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.5 }}
+        transition={{ duration: 0.7 }}
+        className="fixed inset-0 pointer-events-none z-50 flex justify-center items-center"
+      >
+        <div className="confetti">
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="w-2 h-6 rounded bg-pink-400 absolute"
+              style={{
+                left: `${10 + Math.random() * 80}%`,
+                top: `${10 + Math.random() * 80}%`,
+                rotate: `${Math.random() * 360}deg`,
+              }}
+              initial={{ y: -30 }}
+              animate={{ y: 60 + Math.random() * 80 }}
+              transition={{ duration: 1.2, delay: i * 0.05 }}
+            />
+          ))}
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
+const DonorDashboard = () => {
+  // Mock data
+  const eligibility = { eligible: true, nextDate: '2025-08-10' };
+  const urgentRequests = [
+    { id: 1, hospital: 'City Hospital', blood: 'O-', urgency: 'urgent', time: '2h left' },
+    { id: 2, hospital: 'Metro Clinic', blood: 'A+', urgency: 'normal', time: '6h left' },
+  ];
+  const donationHistory = [
+    { id: 1, date: '2025-06-12', location: 'City Hospital', status: 'Completed' },
+    { id: 2, date: '2025-03-05', location: 'Metro Clinic', status: 'Completed' },
+  ];
+  const badges = [
+    { id: 1, label: 'First Donation', icon: <Heart />, achieved: true },
+    { id: 2, label: '5 Donations', icon: <Star />, achieved: false },
+    { id: 3, label: 'Referral Hero', icon: <Gift />, achieved: true },
+  ];
+  const upcomingDrives = [
+    { id: 1, date: '2025-07-25', location: 'Community Center' },
+    { id: 2, date: '2025-08-05', location: 'Town Hall' },
+  ];
+
+  // Referral animation
+  const [showConfetti, setShowConfetti] = useState(false);
+  const referralCode = 'LIFELINK-2025';
+
+  const handleCopyReferral = () => {
+    navigator.clipboard.writeText(referralCode);
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 1200);
+  };
+
+  // Responsive: collapse panels on mobile
+  const isMobile = window.innerWidth < 768;
+
+  return (
+    <main className="bg-gradient-to-br from-red-50 via-white to-pink-50 min-h-screen px-2 sm:px-6 py-6">
+      <Confetti show={showConfetti} />
+
+      {/* Eligibility & Summary */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+        className="mb-6"
+      >
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Heart className="w-8 h-8 text-red-500" aria-label="Eligibility" />
+            <span className="text-xl font-bold">
+              {eligibility.eligible ? 'Eligible to Donate' : 'Not Eligible'}
+            </span>
+            <Tooltip anchorSelect=".eligibility-tooltip" place="top">
+              Next eligible: {eligibility.nextDate}
+            </Tooltip>
+            <span className="eligibility-tooltip ml-2 text-sm text-gray-500">
+              Next: {eligibility.nextDate}
+            </span>
+          </div>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex gap-4"
+          >
+            <motion.button
+              whileHover={{ scale: 1.07 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-6 py-2 rounded-full bg-gradient-to-r from-red-600 to-pink-600 text-white font-bold shadow"
+              aria-label="Donate Now"
+              tabIndex={0}
+            >
+              Donate Now
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-6 py-2 rounded-full border border-red-600 text-red-600 font-bold bg-white"
+              aria-label="Refer a Friend"
+              tabIndex={0}
+            >
+              Refer a Friend
+            </motion.button>
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* Urgent Requests */}
+      {isMobile ? (
+        <Accordion title="Urgent Requests" defaultOpen>
+          <GridSection
+            items={urgentRequests}
+            direction="row"
+            gap="gap-3"
+            ariaLabel="Urgent Requests"
+            renderItem={req => (
+              <div
+                className={`p-4 rounded-lg border shadow-sm ${theme[req.urgency].bg} ${
+                  theme[req.urgency].border
+                }`}
+                tabIndex={0}
+                aria-label={`Urgent request for ${req.blood} at ${req.hospital}`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  {theme[req.urgency].icon}
+                  <span className={`font-bold ${theme[req.urgency].text}`}>{req.blood}</span>
+                  <Tooltip anchorSelect=".urgent-tooltip" place="top">
+                    Urgency: {req.urgency}
+                  </Tooltip>
+                  <span className="urgent-tooltip ml-2 text-xs">{req.time}</span>
+                </div>
+                <div className="text-sm">{req.hospital}</div>
+              </div>
+            )}
+          />
+        </Accordion>
+      ) : (
+        <motion.section
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="mb-8"
+        >
+          <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
+            <AlertCircle className="text-red-500" aria-label="Urgent Requests" />
+            Urgent Requests
+          </h2>
+          <GridSection
+            items={urgentRequests}
+            direction="row"
+            gap="gap-4"
+            ariaLabel="Urgent Requests"
+            renderItem={req => (
+              <div
+                className={`p-4 rounded-lg border shadow-sm ${theme[req.urgency].bg} ${
+                  theme[req.urgency].border
+                }`}
+                tabIndex={0}
+                aria-label={`Urgent request for ${req.blood} at ${req.hospital}`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  {theme[req.urgency].icon}
+                  <span className={`font-bold ${theme[req.urgency].text}`}>{req.blood}</span>
+                  <Tooltip anchorSelect=".urgent-tooltip" place="top">
+                    Urgency: {req.urgency}
+                  </Tooltip>
+                  <span className="urgent-tooltip ml-2 text-xs">{req.time}</span>
+                </div>
+                <div className="text-sm">{req.hospital}</div>
+              </div>
+            )}
+          />
+        </motion.section>
+      )}
+
+      {/* Donation History */}
+      {isMobile ? (
+        <Accordion title="Donation History">
+          <GridSection
+            items={donationHistory}
+            direction="col"
+            gap="gap-2"
+            ariaLabel="Donation History"
+            renderItem={don => (
+              <div
+                className="p-3 rounded-lg border bg-white shadow-sm flex flex-col"
+                tabIndex={0}
+                aria-label={`Donation at ${don.location} on ${don.date}`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <ClipboardCheck className="text-green-500" aria-label="Completed" />
+                  <span className="font-bold">{don.status}</span>
+                  <Tooltip anchorSelect=".donation-tooltip" place="top">
+                    Status: {don.status}
+                  </Tooltip>
+                </div>
+                <div className="text-xs text-gray-600">
+                  {don.date} • {don.location}
+                </div>
+              </div>
+            )}
+          />
+        </Accordion>
+      ) : (
+        <motion.section
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+          className="mb-8"
+        >
+          <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
+            <CalendarDays className="text-pink-500" aria-label="Donation History" />
+            Donation History
+          </h2>
+          <GridSection
+            items={donationHistory}
+            direction="row"
+            gap="gap-4"
+            ariaLabel="Donation History"
+            renderItem={don => (
+              <div
+                className="p-4 rounded-lg border bg-white shadow-sm flex flex-col"
+                tabIndex={0}
+                aria-label={`Donation at ${don.location} on ${don.date}`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <ClipboardCheck className="text-green-500" aria-label="Completed" />
+                  <span className="font-bold">{don.status}</span>
+                  <Tooltip anchorSelect=".donation-tooltip" place="top">
+                    Status: {don.status}
+                  </Tooltip>
+                </div>
+                <div className="text-xs text-gray-600">
+                  {don.date} • {don.location}
+                </div>
+              </div>
+            )}
+          />
+        </motion.section>
+      )}
+
+      {/* Achievements / Badges */}
+      <motion.section
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, delay: 0.3 }}
+        className="mb-8"
+      >
+        <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
+          <Star className="text-yellow-400" aria-label="Achievements" />
+          Achievements
+        </h2>
+        <GridSection
+          items={badges}
+          direction="row"
+          gap="gap-4"
+          ariaLabel="Achievements"
+          renderItem={badge => (
+            <div
+              className={`p-4 rounded-lg border shadow-sm flex flex-col items-center justify-center ${
+                badge.achieved
+                  ? 'bg-yellow-50 border-yellow-400'
+                  : 'bg-gray-50 border-gray-300 opacity-60'
+              }`}
+              tabIndex={0}
+              aria-label={badge.label}
+            >
+              <span className="mb-2" aria-label={badge.label}>
+                {badge.icon}
+              </span>
+              <span className="font-semibold text-sm">{badge.label}</span>
+              {badge.achieved && (
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.4 }}
+                  className="mt-2 px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold"
+                >
+                  Achieved
+                </motion.div>
+              )}
+            </div>
+          )}
+        />
+      </motion.section>
+
+      {/* Referral */}
+      <motion.section
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, delay: 0.4 }}
+        className="mb-8"
+        aria-labelledby="referral-heading"
+      >
+        <h2 id="referral-heading" className="text-xl font-bold mb-3 flex items-center gap-2">
+          <Share2 className="text-blue-500" aria-label="Referral" />
+          Referral
+        </h2>
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          <div
+            className="flex items-center gap-2 bg-white rounded-lg px-4 py-2 border shadow"
+            role="group"
+            aria-label="Referral Code Section"
+          >
+            <span className="font-mono text-lg" aria-label="Referral Code">
+              {referralCode}
+            </span>
+            <motion.button
+              whileHover={{
+                scale: 1.1,
+                rotate: 10,
+                boxShadow: '0 2px 12px 0 #f43f5e44',
+                transition: { type: 'spring', stiffness: 300 },
+              }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleCopyReferral}
+              className="ml-2 px-2 py-1 rounded bg-pink-100 text-pink-700 font-bold flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-pink-400"
+              aria-label="Copy Referral Code"
+              tabIndex={0}
+              data-tooltip-id="copy-referral-tooltip"
+            >
+              <Gift className="w-4 h-4" aria-label="Copy" />
+              Copy
+            </motion.button>
+            <Tooltip id="copy-referral-tooltip" place="top" content="Copy referral code" />
+            <span className="referral-tooltip ml-2 text-xs text-gray-400" aria-live="polite">
+              Share & earn badges!
+            </span>
+          </div>
+        </div>
+        {/* Confetti animation for referral copy */}
+        <AnimatePresence>
+          {showConfetti && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              transition={{ duration: 0.7 }}
+              className="fixed inset-0 pointer-events-none z-50 flex justify-center items-center"
+              aria-hidden="true"
+            >
+              <div className="confetti">
+                {[...Array(20)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="w-2 h-6 rounded bg-pink-400 absolute"
+                    style={{
+                      left: `${10 + Math.random() * 80}%`,
+                      top: `${10 + Math.random() * 80}%`,
+                      rotate: `${Math.random() * 360}deg`,
+                    }}
+                    initial={{ y: -30 }}
+                    animate={{ y: 60 + Math.random() * 80 }}
+                    transition={{ duration: 1.2, delay: i * 0.05 }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.section>
+
+      {/* Upcoming Drives */}
+      <motion.section
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, delay: 0.5 }}
+        className="mb-8"
+      >
+        <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
+          <CalendarDays className="text-indigo-500" aria-label="Upcoming Drives" />
+          Upcoming Drives
+        </h2>
+        <GridSection
+          items={upcomingDrives}
+          direction="row"
+          gap="gap-4"
+          ariaLabel="Upcoming Drives"
+          renderItem={drive => (
+            <div
+              className="p-4 rounded-lg border bg-white shadow-sm flex flex-col items-center"
+              tabIndex={0}
+              aria-label={`Drive at ${drive.location} on ${drive.date}`}
+            >
+              <CalendarDays className="text-indigo-500 mb-2" aria-label="Drive Date" />
+              <span className="font-bold">{drive.date}</span>
+              <span className="text-sm text-gray-600">{drive.location}</span>
+            </div>
+          )}
+        />
+      </motion.section>
+    </main>
+  );
+};
+
+export default DonorDashboard;
