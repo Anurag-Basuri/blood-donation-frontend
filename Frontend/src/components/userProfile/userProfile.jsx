@@ -1,52 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import ProfileHeader from './ProfileHeader';
 import DonationPreferences from './DonationPreferences';
 import DonationHistory from './DonationHistory';
 import ProfileActions from './ProfileActions';
-
-// --- API helpers based on user.controller.js ---
-const API_BASE = '/api/v1/users';
-
-const fetchUserProfile = async userId => {
-  const res = await fetch(`${API_BASE}/profile/${userId}`, { credentials: 'include' });
-  const data = await res.json();
-  return data?.data || null;
-};
-
-const fetchDonationHistory = async userId => {
-  const res = await fetch(`${API_BASE}/history/${userId}`, { credentials: 'include' });
-  const data = await res.json();
-  return data?.data || [];
-};
-
-const fetchNotifications = async () => {
-  const res = await fetch(`${API_BASE}/notifications`, { credentials: 'include' });
-  const data = await res.json();
-  return data?.data || [];
-};
+import useProfile from '../../hooks/useProfile';
 
 const UserProfile = ({ userId, isCurrentUser }) => {
-  const [user, setUser] = useState(null);
-  const [donationHistory, setDonationHistory] = useState([]);
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([fetchUserProfile(userId), fetchDonationHistory(userId), fetchNotifications()])
-      .then(([profile, history, notifs]) => {
-        setUser(profile);
-        setDonationHistory(history);
-        setNotifications(notifs);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError('Failed to load profile.');
-        setLoading(false);
-      });
-  }, [userId]);
+  // Use the custom hook for profile data
+  const {
+    user,
+    donationHistory,
+    notifications,
+    loading,
+    error,
+  } = useProfile(userId);
 
   if (loading) {
     return (
@@ -74,7 +42,7 @@ const UserProfile = ({ userId, isCurrentUser }) => {
       className="max-w-4xl mx-auto p-4 sm:p-6"
     >
       {/* Notifications */}
-      {notifications.length > 0 && (
+      {notifications && notifications.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -116,7 +84,9 @@ const UserProfile = ({ userId, isCurrentUser }) => {
 
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {donationHistory.length > 0 && <DonationHistory history={donationHistory} />}
+          {donationHistory && donationHistory.length > 0 && (
+            <DonationHistory history={donationHistory} />
+          )}
         </div>
 
         <div className="space-y-6">

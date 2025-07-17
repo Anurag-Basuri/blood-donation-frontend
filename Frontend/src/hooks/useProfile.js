@@ -11,7 +11,7 @@ export const useProfile = () => {
       try {
         const data = await getCurrentUserProfile();
         setProfile(data);
-      } catch (err) {
+      } catch  {
         setError('Failed to load profile.');
       } finally {
         setLoading(false);
@@ -25,7 +25,7 @@ export const useProfile = () => {
     try {
       const updatedProfile = await uploadUserProfilePicture(file);
       setProfile(updatedProfile);
-    } catch (err) {
+    } catch {
       setError('Failed to update profile picture.');
     }
   };
