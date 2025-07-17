@@ -1,13 +1,10 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import ProfileHeader from './ProfileHeader';
-import DonationPreferences from './DonationPreferences';
-import DonationHistory from './DonationHistory';
-import ProfileActions from './ProfileActions';
-import useProfile from '../../hooks/useProfile';
+import ProfileHeader from './header.jsx';
+import DonationPreferences from './preference.jsx';
+import DonationHistory from './history.jsx';
+import ProfileActions from './actions.jsx';
+import useProfile from '../../hooks/useProfile.js';
 
 const UserProfile = ({ userId, isCurrentUser }) => {
-  // Use the custom hook for profile data
   const {
     user,
     donationHistory,
